@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="water_deep">#06324C</color>
+    <color name="water_shallow">#0F5A86</color>
+    <color name="canal_bank">#3A2310</color>
+    <color name="canal_bank_top">#5C3A1E</color>
+    <color name="pellet">#FFE9B0</color>
+    <color name="power_pellet">#FFD230</color>
+    <color name="monkey_fur">#8B5A2B</color>
+    <color name="monkey_fur_light">#C58A4E</color>
+    <color name="monkey_belly">#F2D2A8</color>
+    <color name="piranha_body">#7E8C99</color>
+    <color name="piranha_belly">#C44A3D</color>
+    <color name="piranha_fin">#3F4853</color>
+    <color name="piranha_eye">#FFFFFF</color>
+    <color name="hud_bg">#88000000</color>
+    <color name="hud_text">#FFFFFFFF</color>
+    <color name="splash_bg">#CC000000</color>
+    <color name="button_bg">#FFE9B0</color>
+    <color name="button_bg_pressed">#E0CC8A</color>
+    <color name="button_text">#222222</color>
+    <color name="gateway_locked">#222222</color>
+    <color name="gateway_unlocked">#22FFAA</color>
+</resources>

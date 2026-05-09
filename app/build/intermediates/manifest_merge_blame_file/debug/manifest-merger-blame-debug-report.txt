@@ -1,0 +1,476 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.monkeyswim.game"
+4    android:versionCode="1"
+5    android:versionName="0.1.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="24"
+9        android:targetSdkVersion="34" />
+10
+11    <uses-permission android:name="android.permission.INTERNET" />
+11-->C:\Users\cleon\work\monkeyswim\app\src\main\AndroidManifest.xml:4:5-67
+11-->C:\Users\cleon\work\monkeyswim\app\src\main\AndroidManifest.xml:4:22-64
+12    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+12-->C:\Users\cleon\work\monkeyswim\app\src\main\AndroidManifest.xml:5:5-79
+12-->C:\Users\cleon\work\monkeyswim\app\src\main\AndroidManifest.xml:5:22-76
+13    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
+13-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:26:5-79
+13-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:26:22-76
+14    <uses-permission android:name="android.permission.ACCESS_ADSERVICES_AD_ID" />
+14-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:27:5-82
+14-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:27:22-79
+15    <uses-permission android:name="android.permission.ACCESS_ADSERVICES_ATTRIBUTION" />
+15-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:28:5-88
+15-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:28:22-85
+16    <uses-permission android:name="android.permission.ACCESS_ADSERVICES_TOPICS" /> <!-- Android package visibility setting -->
+16-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:29:5-83
+16-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:29:22-80
+17    <queries>
+17-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:35:5-51:15
+18
+19        <!-- For browser content -->
+20        <intent>
+20-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:38:9-44:18
+21            <action android:name="android.intent.action.VIEW" />
+21-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:39:13-65
+21-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:39:21-62
+22
+23            <category android:name="android.intent.category.BROWSABLE" />
+23-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:41:13-74
+23-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:41:23-71
+24
+25            <data android:scheme="https" />
+25-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:43:13-44
+25-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:43:19-41
+26        </intent>
+27        <!-- End of browser content -->
+28        <!-- For CustomTabsService -->
+29        <intent>
+29-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:47:9-49:18
+30            <action android:name="android.support.customtabs.action.CustomTabsService" />
+30-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:48:13-90
+30-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:48:21-87
+31        </intent>
+32        <!-- End of CustomTabsService -->
+33    </queries>
+34
+35    <uses-permission android:name="android.permission.WAKE_LOCK" />
+35-->[com.google.android.gms:play-services-measurement-sdk-api:20.1.2] C:\Users\cleon\.gradle\caches\transforms-3\6d94af8e4a1cb4d1dd24a960ca5719ca\transformed\play-services-measurement-sdk-api-20.1.2\AndroidManifest.xml:25:5-68
+35-->[com.google.android.gms:play-services-measurement-sdk-api:20.1.2] C:\Users\cleon\.gradle\caches\transforms-3\6d94af8e4a1cb4d1dd24a960ca5719ca\transformed\play-services-measurement-sdk-api-20.1.2\AndroidManifest.xml:25:22-65
+36    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+36-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:28:5-77
+36-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:28:22-74
+37
+38    <permission
+38-->[androidx.core:core:1.12.0] C:\Users\cleon\.gradle\caches\transforms-3\01be542a8a7642ecba403b94caa2bdf6\transformed\core-1.12.0\AndroidManifest.xml:22:5-24:47
+39        android:name="com.monkeyswim.game.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+39-->[androidx.core:core:1.12.0] C:\Users\cleon\.gradle\caches\transforms-3\01be542a8a7642ecba403b94caa2bdf6\transformed\core-1.12.0\AndroidManifest.xml:23:9-81
+40        android:protectionLevel="signature" />
+40-->[androidx.core:core:1.12.0] C:\Users\cleon\.gradle\caches\transforms-3\01be542a8a7642ecba403b94caa2bdf6\transformed\core-1.12.0\AndroidManifest.xml:24:9-44
+41
+42    <uses-permission android:name="com.monkeyswim.game.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+42-->[androidx.core:core:1.12.0] C:\Users\cleon\.gradle\caches\transforms-3\01be542a8a7642ecba403b94caa2bdf6\transformed\core-1.12.0\AndroidManifest.xml:26:5-97
+42-->[androidx.core:core:1.12.0] C:\Users\cleon\.gradle\caches\transforms-3\01be542a8a7642ecba403b94caa2bdf6\transformed\core-1.12.0\AndroidManifest.xml:26:22-94
+43
+44    <application
+44-->C:\Users\cleon\work\monkeyswim\app\src\main\AndroidManifest.xml:7:5-34:19
+45        android:allowBackup="true"
+45-->C:\Users\cleon\work\monkeyswim\app\src\main\AndroidManifest.xml:8:9-35
+46        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+46-->[androidx.core:core:1.12.0] C:\Users\cleon\.gradle\caches\transforms-3\01be542a8a7642ecba403b94caa2bdf6\transformed\core-1.12.0\AndroidManifest.xml:28:18-86
+47        android:debuggable="true"
+48        android:extractNativeLibs="false"
+49        android:icon="@mipmap/ic_launcher"
+49-->C:\Users\cleon\work\monkeyswim\app\src\main\AndroidManifest.xml:9:9-43
+50        android:label="@string/app_name"
+50-->C:\Users\cleon\work\monkeyswim\app\src\main\AndroidManifest.xml:10:9-41
+51        android:supportsRtl="false"
+51-->C:\Users\cleon\work\monkeyswim\app\src\main\AndroidManifest.xml:11:9-36
+52        android:testOnly="true"
+53        android:theme="@style/Theme.MonkeySwim" >
+53-->C:\Users\cleon\work\monkeyswim\app\src\main\AndroidManifest.xml:12:9-48
+54
+55        <!--
+56            AdMob App ID. This is Google's official sample/test App ID.
+57            TODO: Replace with your real AdMob App ID before publishing.
+58            Test App ID: ca-app-pub-3940256099942544~3347511713
+59        -->
+60        <meta-data
+60-->C:\Users\cleon\work\monkeyswim\app\src\main\AndroidManifest.xml:19:9-21:70
+61            android:name="com.google.android.gms.ads.APPLICATION_ID"
+61-->C:\Users\cleon\work\monkeyswim\app\src\main\AndroidManifest.xml:20:13-69
+62            android:value="ca-app-pub-3940256099942544~3347511713" />
+62-->C:\Users\cleon\work\monkeyswim\app\src\main\AndroidManifest.xml:21:13-67
+63
+64        <activity
+64-->C:\Users\cleon\work\monkeyswim\app\src\main\AndroidManifest.xml:23:9-33:20
+65            android:name="com.monkeyswim.game.MainActivity"
+65-->C:\Users\cleon\work\monkeyswim\app\src\main\AndroidManifest.xml:24:13-41
+66            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|uiMode"
+66-->C:\Users\cleon\work\monkeyswim\app\src\main\AndroidManifest.xml:27:13-94
+67            android:exported="true"
+67-->C:\Users\cleon\work\monkeyswim\app\src\main\AndroidManifest.xml:25:13-36
+68            android:screenOrientation="portrait"
+68-->C:\Users\cleon\work\monkeyswim\app\src\main\AndroidManifest.xml:26:13-49
+69            android:theme="@style/Theme.MonkeySwim.Fullscreen" >
+69-->C:\Users\cleon\work\monkeyswim\app\src\main\AndroidManifest.xml:28:13-63
+70            <intent-filter>
+70-->C:\Users\cleon\work\monkeyswim\app\src\main\AndroidManifest.xml:29:13-32:29
+71                <action android:name="android.intent.action.MAIN" />
+71-->C:\Users\cleon\work\monkeyswim\app\src\main\AndroidManifest.xml:30:17-69
+71-->C:\Users\cleon\work\monkeyswim\app\src\main\AndroidManifest.xml:30:25-66
+72
+73                <category android:name="android.intent.category.LAUNCHER" />
+73-->C:\Users\cleon\work\monkeyswim\app\src\main\AndroidManifest.xml:31:17-77
+73-->C:\Users\cleon\work\monkeyswim\app\src\main\AndroidManifest.xml:31:27-74
+74            </intent-filter>
+75        </activity>
+76        <!-- Include the AdActivity and InAppPurchaseActivity configChanges and themes. -->
+77        <activity
+77-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:56:9-61:43
+78            android:name="com.google.android.gms.ads.AdActivity"
+78-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:57:13-65
+79            android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"
+79-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:58:13-122
+80            android:exported="false"
+80-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:59:13-37
+81            android:theme="@android:style/Theme.Translucent" />
+81-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:60:13-61
+82
+83        <provider
+83-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:63:9-68:43
+84            android:name="com.google.android.gms.ads.MobileAdsInitProvider"
+84-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:64:13-76
+85            android:authorities="com.monkeyswim.game.mobileadsinitprovider"
+85-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:65:13-73
+86            android:exported="false"
+86-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:66:13-37
+87            android:initOrder="100" />
+87-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:67:13-36
+88
+89        <service
+89-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:70:9-74:43
+90            android:name="com.google.android.gms.ads.AdService"
+90-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:71:13-64
+91            android:enabled="true"
+91-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:72:13-35
+92            android:exported="false" />
+92-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:73:13-37
+93
+94        <activity
+94-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:76:9-80:43
+95            android:name="com.google.android.gms.ads.OutOfContextTestingActivity"
+95-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:77:13-82
+96            android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"
+96-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:78:13-122
+97            android:exported="false" />
+97-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:79:13-37
+98        <activity
+98-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:81:9-88:43
+99            android:name="com.google.android.gms.ads.NotificationHandlerActivity"
+99-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:82:13-82
+100            android:excludeFromRecents="true"
+100-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:83:13-46
+101            android:exported="false"
+101-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:84:13-37
+102            android:launchMode="singleTask"
+102-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:85:13-44
+103            android:taskAffinity=""
+103-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:86:13-36
+104            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+104-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:87:13-72
+105
+106        <property
+106-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:90:9-92:62
+107            android:name="android.adservices.AD_SERVICES_CONFIG"
+107-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:91:13-65
+108            android:resource="@xml/gma_ad_services_config" />
+108-->[com.google.android.gms:play-services-ads-lite:23.0.0] C:\Users\cleon\.gradle\caches\transforms-3\2c37a860986daba88aefb0ce8d22fbec\transformed\play-services-ads-lite-23.0.0\AndroidManifest.xml:92:13-59
+109
+110        <activity
+110-->[com.google.android.gms:play-services-base:18.0.0] C:\Users\cleon\.gradle\caches\transforms-3\e5c1cab9913987b8614cb3fcf3634819\transformed\play-services-base-18.0.0\AndroidManifest.xml:20:9-22:45
+111            android:name="com.google.android.gms.common.api.GoogleApiActivity"
+111-->[com.google.android.gms:play-services-base:18.0.0] C:\Users\cleon\.gradle\caches\transforms-3\e5c1cab9913987b8614cb3fcf3634819\transformed\play-services-base-18.0.0\AndroidManifest.xml:20:19-85
+112            android:exported="false"
+112-->[com.google.android.gms:play-services-base:18.0.0] C:\Users\cleon\.gradle\caches\transforms-3\e5c1cab9913987b8614cb3fcf3634819\transformed\play-services-base-18.0.0\AndroidManifest.xml:22:19-43
+113            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+113-->[com.google.android.gms:play-services-base:18.0.0] C:\Users\cleon\.gradle\caches\transforms-3\e5c1cab9913987b8614cb3fcf3634819\transformed\play-services-base-18.0.0\AndroidManifest.xml:21:19-78
+114
+115        <meta-data
+115-->[com.google.android.gms:play-services-basement:18.2.0] C:\Users\cleon\.gradle\caches\transforms-3\156cc42c1de49f683a93ff8598c1399b\transformed\play-services-basement-18.2.0\AndroidManifest.xml:21:9-23:69
+116            android:name="com.google.android.gms.version"
+116-->[com.google.android.gms:play-services-basement:18.2.0] C:\Users\cleon\.gradle\caches\transforms-3\156cc42c1de49f683a93ff8598c1399b\transformed\play-services-basement-18.2.0\AndroidManifest.xml:22:13-58
+117            android:value="@integer/google_play_services_version" />
+117-->[com.google.android.gms:play-services-basement:18.2.0] C:\Users\cleon\.gradle\caches\transforms-3\156cc42c1de49f683a93ff8598c1399b\transformed\play-services-basement-18.2.0\AndroidManifest.xml:23:13-66
+118
+119        <provider
+119-->[androidx.emoji2:emoji2:1.2.0] C:\Users\cleon\.gradle\caches\transforms-3\2497a04ce439ba5192d483e53a542533\transformed\emoji2-1.2.0\AndroidManifest.xml:24:9-32:20
+120            android:name="androidx.startup.InitializationProvider"
+120-->[androidx.emoji2:emoji2:1.2.0] C:\Users\cleon\.gradle\caches\transforms-3\2497a04ce439ba5192d483e53a542533\transformed\emoji2-1.2.0\AndroidManifest.xml:25:13-67
+121            android:authorities="com.monkeyswim.game.androidx-startup"
+121-->[androidx.emoji2:emoji2:1.2.0] C:\Users\cleon\.gradle\caches\transforms-3\2497a04ce439ba5192d483e53a542533\transformed\emoji2-1.2.0\AndroidManifest.xml:26:13-68
+122            android:exported="false" >
+122-->[androidx.emoji2:emoji2:1.2.0] C:\Users\cleon\.gradle\caches\transforms-3\2497a04ce439ba5192d483e53a542533\transformed\emoji2-1.2.0\AndroidManifest.xml:27:13-37
+123            <meta-data
+123-->[androidx.emoji2:emoji2:1.2.0] C:\Users\cleon\.gradle\caches\transforms-3\2497a04ce439ba5192d483e53a542533\transformed\emoji2-1.2.0\AndroidManifest.xml:29:13-31:52
+124                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+124-->[androidx.emoji2:emoji2:1.2.0] C:\Users\cleon\.gradle\caches\transforms-3\2497a04ce439ba5192d483e53a542533\transformed\emoji2-1.2.0\AndroidManifest.xml:30:17-75
+125                android:value="androidx.startup" />
+125-->[androidx.emoji2:emoji2:1.2.0] C:\Users\cleon\.gradle\caches\transforms-3\2497a04ce439ba5192d483e53a542533\transformed\emoji2-1.2.0\AndroidManifest.xml:31:17-49
+126            <meta-data
+126-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:36:13-38:52
+127                android:name="androidx.work.WorkManagerInitializer"
+127-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:37:17-68
+128                android:value="androidx.startup" />
+128-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:38:17-49
+129            <meta-data
+129-->[androidx.lifecycle:lifecycle-process:2.6.1] C:\Users\cleon\.gradle\caches\transforms-3\86ffc40331241160dd6ae3395fef3d53\transformed\lifecycle-process-2.6.1\AndroidManifest.xml:29:13-31:52
+130                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+130-->[androidx.lifecycle:lifecycle-process:2.6.1] C:\Users\cleon\.gradle\caches\transforms-3\86ffc40331241160dd6ae3395fef3d53\transformed\lifecycle-process-2.6.1\AndroidManifest.xml:30:17-78
+131                android:value="androidx.startup" />
+131-->[androidx.lifecycle:lifecycle-process:2.6.1] C:\Users\cleon\.gradle\caches\transforms-3\86ffc40331241160dd6ae3395fef3d53\transformed\lifecycle-process-2.6.1\AndroidManifest.xml:31:17-49
+132            <meta-data
+132-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cleon\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:29:13-31:52
+133                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+133-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cleon\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:30:17-85
+134                android:value="androidx.startup" />
+134-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cleon\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:31:17-49
+135        </provider>
+136
+137        <service
+137-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:41:9-46:35
+138            android:name="androidx.work.impl.background.systemalarm.SystemAlarmService"
+138-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:42:13-88
+139            android:directBootAware="false"
+139-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:43:13-44
+140            android:enabled="@bool/enable_system_alarm_service_default"
+140-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:44:13-72
+141            android:exported="false" />
+141-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:45:13-37
+142        <service
+142-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:47:9-53:35
+143            android:name="androidx.work.impl.background.systemjob.SystemJobService"
+143-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:48:13-84
+144            android:directBootAware="false"
+144-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:49:13-44
+145            android:enabled="@bool/enable_system_job_service_default"
+145-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:50:13-70
+146            android:exported="true"
+146-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:51:13-36
+147            android:permission="android.permission.BIND_JOB_SERVICE" />
+147-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:52:13-69
+148        <service
+148-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:54:9-59:35
+149            android:name="androidx.work.impl.foreground.SystemForegroundService"
+149-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:55:13-81
+150            android:directBootAware="false"
+150-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:56:13-44
+151            android:enabled="@bool/enable_system_foreground_service_default"
+151-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:57:13-77
+152            android:exported="false" />
+152-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:58:13-37
+153
+154        <receiver
+154-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:61:9-66:35
+155            android:name="androidx.work.impl.utils.ForceStopRunnable$BroadcastReceiver"
+155-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:62:13-88
+156            android:directBootAware="false"
+156-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:63:13-44
+157            android:enabled="true"
+157-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:64:13-35
+158            android:exported="false" />
+158-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:65:13-37
+159        <receiver
+159-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:67:9-77:20
+160            android:name="androidx.work.impl.background.systemalarm.ConstraintProxy$BatteryChargingProxy"
+160-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:68:13-106
+161            android:directBootAware="false"
+161-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:69:13-44
+162            android:enabled="false"
+162-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:70:13-36
+163            android:exported="false" >
+163-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:71:13-37
+164            <intent-filter>
+164-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:73:13-76:29
+165                <action android:name="android.intent.action.ACTION_POWER_CONNECTED" />
+165-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:74:17-87
+165-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:74:25-84
+166                <action android:name="android.intent.action.ACTION_POWER_DISCONNECTED" />
+166-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:75:17-90
+166-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:75:25-87
+167            </intent-filter>
+168        </receiver>
+169        <receiver
+169-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:78:9-88:20
+170            android:name="androidx.work.impl.background.systemalarm.ConstraintProxy$BatteryNotLowProxy"
+170-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:79:13-104
+171            android:directBootAware="false"
+171-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:80:13-44
+172            android:enabled="false"
+172-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:81:13-36
+173            android:exported="false" >
+173-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:82:13-37
+174            <intent-filter>
+174-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:84:13-87:29
+175                <action android:name="android.intent.action.BATTERY_OKAY" />
+175-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:85:17-77
+175-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:85:25-74
+176                <action android:name="android.intent.action.BATTERY_LOW" />
+176-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:86:17-76
+176-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:86:25-73
+177            </intent-filter>
+178        </receiver>
+179        <receiver
+179-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:89:9-99:20
+180            android:name="androidx.work.impl.background.systemalarm.ConstraintProxy$StorageNotLowProxy"
+180-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:90:13-104
+181            android:directBootAware="false"
+181-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:91:13-44
+182            android:enabled="false"
+182-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:92:13-36
+183            android:exported="false" >
+183-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:93:13-37
+184            <intent-filter>
+184-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:95:13-98:29
+185                <action android:name="android.intent.action.DEVICE_STORAGE_LOW" />
+185-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:96:17-83
+185-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:96:25-80
+186                <action android:name="android.intent.action.DEVICE_STORAGE_OK" />
+186-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:97:17-82
+186-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:97:25-79
+187            </intent-filter>
+188        </receiver>
+189        <receiver
+189-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:100:9-109:20
+190            android:name="androidx.work.impl.background.systemalarm.ConstraintProxy$NetworkStateProxy"
+190-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:101:13-103
+191            android:directBootAware="false"
+191-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:102:13-44
+192            android:enabled="false"
+192-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:103:13-36
+193            android:exported="false" >
+193-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:104:13-37
+194            <intent-filter>
+194-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:106:13-108:29
+195                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
+195-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:107:17-79
+195-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:107:25-76
+196            </intent-filter>
+197        </receiver>
+198        <receiver
+198-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:110:9-121:20
+199            android:name="androidx.work.impl.background.systemalarm.RescheduleReceiver"
+199-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:111:13-88
+200            android:directBootAware="false"
+200-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:112:13-44
+201            android:enabled="false"
+201-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:113:13-36
+202            android:exported="false" >
+202-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:114:13-37
+203            <intent-filter>
+203-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:116:13-120:29
+204                <action android:name="android.intent.action.BOOT_COMPLETED" />
+204-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:117:17-79
+204-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:117:25-76
+205                <action android:name="android.intent.action.TIME_SET" />
+205-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:118:17-73
+205-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:118:25-70
+206                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+206-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:119:17-81
+206-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:119:25-78
+207            </intent-filter>
+208        </receiver>
+209        <receiver
+209-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:122:9-131:20
+210            android:name="androidx.work.impl.background.systemalarm.ConstraintProxyUpdateReceiver"
+210-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:123:13-99
+211            android:directBootAware="false"
+211-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:124:13-44
+212            android:enabled="@bool/enable_system_alarm_service_default"
+212-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:125:13-72
+213            android:exported="false" >
+213-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:126:13-37
+214            <intent-filter>
+214-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:128:13-130:29
+215                <action android:name="androidx.work.impl.background.systemalarm.UpdateProxies" />
+215-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:129:17-98
+215-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:129:25-95
+216            </intent-filter>
+217        </receiver>
+218        <receiver
+218-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:132:9-142:20
+219            android:name="androidx.work.impl.diagnostics.DiagnosticsReceiver"
+219-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:133:13-78
+220            android:directBootAware="false"
+220-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:134:13-44
+221            android:enabled="true"
+221-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:135:13-35
+222            android:exported="true"
+222-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:136:13-36
+223            android:permission="android.permission.DUMP" >
+223-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:137:13-57
+224            <intent-filter>
+224-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:139:13-141:29
+225                <action android:name="androidx.work.diagnostics.REQUEST_DIAGNOSTICS" />
+225-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:140:17-88
+225-->[androidx.work:work-runtime:2.7.0] C:\Users\cleon\.gradle\caches\transforms-3\7bd3f5c453d5b6f13fe558d82e92124e\transformed\work-runtime-2.7.0\AndroidManifest.xml:140:25-85
+226            </intent-filter>
+227        </receiver>
+228
+229        <uses-library
+229-->[androidx.privacysandbox.ads:ads-adservices:1.0.0-beta05] C:\Users\cleon\.gradle\caches\transforms-3\ed61af62b5f2b12f52292c9d9fd3e2d0\transformed\ads-adservices-1.0.0-beta05\AndroidManifest.xml:23:9-25:40
+230            android:name="android.ext.adservices"
+230-->[androidx.privacysandbox.ads:ads-adservices:1.0.0-beta05] C:\Users\cleon\.gradle\caches\transforms-3\ed61af62b5f2b12f52292c9d9fd3e2d0\transformed\ads-adservices-1.0.0-beta05\AndroidManifest.xml:24:13-50
+231            android:required="false" />
+231-->[androidx.privacysandbox.ads:ads-adservices:1.0.0-beta05] C:\Users\cleon\.gradle\caches\transforms-3\ed61af62b5f2b12f52292c9d9fd3e2d0\transformed\ads-adservices-1.0.0-beta05\AndroidManifest.xml:25:13-37
+232
+233        <receiver
+233-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cleon\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:34:9-52:20
+234            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+234-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cleon\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:35:13-76
+235            android:directBootAware="false"
+235-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cleon\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:36:13-44
+236            android:enabled="true"
+236-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cleon\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:37:13-35
+237            android:exported="true"
+237-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cleon\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:38:13-36
+238            android:permission="android.permission.DUMP" >
+238-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cleon\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:39:13-57
+239            <intent-filter>
+239-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cleon\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:40:13-42:29
+240                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+240-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cleon\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:41:17-91
+240-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cleon\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:41:25-88
+241            </intent-filter>
+242            <intent-filter>
+242-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cleon\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:43:13-45:29
+243                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+243-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cleon\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:44:17-85
+243-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cleon\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:44:25-82
+244            </intent-filter>
+245            <intent-filter>
+245-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cleon\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:46:13-48:29
+246                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+246-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cleon\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:47:17-88
+246-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cleon\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:47:25-85
+247            </intent-filter>
+248            <intent-filter>
+248-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cleon\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:49:13-51:29
+249                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+249-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cleon\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:50:17-95
+249-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\cleon\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:50:25-92
+250            </intent-filter>
+251        </receiver>
+252
+253        <service
+253-->[androidx.room:room-runtime:2.2.5] C:\Users\cleon\.gradle\caches\transforms-3\31c5c1bd21f7c4944835cfa7cd3a4328\transformed\room-runtime-2.2.5\AndroidManifest.xml:25:9-28:40
+254            android:name="androidx.room.MultiInstanceInvalidationService"
+254-->[androidx.room:room-runtime:2.2.5] C:\Users\cleon\.gradle\caches\transforms-3\31c5c1bd21f7c4944835cfa7cd3a4328\transformed\room-runtime-2.2.5\AndroidManifest.xml:26:13-74
+255            android:directBootAware="true"
+255-->[androidx.room:room-runtime:2.2.5] C:\Users\cleon\.gradle\caches\transforms-3\31c5c1bd21f7c4944835cfa7cd3a4328\transformed\room-runtime-2.2.5\AndroidManifest.xml:27:13-43
+256            android:exported="false" />
+256-->[androidx.room:room-runtime:2.2.5] C:\Users\cleon\.gradle\caches\transforms-3\31c5c1bd21f7c4944835cfa7cd3a4328\transformed\room-runtime-2.2.5\AndroidManifest.xml:28:13-37
+257    </application>
+258
+259</manifest>

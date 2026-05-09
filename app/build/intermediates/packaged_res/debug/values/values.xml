@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="button_bg">#FFE9B0</color>
+    <color name="button_bg_pressed">#E0CC8A</color>
+    <color name="button_text">#222222</color>
+    <color name="canal_bank">#3A2310</color>
+    <color name="canal_bank_top">#5C3A1E</color>
+    <color name="gateway_locked">#222222</color>
+    <color name="gateway_unlocked">#22FFAA</color>
+    <color name="hud_bg">#88000000</color>
+    <color name="hud_text">#FFFFFFFF</color>
+    <color name="monkey_belly">#F2D2A8</color>
+    <color name="monkey_fur">#8B5A2B</color>
+    <color name="monkey_fur_light">#C58A4E</color>
+    <color name="pellet">#FFE9B0</color>
+    <color name="piranha_belly">#C44A3D</color>
+    <color name="piranha_body">#7E8C99</color>
+    <color name="piranha_eye">#FFFFFF</color>
+    <color name="piranha_fin">#3F4853</color>
+    <color name="power_pellet">#FFD230</color>
+    <color name="splash_bg">#CC000000</color>
+    <color name="water_deep">#06324C</color>
+    <color name="water_shallow">#0F5A86</color>
+    <string name="ad_failed">No ad available — try again</string>
+    <string name="app_name">MonkeySwim</string>
+    <string name="game_over">Game Over</string>
+    <string name="level_label">Level %1$d</string>
+    <string name="lives_label">Lives %1$d</string>
+    <string name="loading_ad">Loading ad…</string>
+    <string name="pause_action">Pause</string>
+    <string name="paused">Paused</string>
+    <string name="ready">Ready!</string>
+    <string name="restart">Restart</string>
+    <string name="resume">Resume</string>
+    <string name="score_label">Score %1$d</string>
+    <string name="watch_ad_for_lives">Watch Ad for +3 Lives</string>
+    <style name="Theme.MonkeySwim" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/water_shallow</item>
+        <item name="colorPrimaryDark">@color/water_deep</item>
+        <item name="colorAccent">@color/power_pellet</item>
+        <item name="android:statusBarColor">@color/water_deep</item>
+    </style>
+    <style name="Theme.MonkeySwim.Fullscreen" parent="Theme.MonkeySwim">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowBackground">@color/water_deep</item>
+        <item name="android:navigationBarColor">@color/water_deep</item>
+    </style>
+</resources>

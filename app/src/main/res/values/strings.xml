@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MonkeySwim</string>
+    <string name="game_over">Game Over</string>
+    <string name="restart">Restart</string>
+    <string name="watch_ad_for_lives">Watch Ad for +3 Lives</string>
+    <string name="loading_ad">Loading ad…</string>
+    <string name="ad_failed">No ad available — try again</string>
+    <string name="paused">Paused</string>
+    <string name="pause_action">Pause</string>
+    <string name="resume">Resume</string>
+    <string name="level_label">Level %1$d</string>
+    <string name="score_label">Score %1$d</string>
+    <string name="lives_label">Lives %1$d</string>
+    <string name="ready">Ready!</string>
+</resources>

@@ -1,0 +1,10 @@
+[
+    {
+        "merged": "C:\\Users\\cleon\\.gradle\\daemon\\8.4\\com.monkeyswim.game.app-mergeDebugResources-43:\\layout\\activity_main.xml",
+        "source": "C:\\Users\\cleon\\.gradle\\daemon\\8.4\\com.monkeyswim.game.app-main-46:\\layout\\activity_main.xml"
+    },
+    {
+        "merged": "com.monkeyswim.game.app-mergeDebugResources-43:/layout/activity_main.xml",
+        "source": "com.monkeyswim.game.app-main-46:/layout/activity_main.xml"
+    }
+]
