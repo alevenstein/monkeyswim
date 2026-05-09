@@ -296,10 +296,21 @@ class Maze(layout: List<String>) {
                     Tile.PEN_DOOR -> {
                         // Render the gate only at door cells whose neighbor above is an open
                         // corridor — that's the *actual* entryway. Door cells flanked above by
-                        // walls (cols 6 and 8 in the current layout) are part of the pen
-                        // perimeter logically but have no doorway to gate visually.
+                        // walls are part of the pen perimeter logically but have no doorway
+                        // to gate visually.
                         if (tileAt(c, r - 1) != Tile.WALL) {
-                            tmpRect.set(left, top - cellSize * 0.05f, left + cellSize, top + cellSize * 0.05f)
+                            // The walls flanking the door inset their door-facing edges by
+                            // 0.30·cellSize (general wall-renderer behavior toward non-wall
+                            // neighbors), so the visual entrance is 1.6·cellSize wide. Extend
+                            // the gate by the same inset on each side so it bridges to the
+                            // walls' actual edges instead of floating with water gaps beside it.
+                            val inset = cellSize * 0.30f
+                            tmpRect.set(
+                                left - inset,
+                                top - cellSize * 0.05f,
+                                left + cellSize + inset,
+                                top + cellSize * 0.05f,
+                            )
                             canvas.drawRect(tmpRect, penDoorPaint)
                         }
                     }
