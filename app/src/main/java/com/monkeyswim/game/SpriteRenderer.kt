@@ -15,11 +15,12 @@ object SpriteRenderer {
     private val monkeyFur = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor("#8B5A2B"); style = Paint.Style.FILL
     }
-    private val monkeyFurLight = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#C58A4E"); style = Paint.Style.FILL
-    }
-    private val monkeyBelly = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+    private val monkeyFace = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor("#F2D2A8"); style = Paint.Style.FILL
+    }
+    private val monkeyBrow = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#5A3A1C"); style = Paint.Style.STROKE
+        strokeCap = Paint.Cap.ROUND
     }
     private val eyeWhite = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.WHITE; style = Paint.Style.FILL
@@ -85,38 +86,58 @@ object SpriteRenderer {
         canvas.drawCircle(rippleX, -s * 0.4f, cellSize * 0.10f, ripplePaint)
         canvas.drawCircle(rippleX - cellSize * 0.10f, s * 0.4f, cellSize * 0.10f, ripplePaint)
 
-        // Outline halo
-        canvas.drawCircle(0f, 0f, s * 1.07f, monkeyOutline)
+        // Ears (drawn first; body covers their inner edge). Set at the temples,
+        // small and on the sides — not Mickey-Mouse circles at the back.
+        canvas.drawCircle(s * 0.15f, -s * 0.92f, s * 0.27f, monkeyOutline)
+        canvas.drawCircle(s * 0.15f,  s * 0.92f, s * 0.27f, monkeyOutline)
+        canvas.drawCircle(s * 0.15f, -s * 0.92f, s * 0.21f, monkeyFur)
+        canvas.drawCircle(s * 0.15f,  s * 0.92f, s * 0.21f, monkeyFur)
+        canvas.drawCircle(s * 0.15f, -s * 0.92f, s * 0.10f, monkeyFace)
+        canvas.drawCircle(s * 0.15f,  s * 0.92f, s * 0.10f, monkeyFace)
 
-        // Body (round brown disc)
-        canvas.drawCircle(0f, 0f, s, monkeyFur)
-        // Belly highlight (oval, slightly forward)
-        tmpRect.set(s * 0.05f, -s * 0.55f, s * 0.85f, s * 0.55f)
-        canvas.drawOval(tmpRect, monkeyBelly)
+        // Body outline — slightly elongated forward (primate proportions, not a disc)
+        tmpRect.set(-s * 1.02f, -s * 0.92f, s * 1.05f, s * 0.92f)
+        canvas.drawOval(tmpRect, monkeyOutline)
 
-        // Ears (top-down: small circles at sides toward back)
-        canvas.drawCircle(-s * 0.55f, -s * 0.65f, s * 0.32f, monkeyOutline)
-        canvas.drawCircle(-s * 0.55f,  s * 0.65f, s * 0.32f, monkeyOutline)
-        canvas.drawCircle(-s * 0.55f, -s * 0.65f, s * 0.28f, monkeyFur)
-        canvas.drawCircle(-s * 0.55f,  s * 0.65f, s * 0.28f, monkeyFur)
-        canvas.drawCircle(-s * 0.55f, -s * 0.65f, s * 0.16f, monkeyFurLight)
-        canvas.drawCircle(-s * 0.55f,  s * 0.65f, s * 0.16f, monkeyFurLight)
+        // Body fill
+        tmpRect.set(-s * 0.95f, -s * 0.85f, s, s * 0.85f)
+        canvas.drawOval(tmpRect, monkeyFur)
 
-        // Eyes (forward) with sparkle
-        canvas.drawCircle(s * 0.45f, -s * 0.30f, s * 0.20f, eyeWhite)
-        canvas.drawCircle(s * 0.45f,  s * 0.30f, s * 0.20f, eyeWhite)
-        canvas.drawCircle(s * 0.55f, -s * 0.30f, s * 0.11f, eyeBlack)
-        canvas.drawCircle(s * 0.55f,  s * 0.30f, s * 0.11f, eyeBlack)
-        canvas.drawCircle(s * 0.60f, -s * 0.34f, s * 0.05f, eyeWhite)
-        canvas.drawCircle(s * 0.60f,  s * 0.26f, s * 0.05f, eyeWhite)
+        // Face mask — pale-tan peanut/figure-8 covering the front (the signature monkey marking)
+        canvas.drawCircle(s * 0.32f, -s * 0.30f, s * 0.40f, monkeyFace)
+        canvas.drawCircle(s * 0.32f,  s * 0.30f, s * 0.40f, monkeyFace)
+        tmpRect.set(s * 0.10f, -s * 0.40f, s * 0.85f, s * 0.40f)
+        canvas.drawOval(tmpRect, monkeyFace)
 
-        // Swimming arms — alternate per frame
+        // Muzzle — rounded snout poking forward, same pale tone so it reads as one face
+        tmpRect.set(s * 0.72f, -s * 0.28f, s * 1.05f, s * 0.28f)
+        canvas.drawOval(tmpRect, monkeyFace)
+        // Nostrils
+        canvas.drawCircle(s * 0.93f, -s * 0.08f, s * 0.045f, monkeyOutline)
+        canvas.drawCircle(s * 0.93f,  s * 0.08f, s * 0.045f, monkeyOutline)
+
+        // Brow ridge — short dark arcs above each eye, primate signature
+        monkeyBrow.strokeWidth = s * 0.06f
+        tmpRect.set(s * 0.28f, -s * 0.46f, s * 0.58f, -s * 0.04f)
+        canvas.drawArc(tmpRect, 200f, 100f, false, monkeyBrow)
+        tmpRect.set(s * 0.28f,  s * 0.04f, s * 0.58f,  s * 0.46f)
+        canvas.drawArc(tmpRect, 60f, 100f, false, monkeyBrow)
+
+        // Eyes — closer together than the bear version, sitting on the face mask
+        canvas.drawCircle(s * 0.42f, -s * 0.22f, s * 0.16f, eyeWhite)
+        canvas.drawCircle(s * 0.42f,  s * 0.22f, s * 0.16f, eyeWhite)
+        canvas.drawCircle(s * 0.48f, -s * 0.22f, s * 0.10f, eyeBlack)
+        canvas.drawCircle(s * 0.48f,  s * 0.22f, s * 0.10f, eyeBlack)
+        canvas.drawCircle(s * 0.52f, -s * 0.25f, s * 0.04f, eyeWhite)
+        canvas.drawCircle(s * 0.52f,  s * 0.19f, s * 0.04f, eyeWhite)
+
+        // Swimming arms with pale palms (primates have palms!)
         canvas.drawCircle(s * 0.30f, -s * 0.95f - cellSize * 0.04f * armOffset, s * 0.20f, monkeyOutline)
         canvas.drawCircle(-s * 0.10f, s * 0.95f + cellSize * 0.04f * armOffset, s * 0.20f, monkeyOutline)
         canvas.drawCircle(s * 0.30f, -s * 0.95f - cellSize * 0.04f * armOffset, s * 0.18f, monkeyFur)
         canvas.drawCircle(-s * 0.10f, s * 0.95f + cellSize * 0.04f * armOffset, s * 0.18f, monkeyFur)
-        canvas.drawCircle(s * 0.30f, -s * 0.95f - cellSize * 0.04f * armOffset, s * 0.10f, monkeyFurLight)
-        canvas.drawCircle(-s * 0.10f, s * 0.95f + cellSize * 0.04f * armOffset, s * 0.10f, monkeyFurLight)
+        canvas.drawCircle(s * 0.30f, -s * 0.95f - cellSize * 0.04f * armOffset, s * 0.10f, monkeyFace)
+        canvas.drawCircle(-s * 0.10f, s * 0.95f + cellSize * 0.04f * armOffset, s * 0.10f, monkeyFace)
 
         canvas.restore()
     }
