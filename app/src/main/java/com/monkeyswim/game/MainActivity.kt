@@ -1,6 +1,9 @@
 package com.monkeyswim.game
 
+import android.content.Intent
 import android.content.res.Configuration
+import android.graphics.Paint
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.view.View
@@ -8,6 +11,7 @@ import android.view.WindowInsets
 import android.view.WindowInsetsController
 import android.widget.Button
 import android.widget.FrameLayout
+import android.widget.RadioGroup
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -23,6 +27,10 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
     private lateinit var restartButton: Button
     private lateinit var watchAdButton: Button
     private lateinit var pauseButton: Button
+    private lateinit var splashOverlay: FrameLayout
+    private lateinit var splashDifficultyGroup: RadioGroup
+    private lateinit var splashStartButton: Button
+    private lateinit var splashPrivacyLink: TextView
 
     private lateinit var adMob: AdMobController
 
@@ -40,6 +48,26 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
         restartButton = findViewById(R.id.restartButton)
         watchAdButton = findViewById(R.id.watchAdButton)
         pauseButton = findViewById(R.id.pauseButton)
+        splashOverlay = findViewById(R.id.splashOverlay)
+        splashDifficultyGroup = findViewById(R.id.splashDifficultyGroup)
+        splashStartButton = findViewById(R.id.splashStartButton)
+        splashPrivacyLink = findViewById(R.id.splashPrivacyLink)
+
+        splashPrivacyLink.paintFlags = splashPrivacyLink.paintFlags or Paint.UNDERLINE_TEXT_FLAG
+        splashPrivacyLink.setOnClickListener {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PRIVACY_POLICY_URL)))
+        }
+        splashStartButton.setOnClickListener {
+            val multiplier = when (splashDifficultyGroup.checkedRadioButtonId) {
+                R.id.difficultyEasy -> 0.75f
+                R.id.difficultyHard -> 1.25f
+                else -> 1.0f
+            }
+            val state = gameView.gameState()
+            state.difficultyMultiplier = multiplier
+            splashOverlay.visibility = View.GONE
+            state.startGame()
+        }
 
         // Push playable area below the HUD so the maze never sits under it.
         hud.post { gameView.hudHeightPx = hud.height.toFloat() }
@@ -145,5 +173,9 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
 
     private fun hideGameOver() {
         gameOverOverlay.visibility = View.GONE
+    }
+
+    companion object {
+        private const val PRIVACY_POLICY_URL = "https://lionstone.dev/privacy/"
     }
 }

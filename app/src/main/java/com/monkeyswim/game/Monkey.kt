@@ -24,7 +24,7 @@ class Monkey(
     private val initialDirection = Direction.NONE
 
     /** Tiles per second. Pac-Man moves about 11 tiles/sec at full speed. */
-    private val baseSpeed = 9f
+    private val baseSpeed = 6.75f
     var speedScale: Float = 1f
 
     /** Animation frame timer (cycles 0..1). */

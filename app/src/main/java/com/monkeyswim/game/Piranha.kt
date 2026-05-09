@@ -32,9 +32,9 @@ class Piranha(
     private val spawnX = spawnCol + 0.5f
     private val spawnY = spawnRow + 0.5f
 
-    private val baseChaseSpeed = 8.2f
-    private val frightSpeed = 4.5f
-    private val eatenSpeed = 16f
+    private val baseChaseSpeed = 6.15f
+    private val frightSpeed = 3.375f
+    private val eatenSpeed = 12f
 
     var speedScale: Float = 1f
     private var animTime: Float = 0f

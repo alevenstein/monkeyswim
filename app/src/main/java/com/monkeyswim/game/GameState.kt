@@ -13,7 +13,7 @@ class GameState(
     initialLives: Int = 3,
     var listener: Listener? = null,
 ) {
-    enum class Phase { READY, PLAYING, LIFE_LOST, LEVEL_COMPLETE, GAME_OVER, PAUSED }
+    enum class Phase { AWAITING_START, READY, PLAYING, LIFE_LOST, LEVEL_COMPLETE, GAME_OVER, PAUSED }
 
     interface Listener {
         fun onScoreChanged(score: Int) {}
@@ -28,13 +28,24 @@ class GameState(
         private set
     var lives: Int = initialLives
         private set
-    var phase: Phase = Phase.READY
+    var phase: Phase = Phase.AWAITING_START
         private set
 
     private var phaseTimer: Float = 2.0f
     private var animTime: Float = 0f
     private var frightTimer: Float = 0f
     private var frightChainBonus: Int = 200
+
+    /**
+     * Global speed multiplier from the difficulty selection on the splash screen.
+     * Setter applies to the existing monkey + piranhas immediately so a difficulty
+     * picked at startup takes effect before the game leaves the READY phase.
+     */
+    var difficultyMultiplier: Float = 1f
+        @Synchronized set(value) {
+            field = value
+            applyDifficultyToEntities()
+        }
 
     private var maze: Maze = Maze(Levels.layoutForLevel(1))
     private var monkey: Monkey = Monkey(maze, Levels.MONKEY_SPAWN.first, Levels.MONKEY_SPAWN.second)
@@ -77,6 +88,19 @@ class GameState(
         }
     }
 
+    /**
+     * Leave the splash-screen waiting state and start the game flow normally.
+     * No-op outside of `AWAITING_START` so a stray call (e.g. from a leaked
+     * click handler) can't reset a game already in progress.
+     */
+    @Synchronized
+    fun startGame() {
+        if (phase == Phase.AWAITING_START) {
+            phase = Phase.READY
+            phaseTimer = 2.0f
+        }
+    }
+
     @Synchronized
     fun requestDirection(dir: Direction) {
         if (phase == Phase.PLAYING) monkey.requestDirection(dir)
@@ -116,7 +140,7 @@ class GameState(
                     listener?.onLevelChanged(level)
                 }
             }
-            Phase.GAME_OVER, Phase.PAUSED -> { /* no-op until resumed */ }
+            Phase.AWAITING_START, Phase.GAME_OVER, Phase.PAUSED -> { /* no-op until resumed */ }
         }
     }
 
@@ -183,6 +207,7 @@ class GameState(
         maze = Maze(Levels.layoutForLevel(lvl))
         monkey = Monkey(maze, Levels.MONKEY_SPAWN.first, Levels.MONKEY_SPAWN.second)
         piranhas = createPiranhas(maze, lvl)
+        applyDifficultyToEntities()
         frightTimer = 0f
     }
 
@@ -204,9 +229,15 @@ class GameState(
                 r,
                 releaseDelays[i % releaseDelays.size],
             ).also {
-                it.speedScale = scale
+                it.speedScale = scale * difficultyMultiplier
             }
         }
+    }
+
+    private fun applyDifficultyToEntities() {
+        monkey.speedScale = difficultyMultiplier
+        val pscale = Levels.piranhaSpeedScale(level)
+        for (p in piranhas) p.speedScale = pscale * difficultyMultiplier
     }
 
     private fun emitAll() {
