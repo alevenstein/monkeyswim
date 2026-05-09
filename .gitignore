@@ -57,11 +57,13 @@ replay_pid*
 bin/
 gen/
 out/
+build/
 
 # Gradle files
 .gradle
 .gradle/
 build/
+.idea/
 
 # Signing files
 .signing/
@@ -167,3 +169,8 @@ fabric.properties
 !/gradle/wrapper/gradle-wrapper.jar
 
 # End of https://www.toptal.com/developers/gitignore/api/kotlin,java,androidstudio
+
+
+# Claude stuff
+.claude/
+memory/
