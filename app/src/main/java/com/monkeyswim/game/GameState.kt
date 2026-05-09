@@ -15,6 +15,8 @@ class GameState(
 ) {
     enum class Phase { AWAITING_START, READY, PLAYING, LIFE_LOST, LEVEL_COMPLETE, GAME_OVER, PAUSED }
 
+    enum class Powerup { LIGHTNING, BLACK_HOLE, SHARK, SLOW_PIRANHAS }
+
     interface Listener {
         fun onScoreChanged(score: Int) {}
         fun onLivesChanged(lives: Int) {}
@@ -36,6 +38,18 @@ class GameState(
     private var frightTimer: Float = 0f
     private var frightChainBonus: Int = 200
 
+    // Powerup state. Banana spawns periodically; collecting it triggers a
+    // random Powerup. The four effects each have their own state + timer.
+    private var banana: Pair<Int, Int>? = null
+    private var bananaTimer: Float = BANANA_INITIAL_DELAY
+    private var lightningFlashTimer: Float = 0f
+    private var blackHole: Pair<Int, Int>? = null
+    private var blackHoleTimer: Float = 0f
+    private var shark: Shark? = null
+    private var sharkTimer: Float = 0f
+    private var slowPiranhaTimer: Float = 0f
+    private var turtleTimer: Float = 0f
+
     /**
      * Global speed multiplier from the difficulty selection on the splash screen.
      * Setter applies to the existing monkey + piranhas immediately so a difficulty
@@ -44,7 +58,7 @@ class GameState(
     var difficultyMultiplier: Float = 1f
         @Synchronized set(value) {
             field = value
-            applyDifficultyToEntities()
+            applyEntitySpeeds()
         }
 
     private var maze: Maze = Maze(Levels.layoutForLevel(1))
@@ -153,8 +167,38 @@ class GameState(
             }
         }
 
+        // Powerup effect timers.
+        if (lightningFlashTimer > 0f) lightningFlashTimer -= dt
+        if (turtleTimer > 0f) turtleTimer -= dt
+        if (blackHoleTimer > 0f) {
+            blackHoleTimer -= dt
+            if (blackHoleTimer <= 0f) blackHole = null
+        }
+        if (sharkTimer > 0f) {
+            sharkTimer -= dt
+            if (sharkTimer <= 0f) shark = null
+        }
+        if (slowPiranhaTimer > 0f) {
+            slowPiranhaTimer -= dt
+            if (slowPiranhaTimer <= 0f) applyEntitySpeeds()  // restore full speed
+        }
+
+        // Banana spawn / expiry — single timer flips between "spawn delay" and
+        // "active duration" depending on whether a banana is on the map.
+        bananaTimer -= dt
+        if (bananaTimer <= 0f) {
+            if (banana == null) {
+                banana = pickRandomFreeTile()
+                bananaTimer = BANANA_ACTIVE_DURATION
+            } else {
+                banana = null
+                bananaTimer = BANANA_RESPAWN_DELAY
+            }
+        }
+
         monkey.update(dt)
         for (p in piranhas) p.update(dt, monkey, frightTimer)
+        shark?.update(dt, piranhas)
 
         // Pellet collection.
         maze.consumePelletAt(monkey.tileCol, monkey.tileRow) { kind ->
@@ -164,6 +208,34 @@ class GameState(
                 frightChainBonus = 200
             }
             listener?.onScoreChanged(score)
+        }
+
+        // Banana collection — triggers a random powerup.
+        val ban = banana
+        if (ban != null && ban.first == monkey.tileCol && ban.second == monkey.tileRow) {
+            banana = null
+            bananaTimer = BANANA_RESPAWN_DELAY
+            activatePowerup(Powerup.values().random())
+        }
+
+        // Black hole kills anything standing on its tile.
+        blackHole?.let { (bhC, bhR) ->
+            if (bhC == monkey.tileCol && bhR == monkey.tileRow) {
+                onLifeLost()
+                return
+            }
+            for (p in piranhas) {
+                if (p.mode == Piranha.Mode.EATEN) continue
+                if (p.tileCol == bhC && p.tileRow == bhR) p.markEaten()
+            }
+        }
+
+        // Shark kill check — overlap with any non-eaten piranha sends it home.
+        shark?.let { s ->
+            for (p in piranhas) {
+                if (p.mode == Piranha.Mode.EATEN) continue
+                if (s.overlapsWith(p)) p.markEaten()
+            }
         }
 
         // Bottom gateway -> level complete.
@@ -190,12 +262,89 @@ class GameState(
         }
     }
 
+    private fun activatePowerup(type: Powerup) {
+        when (type) {
+            Powerup.LIGHTNING -> {
+                lightningFlashTimer = LIGHTNING_FLASH_DURATION
+                // Snap every piranha back to its spawn corner with the same
+                // staggered release schedule as level start (releaseDelay 0,
+                // 4, 8, 12 s) — they're confined inside the pen and trickle
+                // back out one at a time.
+                for (p in piranhas) p.resetToSpawn()
+            }
+            Powerup.BLACK_HOLE -> {
+                pickRandomFreeTile()?.let {
+                    blackHole = it
+                    blackHoleTimer = BLACK_HOLE_DURATION
+                }
+            }
+            Powerup.SHARK -> {
+                pickRandomFreeTile()?.let { (c, r) ->
+                    shark = Shark(maze, c, r)
+                    sharkTimer = SHARK_DURATION
+                }
+            }
+            Powerup.SLOW_PIRANHAS -> {
+                slowPiranhaTimer = SLOW_DURATION
+                turtleTimer = TURTLE_VISIBLE_DURATION
+                applyEntitySpeeds()
+            }
+        }
+    }
+
+    /**
+     * Random walkable tile (PATH/PELLET) not currently occupied by the monkey
+     * or any piranha. Used to drop bananas, black holes, and the shark spawn.
+     *
+     * Requires the candidate cell to have at least two monkey-walkable
+     * neighbors so we never drop spawns on 1-tile dead-end stubs (the most
+     * notable in the current layout is (7, 7) — the pen-exit corridor cell,
+     * a PATH tile whose only monkey-walkable neighbor is (7, 6) above it.
+     * Bananas sitting there look unreachable even though the monkey can in
+     * principle commit to the col-7 detour to grab them).
+     */
+    private fun pickRandomFreeTile(): Pair<Int, Int>? {
+        val candidates = mutableListOf<Pair<Int, Int>>()
+        for (r in 0 until maze.rows) {
+            for (c in 0 until maze.cols) {
+                val t = maze.tileAt(c, r)
+                if (t != Tile.PATH && t != Tile.PELLET) continue
+                if (c == monkey.tileCol && r == monkey.tileRow) continue
+                if (piranhas.any { it.tileCol == c && it.tileRow == r }) continue
+                val walkableNeighbors = (
+                    (if (maze.isMonkeyWalkable(c, r - 1)) 1 else 0) +
+                    (if (maze.isMonkeyWalkable(c, r + 1)) 1 else 0) +
+                    (if (maze.isMonkeyWalkable(c - 1, r)) 1 else 0) +
+                    (if (maze.isMonkeyWalkable(c + 1, r)) 1 else 0)
+                )
+                if (walkableNeighbors < 2) continue
+                candidates += c to r
+            }
+        }
+        return if (candidates.isEmpty()) null else candidates.random()
+    }
+
+    /** Reset powerup state — called on life loss, level transition, full reset. */
+    private fun clearPowerups() {
+        banana = null
+        bananaTimer = BANANA_INITIAL_DELAY
+        lightningFlashTimer = 0f
+        blackHole = null
+        blackHoleTimer = 0f
+        shark = null
+        sharkTimer = 0f
+        slowPiranhaTimer = 0f
+        turtleTimer = 0f
+    }
+
     private fun onLifeLost() {
         lives--
         listener?.onLivesChanged(lives)
         phase = Phase.LIFE_LOST
         phaseTimer = 1.5f
         frightTimer = 0f
+        clearPowerups()
+        applyEntitySpeeds()  // restore base speeds in case slow effect was active
     }
 
     private fun respawnEntities() {
@@ -207,7 +356,8 @@ class GameState(
         maze = Maze(Levels.layoutForLevel(lvl))
         monkey = Monkey(maze, Levels.MONKEY_SPAWN.first, Levels.MONKEY_SPAWN.second)
         piranhas = createPiranhas(maze, lvl)
-        applyDifficultyToEntities()
+        clearPowerups()
+        applyEntitySpeeds()
         frightTimer = 0f
     }
 
@@ -234,10 +384,13 @@ class GameState(
         }
     }
 
-    private fun applyDifficultyToEntities() {
+    private fun applyEntitySpeeds() {
         monkey.speedScale = difficultyMultiplier
         val pscale = Levels.piranhaSpeedScale(level)
-        for (p in piranhas) p.speedScale = pscale * difficultyMultiplier
+        // Slow-piranhas powerup halves the piranha speed; the monkey's speed is
+        // unaffected (per the spec).
+        val slowMult = if (slowPiranhaTimer > 0f) 0.5f else 1f
+        for (p in piranhas) p.speedScale = pscale * difficultyMultiplier * slowMult
     }
 
     private fun emitAll() {
@@ -272,6 +425,22 @@ class GameState(
         canvas.drawColor(Color.parseColor("#06324C"))
         maze.draw(canvas, cellSize, originX, originY, animTime)
 
+        // Banana sits above the maze, below the entities. Drawn larger than
+        // the fruit power pellets so it reads as the "powerup" tile.
+        banana?.let { (col, row) ->
+            val cx = originX + (col + 0.5f) * cellSize
+            val cy = originY + (row + 0.5f) * cellSize
+            val pulse = 0.55f + 0.05f * kotlin.math.sin(animTime * 4f)
+            FruitRenderer.drawBanana(canvas, cx, cy, cellSize * pulse)
+        }
+
+        // Black hole — same z-layer as banana so the monkey can step over it.
+        blackHole?.let { (col, row) ->
+            val cx = originX + (col + 0.5f) * cellSize
+            val cy = originY + (row + 0.5f) * cellSize
+            SpriteRenderer.drawBlackHole(canvas, cx, cy, cellSize, animTime)
+        }
+
         if (phase != Phase.LIFE_LOST) {
             monkey.draw(canvas, cellSize, originX, originY)
         } else {
@@ -287,6 +456,30 @@ class GameState(
 
         if (phase != Phase.LIFE_LOST && phase != Phase.LEVEL_COMPLETE) {
             for (p in piranhas) p.draw(canvas, cellSize, originX, originY, frightTimer)
+        }
+
+        // Shark draws on top of piranhas (it's the predator chasing them).
+        if (phase != Phase.LIFE_LOST && phase != Phase.LEVEL_COMPLETE) {
+            shark?.draw(canvas, cellSize, originX, originY)
+        }
+
+        // Brief turtle visual when the slow-piranhas powerup activates —
+        // pops in centre-screen and fades out over 1.5s, matching Brick
+        // Basher's white-powerup turtle.
+        if (turtleTimer > 0f) {
+            val tx = viewWidth / 2f
+            val ty = hudHeightPx + playableHeight / 2f
+            SpriteRenderer.drawTurtle(
+                canvas, tx, ty, cellSize * 1.8f, turtleTimer, TURTLE_VISIBLE_DURATION,
+            )
+        }
+
+        // Lightning flash — full-screen white wash that fades over the duration.
+        if (lightningFlashTimer > 0f) {
+            val alpha = (lightningFlashTimer / LIGHTNING_FLASH_DURATION).coerceIn(0f, 1f)
+            SpriteRenderer.drawLightningOverlay(
+                canvas, viewWidth.toFloat(), viewHeight.toFloat(), alpha,
+            )
         }
 
         // Banner text overlays.
@@ -305,5 +498,16 @@ class GameState(
         bannerShadow.textSize = size
         canvas.drawText(text, x + 4f, y + 4f, bannerShadow)
         canvas.drawText(text, x, y, bannerPaint)
+    }
+
+    companion object {
+        private const val BANANA_INITIAL_DELAY = 20f       // first banana spawn (s)
+        private const val BANANA_RESPAWN_DELAY = 25f       // delay between bananas (s)
+        private const val BANANA_ACTIVE_DURATION = 12f     // how long an uneaten banana stays (s)
+        private const val LIGHTNING_FLASH_DURATION = 0.6f
+        private const val BLACK_HOLE_DURATION = 15f
+        private const val SHARK_DURATION = 15f
+        private const val SLOW_DURATION = 10f
+        private const val TURTLE_VISIBLE_DURATION = 1.5f
     }
 }

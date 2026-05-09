@@ -32,6 +32,43 @@ class Piranha(
     private val spawnX = spawnCol + 0.5f
     private val spawnY = spawnRow + 0.5f
 
+    /**
+     * BFS shortest-path flow field from this piranha's spawn tile. Maps every
+     * reachable walkable tile to the direction it should step to get one tile
+     * closer to spawn along the shortest path. Used only by EATEN-mode return:
+     * the previous greedy distance-minimization could oscillate or take grand-
+     * tour routes when the maze topology didn't align with Manhattan distance,
+     * which became visible once the shark + black-hole powerups started killing
+     * piranhas in arbitrary positions.
+     */
+    private val homeFlow: Map<Pair<Int, Int>, Direction> = computeHomeFlow(spawnCol, spawnRow)
+
+    private fun computeHomeFlow(spawnCol: Int, spawnRow: Int): Map<Pair<Int, Int>, Direction> {
+        val flow = HashMap<Pair<Int, Int>, Direction>()
+        val target = spawnCol to spawnRow
+        val visited = HashSet<Pair<Int, Int>>().apply { add(target) }
+        val queue = ArrayDeque<Pair<Int, Int>>().apply { add(target) }
+        val dirs = listOf(Direction.UP, Direction.DOWN, Direction.LEFT, Direction.RIGHT)
+        while (queue.isNotEmpty()) {
+            val current = queue.removeFirst()
+            for (d in dirs) {
+                val nx = current.first + d.dx
+                val ny = current.second + d.dy
+                if (nx < 0 || nx >= maze.cols || ny < 0 || ny >= maze.rows) continue
+                val tile = nx to ny
+                if (tile in visited) continue
+                if (!maze.isPiranhaWalkable(nx, ny)) continue
+                // The neighbor's optimal next-direction is the OPPOSITE of how
+                // we got here — stepping that way moves it toward `current`,
+                // which is one tile closer to the BFS root (the spawn).
+                flow[tile] = d.opposite()
+                visited.add(tile)
+                queue.addLast(tile)
+            }
+        }
+        return flow
+    }
+
     private val baseChaseSpeed = 6.15f
     private val frightSpeed = 3.375f
     private val eatenSpeed = 12f
@@ -150,6 +187,14 @@ class Piranha(
 
     /** Pick best direction at a junction, excluding reverse and walls. */
     private fun pickDirection(monkey: Monkey): Direction {
+        // EATEN piranhas follow the precomputed BFS shortest-path flow back to
+        // their spawn — no greedy / no-reverse oscillation. Falls through to
+        // the greedy logic below if the flow somehow doesn't have an entry
+        // (e.g. piranha is on the spawn tile itself, in which case the
+        // EATEN-mode arrival check in update() handles the snap-and-flip).
+        if (mode == Mode.EATEN) {
+            homeFlow[tileCol to tileRow]?.let { return it }
+        }
         val (tx, ty) = targetTile(monkey)
         var bestDir = Direction.NONE
         var bestDist = Float.MAX_VALUE

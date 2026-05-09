@@ -59,6 +59,52 @@ object SpriteRenderer {
     private val wakePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.argb(170, 230, 245, 255); style = Paint.Style.FILL
     }
+    // Shark
+    private val sharkBody = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#5A6B7A"); style = Paint.Style.FILL
+    }
+    private val sharkBelly = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#C8D5DD"); style = Paint.Style.FILL
+    }
+    private val sharkFin = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#3F4C58"); style = Paint.Style.FILL
+    }
+    // Turtle (matches the side-profile turtle in Brick Basher's white powerup)
+    private val turtleLegFill = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.rgb(102, 187, 106); style = Paint.Style.FILL
+    }
+    private val turtleLegStroke = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.rgb(30, 80, 30); style = Paint.Style.STROKE; strokeWidth = 3f
+    }
+    private val turtleShellFill = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.rgb(56, 142, 60); style = Paint.Style.FILL
+    }
+    private val turtleShellStroke = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.rgb(20, 70, 20); style = Paint.Style.STROKE; strokeWidth = 5f
+    }
+    private val turtleHexStroke = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.rgb(25, 75, 25); style = Paint.Style.STROKE; strokeWidth = 3f
+    }
+    private val turtleEye = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.BLACK; style = Paint.Style.FILL
+    }
+    // Black hole
+    private val bhRingOuter = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#5A2D82"); style = Paint.Style.FILL
+    }
+    private val bhRingMid = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#2D1244"); style = Paint.Style.FILL
+    }
+    private val bhCore = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.BLACK; style = Paint.Style.FILL
+    }
+    private val bhSparkle = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.WHITE; style = Paint.Style.FILL
+    }
+    // Lightning flash
+    private val lightningPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.WHITE; style = Paint.Style.FILL
+    }
 
     private val tmpRect = RectF()
     private val tmpPath = Path()
@@ -238,5 +284,160 @@ object SpriteRenderer {
         Direction.DOWN -> 90f
         Direction.LEFT -> 180f
         Direction.UP -> 270f
+    }
+
+    fun drawShark(
+        canvas: Canvas,
+        cx: Float, cy: Float,
+        cellSize: Float,
+        direction: Direction,
+        frame: Int,
+    ) {
+        canvas.save()
+        canvas.translate(cx, cy)
+        canvas.rotate(rotationFor(direction))
+        val s = cellSize * 0.65f
+        val tailFlick = if (frame % 2 == 0) -1f else 1f
+
+        // Tail fin (behind = LEFT in local frame)
+        tmpPath.reset()
+        tmpPath.moveTo(-s * 0.95f, 0f)
+        tmpPath.lineTo(-s * 1.40f, -s * 0.55f + tailFlick * cellSize * 0.05f)
+        tmpPath.lineTo(-s * 1.40f,  s * 0.55f - tailFlick * cellSize * 0.05f)
+        tmpPath.close()
+        canvas.drawPath(tmpPath, sharkFin)
+
+        // Body
+        tmpRect.set(-s, -s * 0.45f, s * 1.05f, s * 0.45f)
+        canvas.drawOval(tmpRect, sharkBody)
+
+        // Lighter belly underside
+        tmpRect.set(-s * 0.85f, s * 0.08f, s * 0.85f, s * 0.45f)
+        canvas.drawOval(tmpRect, sharkBelly)
+
+        // Dorsal fin
+        tmpPath.reset()
+        tmpPath.moveTo(-s * 0.20f, -s * 0.45f)
+        tmpPath.lineTo( s * 0.10f, -s * 0.85f)
+        tmpPath.lineTo( s * 0.30f, -s * 0.45f)
+        tmpPath.close()
+        canvas.drawPath(tmpPath, sharkFin)
+
+        // Side pectoral fin
+        tmpPath.reset()
+        tmpPath.moveTo(-s * 0.05f,  s * 0.40f)
+        tmpPath.lineTo(-s * 0.30f,  s * 0.80f + tailFlick * cellSize * 0.03f)
+        tmpPath.lineTo( s * 0.20f,  s * 0.45f)
+        tmpPath.close()
+        canvas.drawPath(tmpPath, sharkFin)
+
+        // Eye
+        canvas.drawCircle(s * 0.55f, -s * 0.18f, s * 0.10f, eyeWhite)
+        canvas.drawCircle(s * 0.58f, -s * 0.18f, s * 0.06f, eyeBlack)
+
+        // Teeth: zigzag of small triangles
+        tmpPath.reset()
+        tmpPath.moveTo(s * 0.65f, s * 0.05f)
+        tmpPath.lineTo(s * 0.72f, s * 0.20f)
+        tmpPath.lineTo(s * 0.79f, s * 0.05f)
+        tmpPath.lineTo(s * 0.86f, s * 0.20f)
+        tmpPath.lineTo(s * 0.93f, s * 0.05f)
+        tmpPath.lineTo(s * 1.00f, s * 0.20f)
+        tmpPath.lineTo(s * 1.00f, s * 0.05f)
+        tmpPath.close()
+        canvas.drawPath(tmpPath, toothPaint)
+
+        canvas.restore()
+    }
+
+    /**
+     * Side-profile turtle that pops in over 0.25s and fades out across the
+     * full duration. Visual style copied from Brick Basher's white-powerup
+     * turtle: legs first (rounded ovals with dark outline), head poking out
+     * the front (left side), shell as a dark-green dome with five hexagonal
+     * scute outlines.
+     */
+    fun drawTurtle(
+        canvas: Canvas,
+        cx: Float, cy: Float,
+        size: Float,
+        timeLeft: Float,
+        duration: Float,
+    ) {
+        val popScale = if (timeLeft > duration - 0.25f) (duration - timeLeft) / 0.25f else 1.0f
+        val s = size * popScale
+        val a = ((timeLeft / duration) * 255f).toInt().coerceIn(0, 255)
+        turtleLegFill.alpha = a
+        turtleLegStroke.alpha = a
+        turtleShellFill.alpha = a
+        turtleShellStroke.alpha = a
+        turtleHexStroke.alpha = a
+        turtleEye.alpha = a
+
+        // Four legs (light green, behind shell)
+        for ((dx, dy) in listOf(
+            -0.65f to -0.25f, 0.65f to -0.25f,
+            -0.55f to 0.45f, 0.55f to 0.45f,
+        )) {
+            tmpRect.set(
+                cx + dx * s - s * 0.13f, cy + dy * s - s * 0.13f,
+                cx + dx * s + s * 0.13f, cy + dy * s + s * 0.13f,
+            )
+            canvas.drawOval(tmpRect, turtleLegFill)
+            canvas.drawOval(tmpRect, turtleLegStroke)
+        }
+
+        // Head poking out the left side
+        val headCx = cx - s * 0.85f
+        val headCy = cy + s * 0.05f
+        canvas.drawCircle(headCx, headCy, s * 0.18f, turtleLegFill)
+        canvas.drawCircle(headCx, headCy, s * 0.18f, turtleLegStroke)
+        canvas.drawCircle(headCx - s * 0.05f, headCy - s * 0.05f, s * 0.03f, turtleEye)
+
+        // Shell (dark green dome)
+        tmpRect.set(cx - s * 0.7f, cy - s * 0.45f, cx + s * 0.7f, cy + s * 0.45f)
+        canvas.drawOval(tmpRect, turtleShellFill)
+        canvas.drawOval(tmpRect, turtleShellStroke)
+
+        // Hexagonal scute pattern on shell (5 small hexes)
+        val hexR = s * 0.13f
+        val centers = listOf(
+            cx to cy,
+            cx - s * 0.36f to cy - s * 0.05f,
+            cx + s * 0.36f to cy - s * 0.05f,
+            cx - s * 0.18f to cy + s * 0.22f,
+            cx + s * 0.18f to cy + s * 0.22f,
+        )
+        for ((hx, hy) in centers) {
+            tmpPath.reset()
+            for (i in 0..6) {
+                val angle = (i * 60.0 - 90.0) * Math.PI / 180.0
+                val px = hx + (hexR * kotlin.math.cos(angle)).toFloat()
+                val py = hy + (hexR * kotlin.math.sin(angle)).toFloat()
+                if (i == 0) tmpPath.moveTo(px, py) else tmpPath.lineTo(px, py)
+            }
+            tmpPath.close()
+            canvas.drawPath(tmpPath, turtleHexStroke)
+        }
+    }
+
+    fun drawBlackHole(canvas: Canvas, cx: Float, cy: Float, cellSize: Float, animTime: Float) {
+        val s = cellSize * 0.45f
+        canvas.drawCircle(cx, cy, s * 1.00f, bhRingOuter)
+        canvas.drawCircle(cx, cy, s * 0.75f, bhRingMid)
+        canvas.drawCircle(cx, cy, s * 0.45f, bhCore)
+        // 8 sparkles drifting around the rim — accretion-disk feel.
+        for (i in 0..7) {
+            val angle = animTime * 1.5f + i * Math.PI.toFloat() / 4f
+            val r = s * (0.92f + 0.05f * kotlin.math.sin(animTime * 2f + i.toFloat()).toFloat())
+            val sx = cx + kotlin.math.cos(angle) * r
+            val sy = cy + kotlin.math.sin(angle) * r
+            canvas.drawCircle(sx, sy, s * 0.06f, bhSparkle)
+        }
+    }
+
+    fun drawLightningOverlay(canvas: Canvas, viewWidth: Float, viewHeight: Float, alpha: Float) {
+        lightningPaint.alpha = (alpha.coerceIn(0f, 1f) * 230f).toInt()
+        canvas.drawRect(0f, 0f, viewWidth, viewHeight, lightningPaint)
     }
 }

@@ -44,17 +44,27 @@ class Maze(layout: List<String>) {
     // LEAVING_PEN mode home in on this tile to escape the pen.
     val penExitTile: Pair<Int, Int>
 
+    // Each power pellet picks a random fruit at maze construction so that the
+    // sprite stays stable for the whole level — players see the same fruit
+    // every frame until they eat it.
+    private val powerPelletFruit: Map<Pair<Int, Int>, FruitRenderer.FruitType>
+
     init {
         var pellets = 0
         val gw = mutableListOf<Pair<Int, Int>>()
         val penDoors = mutableListOf<Pair<Int, Int>>()
+        val ppFruits = mutableMapOf<Pair<Int, Int>, FruitRenderer.FruitType>()
         var foundTunnelRow = -1
         var leftT = -1
         var rightT = -1
         for (r in 0 until rows) {
             for (c in 0 until cols) {
                 when (tiles[r][c]) {
-                    Tile.PELLET, Tile.POWER_PELLET -> pellets++
+                    Tile.PELLET -> pellets++
+                    Tile.POWER_PELLET -> {
+                        pellets++
+                        ppFruits[c to r] = FruitRenderer.FruitType.values().random()
+                    }
                     Tile.BOTTOM_GATEWAY -> gw += c to r
                     Tile.PEN_DOOR -> penDoors += c to r
                     Tile.TUNNEL -> {
@@ -71,6 +81,7 @@ class Maze(layout: List<String>) {
         tunnelRow = foundTunnelRow
         tunnelLeftCol = leftT
         tunnelRightCol = rightT
+        powerPelletFruit = ppFruits
 
         penExitTile = if (penDoors.isNotEmpty()) {
             val doorRow = penDoors.minOf { it.second }
@@ -188,10 +199,6 @@ class Maze(layout: List<String>) {
         color = Color.parseColor("#FFE9B0")
         style = Paint.Style.FILL
     }
-    private val powerPelletPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#FFD230")
-        style = Paint.Style.FILL
-    }
     private val penDoorPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor("#FFC0CB")
         style = Paint.Style.FILL
@@ -290,8 +297,9 @@ class Maze(layout: List<String>) {
                         canvas.drawCircle(cx, cy, cellSize * 0.12f, pelletPaint)
                     }
                     Tile.POWER_PELLET -> {
-                        val pulse = 0.30f + 0.06f * sin(animTime * 4f)
-                        canvas.drawCircle(cx, cy, cellSize * pulse, powerPelletPaint)
+                        val pulse = 0.40f + 0.04f * sin(animTime * 4f)
+                        val fruit = powerPelletFruit[c to r] ?: FruitRenderer.FruitType.APPLE
+                        FruitRenderer.draw(canvas, fruit, cx, cy, cellSize * pulse)
                     }
                     Tile.PEN_DOOR -> {
                         // Render the gate only at door cells whose neighbor above is an open
