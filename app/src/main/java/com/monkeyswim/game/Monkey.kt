@@ -18,10 +18,10 @@ class Monkey(
     var y: Float = spawnRow + 0.5f
         private set
 
-    var direction: Direction = Direction.LEFT
+    var direction: Direction = Direction.NONE
         private set
     var queuedDirection: Direction = Direction.NONE
-    private val initialDirection = Direction.LEFT
+    private val initialDirection = Direction.NONE
 
     /** Tiles per second. Pac-Man moves about 11 tiles/sec at full speed. */
     private val baseSpeed = 9f

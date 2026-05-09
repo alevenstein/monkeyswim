@@ -76,15 +76,17 @@ object SpriteRenderer {
         val s = cellSize * 0.75f  // half-size
         val armOffset = if (frame % 2 == 0) 1f else -1f
 
-        // Wake foam trail (behind = LEFT in local frame)
-        canvas.drawCircle(-s * 1.05f, -s * 0.30f, cellSize * 0.13f, wakePaint)
-        canvas.drawCircle(-s * 1.30f,  s * 0.20f, cellSize * 0.10f, wakePaint)
-        canvas.drawCircle(-s * 1.55f, -s * 0.10f + cellSize * 0.04f * armOffset, cellSize * 0.07f, wakePaint)
+        if (direction != Direction.NONE) {
+            // Wake foam trail (behind = LEFT in local frame)
+            canvas.drawCircle(-s * 1.05f, -s * 0.30f, cellSize * 0.13f, wakePaint)
+            canvas.drawCircle(-s * 1.30f,  s * 0.20f, cellSize * 0.10f, wakePaint)
+            canvas.drawCircle(-s * 1.55f, -s * 0.10f + cellSize * 0.04f * armOffset, cellSize * 0.07f, wakePaint)
 
-        // Trailing ripples
-        val rippleX = -s * 0.9f - cellSize * 0.05f
-        canvas.drawCircle(rippleX, -s * 0.4f, cellSize * 0.10f, ripplePaint)
-        canvas.drawCircle(rippleX - cellSize * 0.10f, s * 0.4f, cellSize * 0.10f, ripplePaint)
+            // Trailing ripples
+            val rippleX = -s * 0.9f - cellSize * 0.05f
+            canvas.drawCircle(rippleX, -s * 0.4f, cellSize * 0.10f, ripplePaint)
+            canvas.drawCircle(rippleX - cellSize * 0.10f, s * 0.4f, cellSize * 0.10f, ripplePaint)
+        }
 
         // Ears (drawn first; body covers their inner edge). Set at the temples,
         // small and on the sides — not Mickey-Mouse circles at the back.

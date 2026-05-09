@@ -14,9 +14,10 @@ class Piranha(
     val personality: Personality,
     spawnCol: Int,
     spawnRow: Int,
+    private val releaseDelay: Float = 0f,
 ) {
     enum class Personality { DIRECT, AHEAD2, AHEAD4, ROAMER }
-    enum class Mode { CHASE, FRIGHTENED, EATEN }
+    enum class Mode { CHASE, FRIGHTENED, EATEN, LEAVING_PEN }
 
     var x: Float = spawnCol + 0.5f
         private set
@@ -26,7 +27,7 @@ class Piranha(
     var direction: Direction = Direction.LEFT
         private set
 
-    var mode: Mode = Mode.CHASE
+    var mode: Mode = Mode.LEAVING_PEN
 
     private val spawnX = spawnCol + 0.5f
     private val spawnY = spawnRow + 0.5f
@@ -37,13 +38,15 @@ class Piranha(
 
     var speedScale: Float = 1f
     private var animTime: Float = 0f
+    private var releaseTimer: Float = releaseDelay
     val frame: Int get() = ((animTime * 6f).toInt() % 2)
 
     fun resetToSpawn() {
         x = spawnX
         y = spawnY
         direction = Direction.LEFT
-        mode = Mode.CHASE
+        mode = Mode.LEAVING_PEN
+        releaseTimer = releaseDelay
         animTime = 0f
     }
 
@@ -53,23 +56,38 @@ class Piranha(
     fun update(deltaSec: Float, monkey: Monkey, frightTimer: Float) {
         animTime += deltaSec
 
-        // Sync mode with global frighten state — but if EATEN, stay EATEN until home.
-        if (mode != Mode.EATEN) {
-            mode = if (frightTimer > 0f) Mode.FRIGHTENED else Mode.CHASE
-        } else {
-            // Check if returned home (close to spawn).
-            val dx = x - spawnX
-            val dy = y - spawnY
-            if (dx * dx + dy * dy < 0.04f) {
+        // Wait inside the pen until the staggered-release timer expires.
+        if (releaseTimer > 0f) {
+            releaseTimer -= deltaSec
+            return
+        }
+
+        // Mode sync. LEAVING_PEN sticks until the piranha clears the pen tiles;
+        // EATEN sticks until the piranha is back at its spawn, then re-enters
+        // LEAVING_PEN so it has to swim out through the door again.
+        when (mode) {
+            Mode.LEAVING_PEN -> {
+                if (!maze.isPenTile(tileCol, tileRow)) {
+                    mode = if (frightTimer > 0f) Mode.FRIGHTENED else Mode.CHASE
+                }
+            }
+            Mode.EATEN -> {
+                val dx = x - spawnX
+                val dy = y - spawnY
+                if (dx * dx + dy * dy < 0.04f) {
+                    x = spawnX; y = spawnY
+                    mode = Mode.LEAVING_PEN
+                }
+            }
+            else -> {
                 mode = if (frightTimer > 0f) Mode.FRIGHTENED else Mode.CHASE
-                x = spawnX; y = spawnY
             }
         }
 
         val speed = when (mode) {
             Mode.FRIGHTENED -> frightSpeed
             Mode.EATEN -> eatenSpeed
-            Mode.CHASE -> baseChaseSpeed * speedScale
+            Mode.LEAVING_PEN, Mode.CHASE -> baseChaseSpeed * speedScale
         }
         var remaining = speed * deltaSec
         while (remaining > 0f) {
@@ -111,6 +129,7 @@ class Piranha(
     /** Choose a target tile based on personality + mode. */
     private fun targetTile(monkey: Monkey): Pair<Int, Int> {
         if (mode == Mode.EATEN) return spawnX.toInt() to spawnY.toInt()
+        if (mode == Mode.LEAVING_PEN) return maze.penExitTile
         if (mode == Mode.FRIGHTENED) {
             // Random target far away — bias to opposite of monkey.
             return (maze.cols - monkey.tileCol) to (maze.rows - monkey.tileRow)

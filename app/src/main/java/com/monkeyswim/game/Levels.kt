@@ -18,7 +18,7 @@ object Levels {
         "W.WW.W.W.W.WW.W", //  4
         "W..W.......W..W", //  5
         "WW.W.WW WW.W.WW", //  6
-        "WW.W.W---W.W.WW", //  7
+        "WW.W.WW-WW.W.WW", //  7
         "T....W===W....T", //  8 (tunnel row + pen interior)
         "WW.W.W===W.W.WW", //  9
         "WW.W.WWWWW.W.WW", // 10

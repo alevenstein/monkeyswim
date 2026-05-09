@@ -194,8 +194,16 @@ class GameState(
             Piranha.Personality.AHEAD4,
             Piranha.Personality.ROAMER,
         )
+        // Staggered release: Blinky out instantly, then 4s, 8s, 12s.
+        val releaseDelays = listOf(0f, 4f, 8f, 12f)
         return Levels.PIRANHA_SPAWNS.mapIndexed { i, (c, r) ->
-            Piranha(m, personalities[i % personalities.size], c, r).also {
+            Piranha(
+                m,
+                personalities[i % personalities.size],
+                c,
+                r,
+                releaseDelays[i % releaseDelays.size],
+            ).also {
                 it.speedScale = scale
             }
         }

@@ -40,9 +40,14 @@ class Maze(layout: List<String>) {
     private val tunnelLeftCol: Int
     private val tunnelRightCol: Int
 
+    // Corridor tile directly above the middle of the pen door. Piranhas in
+    // LEAVING_PEN mode home in on this tile to escape the pen.
+    val penExitTile: Pair<Int, Int>
+
     init {
         var pellets = 0
         val gw = mutableListOf<Pair<Int, Int>>()
+        val penDoors = mutableListOf<Pair<Int, Int>>()
         var foundTunnelRow = -1
         var leftT = -1
         var rightT = -1
@@ -51,6 +56,7 @@ class Maze(layout: List<String>) {
                 when (tiles[r][c]) {
                     Tile.PELLET, Tile.POWER_PELLET -> pellets++
                     Tile.BOTTOM_GATEWAY -> gw += c to r
+                    Tile.PEN_DOOR -> penDoors += c to r
                     Tile.TUNNEL -> {
                         if (foundTunnelRow == -1) foundTunnelRow = r
                         if (leftT == -1) leftT = c else rightT = c
@@ -65,6 +71,19 @@ class Maze(layout: List<String>) {
         tunnelRow = foundTunnelRow
         tunnelLeftCol = leftT
         tunnelRightCol = rightT
+
+        penExitTile = if (penDoors.isNotEmpty()) {
+            val doorRow = penDoors.minOf { it.second }
+            val midDoors = penDoors.filter { it.second == doorRow }.sortedBy { it.first }
+            midDoors[midDoors.size / 2].first to (doorRow - 1)
+        } else {
+            -1 to -1
+        }
+    }
+
+    fun isPenTile(col: Int, row: Int): Boolean {
+        val t = tileAt(col, row)
+        return t == Tile.PEN_DOOR || t == Tile.PEN_INTERIOR
     }
 
     fun tileAt(col: Int, row: Int): Tile {
@@ -275,8 +294,14 @@ class Maze(layout: List<String>) {
                         canvas.drawCircle(cx, cy, cellSize * pulse, powerPelletPaint)
                     }
                     Tile.PEN_DOOR -> {
-                        tmpRect.set(left + 2f, cy - cellSize * 0.10f, left + cellSize - 2f, cy + cellSize * 0.10f)
-                        canvas.drawRect(tmpRect, penDoorPaint)
+                        // Render the gate only at door cells whose neighbor above is an open
+                        // corridor — that's the *actual* entryway. Door cells flanked above by
+                        // walls (cols 6 and 8 in the current layout) are part of the pen
+                        // perimeter logically but have no doorway to gate visually.
+                        if (tileAt(c, r - 1) != Tile.WALL) {
+                            tmpRect.set(left, top - cellSize * 0.05f, left + cellSize, top + cellSize * 0.05f)
+                            canvas.drawRect(tmpRect, penDoorPaint)
+                        }
                     }
                     Tile.BOTTOM_GATEWAY -> {
                         if (gatewayUnlocked) {
