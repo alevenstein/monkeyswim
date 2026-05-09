@@ -27,7 +27,7 @@ object Levels {
         "W......W......W", // 13
         "WoWWWW...WWWWoW", // 14
         "W.....   .....W", // 15 (monkey spawn row, no pellets at center)
-        "WWWWWWWXXXWWWWW", // 16
+        "WWWWWWXXXWWWWWW", // 16
     )
 
     init {

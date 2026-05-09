@@ -73,6 +73,11 @@ class Maze(layout: List<String>) {
     }
 
     fun isMonkeyWalkable(col: Int, row: Int): Boolean {
+        // Off-grid on the tunnel row is walkable — the wrap logic will pull the
+        // entity to the opposite side. Without this, leading-edge tile probes
+        // block right-to-left wrap before the position-wrap can fire (Float.toInt
+        // truncates toward zero, so the equivalent left-to-right case slips through).
+        if (row == tunnelRow && (col < 0 || col >= cols)) return true
         val t = tileAt(col, row)
         return when (t) {
             Tile.PATH, Tile.PELLET, Tile.POWER_PELLET, Tile.TUNNEL -> true
@@ -82,6 +87,7 @@ class Maze(layout: List<String>) {
     }
 
     fun isPiranhaWalkable(col: Int, row: Int): Boolean {
+        if (row == tunnelRow && (col < 0 || col >= cols)) return true
         val t = tileAt(col, row)
         return when (t) {
             Tile.PATH, Tile.PELLET, Tile.POWER_PELLET, Tile.TUNNEL,
