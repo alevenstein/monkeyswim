@@ -36,6 +36,7 @@ android {
 
     buildFeatures {
         viewBinding = true
+        buildConfig = true  // generates BuildConfig.DEBUG, used to gate debug-only HUD controls
     }
 }
 

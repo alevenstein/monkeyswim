@@ -63,7 +63,7 @@ class GameState(
         }
 
     private var maze: Maze = Maze(Levels.layoutForLevel(1))
-    private var monkey: Monkey = Monkey(maze, Levels.MONKEY_SPAWN.first, Levels.MONKEY_SPAWN.second)
+    private var monkey: Monkey = Monkey(maze, maze.monkeySpawn.first, maze.monkeySpawn.second)
     private var piranhas: List<Piranha> = createPiranhas(maze, level)
 
     init {
@@ -79,6 +79,61 @@ class GameState(
         phase = Phase.READY
         phaseTimer = 2.0f
         emitAll()
+    }
+
+    @Synchronized
+    fun snapshot(): SaveGame.Snapshot = SaveGame.Snapshot(
+        level = level,
+        score = score,
+        lives = lives,
+        phase = phase,
+        difficultyMultiplier = difficultyMultiplier,
+        mazeLayout = maze.snapshotLayout(),
+        fruitMap = maze.powerPelletFruits.toMap(),
+    )
+
+    /**
+     * Restore from a previously saved snapshot. The current maze pellet state is
+     * preserved so the player resumes where they left off; entities respawn.
+     * - GAME_OVER snapshots stay in GAME_OVER so the overlay (watch-ad / restart)
+     *   can be presented exactly as the player last saw it.
+     * - LEVEL_COMPLETE snapshots advance to the next level on restore (the saved
+     *   pellet grid is irrelevant since a new level is loaded fresh).
+     * - All other phases (PLAYING/PAUSED/READY/LIFE_LOST) resume at READY with
+     *   pellet progress intact.
+     */
+    @Synchronized
+    fun restore(snapshot: SaveGame.Snapshot) {
+        level = snapshot.level
+        score = snapshot.score
+        lives = snapshot.lives
+        difficultyMultiplier = snapshot.difficultyMultiplier
+        when (snapshot.phase) {
+            Phase.LEVEL_COMPLETE -> {
+                level++
+                loadLevel(level)
+                phase = Phase.READY
+                phaseTimer = 2.0f
+                emitAll()
+            }
+            else -> {
+                maze = Maze(snapshot.mazeLayout, snapshot.fruitMap)
+                monkey = Monkey(maze, maze.monkeySpawn.first, maze.monkeySpawn.second)
+                piranhas = createPiranhas(maze, level)
+                clearPowerups()
+                applyEntitySpeeds()
+                frightTimer = 0f
+                if (snapshot.phase == Phase.GAME_OVER) {
+                    phase = Phase.GAME_OVER
+                    emitAll()
+                    listener?.onGameOver()
+                } else {
+                    phase = Phase.READY
+                    phaseTimer = 2.0f
+                    emitAll()
+                }
+            }
+        }
     }
 
     @Synchronized
@@ -364,17 +419,33 @@ class GameState(
     }
 
     private fun respawnEntities() {
-        monkey.resetTo(Levels.MONKEY_SPAWN.first, Levels.MONKEY_SPAWN.second)
+        monkey.resetTo(maze.monkeySpawn.first, maze.monkeySpawn.second)
         for (p in piranhas) p.resetToSpawn()
     }
 
     private fun loadLevel(lvl: Int) {
         maze = Maze(Levels.layoutForLevel(lvl))
-        monkey = Monkey(maze, Levels.MONKEY_SPAWN.first, Levels.MONKEY_SPAWN.second)
+        monkey = Monkey(maze, maze.monkeySpawn.first, maze.monkeySpawn.second)
         piranhas = createPiranhas(maze, lvl)
         clearPowerups()
         applyEntitySpeeds()
         frightTimer = 0f
+    }
+
+    /**
+     * Debug-only level jump: load the requested level mid-game while preserving
+     * score and lives. Resets to READY so the new layout has a moment to draw
+     * before play resumes. Wired up to a debug-build-only level selector in the
+     * HUD; safe to call at any time.
+     */
+    @Synchronized
+    fun jumpToLevel(targetLevel: Int) {
+        if (targetLevel < 1) return
+        level = targetLevel
+        loadLevel(targetLevel)
+        phase = Phase.READY
+        phaseTimer = 2.0f
+        listener?.onLevelChanged(level)
     }
 
     private fun createPiranhas(m: Maze, lvl: Int): List<Piranha> {
@@ -387,7 +458,7 @@ class GameState(
         )
         // Staggered release: Blinky out instantly, then 4s, 8s, 12s.
         val releaseDelays = listOf(0f, 4f, 8f, 12f)
-        return Levels.PIRANHA_SPAWNS.mapIndexed { i, (c, r) ->
+        return m.piranhaSpawnTiles.mapIndexed { i, (c, r) ->
             Piranha(
                 m,
                 personalities[i % personalities.size],

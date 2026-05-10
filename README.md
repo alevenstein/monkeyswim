@@ -68,16 +68,18 @@ Before publishing, replace **both** IDs with your own from the AdMob console. Se
 
 ## Adding a new level
 
-1. Add a 28-character-wide layout block to `Levels.LEVEL_1`'s sibling list (extract `LEVEL_2`, etc.).
-2. Update `Levels.layoutForLevel(level)` to dispatch by index.
-3. Adjust `Levels.MONKEY_SPAWN` / `PIRANHA_SPAWNS` per level if needed (or refactor to per-level data).
+1. Add a `LEVEL_N` layout (a 22-row × 15-char `List<String>`) inside `Levels.kt`.
+2. Append it to the `LEVELS` list — `LEVEL_COUNT` and the debug-mode level-selector spinner pick it up automatically.
+3. Each layout *must* contain exactly one `M` (monkey spawn) and at least one `=` (pen interior — drives both pen visuals and piranha spawn cells). The init validator catches missing `M`s, mismatched row widths, and wrong row counts.
 
-Tile chars: `W` wall, `.` pellet, `o` power pellet, `(space)` empty water, `-` pen door, `=` pen interior, `T` tunnel, `X` bottom gateway.
+Tile chars: `W` wall, `.` pellet, `o` power pellet, `(space)` empty water, `M` monkey spawn (PATH; no pellet), `-` pen door, `=` pen interior + piranha spawn, `T` tunnel mouth, `X` level portal.
+
+In debug builds (`./gradlew :app:assembleDebug`), a "DEBUG · Level" spinner appears under the HUD and lets you jump to any level instantly via `GameState.jumpToLevel`. It's hidden in release builds via `BuildConfig.DEBUG`.
 
 ## Known limitations / future work
 
 - Sprites are procedurally drawn for v1. To replace with hand-drawn art, swap calls in `SpriteRenderer` with `BitmapFactory.decodeResource` + a sprite-sheet atlas keyed on (direction, frame).
 - Piranhas don't currently emerge from the pen; they spawn outside it. Implementing the classic pen-exit timing is straightforward (move spawns inside `=` tiles and add an exit timer per piranha).
-- Only one maze layout exists.
+- Ten maze layouts ship with the game (`LEVEL_1` … `LEVEL_10` in `Levels.kt`); levels beyond ten cycle back to layout 1 while difficulty keeps climbing via piranha speed.
 - AdMob uses test IDs only — flip both in the manifest and `AdMobController` before shipping.
 - No sound yet.

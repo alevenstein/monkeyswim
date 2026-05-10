@@ -8,10 +8,24 @@ enum class Tile {
     PEN_DOOR,
     PEN_INTERIOR,
     BOTTOM_GATEWAY,
-    TUNNEL;
+    TUNNEL,
+    MONKEY_SPAWN;  // walkable like PATH; carries no pellet; marks where the monkey spawns
 
     val carriesPellet: Boolean
         get() = this == PELLET || this == POWER_PELLET
+
+    val char: Char
+        get() = when (this) {
+            WALL -> 'W'
+            PELLET -> '.'
+            POWER_PELLET -> 'o'
+            PATH -> ' '
+            PEN_DOOR -> '-'
+            PEN_INTERIOR -> '='
+            BOTTOM_GATEWAY -> 'X'
+            TUNNEL -> 'T'
+            MONKEY_SPAWN -> 'M'
+        }
 
     companion object {
         fun fromChar(c: Char): Tile = when (c) {
@@ -23,6 +37,7 @@ enum class Tile {
             '=' -> PEN_INTERIOR
             'X' -> BOTTOM_GATEWAY
             'T' -> TUNNEL
+            'M' -> MONKEY_SPAWN
             else -> error("Unknown tile char: '$c'")
         }
     }

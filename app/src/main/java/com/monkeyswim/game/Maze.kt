@@ -15,7 +15,10 @@ import kotlin.random.Random
  * Holds runtime maze state for a single level. Pellet/power-pellet tiles mutate to PATH
  * as the monkey collects them. Tracks remaining pellets and the bottom gateway lock.
  */
-class Maze(layout: List<String>) {
+class Maze(
+    layout: List<String>,
+    fruitOverrides: Map<Pair<Int, Int>, FruitRenderer.FruitType>? = null,
+) {
 
     val cols: Int = layout.first().length
     val rows: Int = layout.size
@@ -48,6 +51,12 @@ class Maze(layout: List<String>) {
     // LEAVING_PEN mode home in on this tile to escape the pen.
     val penExitTile: Pair<Int, Int>
 
+    // Cell coordinates of the monkey's spawn (the unique 'M' tile in the layout)
+    // and the piranha spawn cells (every '=' pen-interior tile). Both are derived
+    // from the layout itself so each level can carry its own spawn config.
+    val monkeySpawn: Pair<Int, Int>
+    val piranhaSpawnTiles: List<Pair<Int, Int>>
+
     // Each power pellet picks a random fruit at maze construction so that the
     // sprite stays stable for the whole level — players see the same fruit
     // every frame until they eat it.
@@ -60,19 +69,29 @@ class Maze(layout: List<String>) {
         val ppFruits = mutableMapOf<Pair<Int, Int>, FruitRenderer.FruitType>()
         val tunnelColsSet = mutableSetOf<Int>()
         val tunnelRowsSet = mutableSetOf<Int>()
+        var monkeySpawnFound: Pair<Int, Int>? = null
+        val piranhaSpawns = mutableListOf<Pair<Int, Int>>()
         for (r in 0 until rows) {
             for (c in 0 until cols) {
                 when (tiles[r][c]) {
                     Tile.PELLET -> pellets++
                     Tile.POWER_PELLET -> {
                         pellets++
-                        ppFruits[c to r] = FruitRenderer.FruitType.values().random()
+                        ppFruits[c to r] = fruitOverrides?.get(c to r)
+                            ?: FruitRenderer.FruitType.values().random()
                     }
                     Tile.BOTTOM_GATEWAY -> gw += c to r
                     Tile.PEN_DOOR -> penDoors += c to r
+                    Tile.PEN_INTERIOR -> piranhaSpawns += c to r
                     Tile.TUNNEL -> {
                         tunnelColsSet += c
                         tunnelRowsSet += r
+                    }
+                    Tile.MONKEY_SPAWN -> {
+                        require(monkeySpawnFound == null) {
+                            "Layout has more than one 'M' (monkey-spawn) tile"
+                        }
+                        monkeySpawnFound = c to r
                     }
                     else -> {}
                 }
@@ -85,6 +104,10 @@ class Maze(layout: List<String>) {
         tunnelTopRow = tunnelRowsSet.minOrNull() ?: -1
         tunnelBottomRow = tunnelRowsSet.maxOrNull() ?: -1
         powerPelletFruit = ppFruits
+        monkeySpawn = requireNotNull(monkeySpawnFound) {
+            "Layout is missing an 'M' (monkey-spawn) tile"
+        }
+        piranhaSpawnTiles = piranhaSpawns
 
         penExitTile = if (penDoors.isNotEmpty()) {
             val doorRow = penDoors.minOf { it.second }
@@ -114,7 +137,7 @@ class Maze(layout: List<String>) {
         if (col in tunnelCols && (row < 0 || row >= rows)) return true
         val t = tileAt(col, row)
         return when (t) {
-            Tile.PATH, Tile.PELLET, Tile.POWER_PELLET, Tile.TUNNEL -> true
+            Tile.PATH, Tile.PELLET, Tile.POWER_PELLET, Tile.TUNNEL, Tile.MONKEY_SPAWN -> true
             Tile.BOTTOM_GATEWAY -> gatewayUnlocked
             else -> false
         }
@@ -125,7 +148,7 @@ class Maze(layout: List<String>) {
         val t = tileAt(col, row)
         return when (t) {
             Tile.PATH, Tile.PELLET, Tile.POWER_PELLET, Tile.TUNNEL,
-            Tile.PEN_DOOR, Tile.PEN_INTERIOR -> true
+            Tile.PEN_DOOR, Tile.PEN_INTERIOR, Tile.MONKEY_SPAWN -> true
             else -> false
         }
     }
@@ -157,6 +180,15 @@ class Maze(layout: List<String>) {
 
     fun isGatewayTile(col: Int, row: Int): Boolean =
         tileAt(col, row) == Tile.BOTTOM_GATEWAY
+
+    val powerPelletFruits: Map<Pair<Int, Int>, FruitRenderer.FruitType>
+        get() = powerPelletFruit
+
+    fun snapshotLayout(): List<String> = (0 until rows).map { r ->
+        buildString(cols) {
+            for (c in 0 until cols) append(tiles[r][c].char)
+        }
+    }
 
     /** True if the cell is a wall for rendering — out-of-bounds counts as wall so outer banks stay flush. */
     private fun isWallForRender(col: Int, row: Int): Boolean {
@@ -338,7 +370,7 @@ class Maze(layout: List<String>) {
                             canvas.drawRect(left, top, left + cellSize, top + cellSize, gatewayLockedPaint)
                         }
                     }
-                    Tile.PATH, Tile.PEN_INTERIOR, Tile.TUNNEL -> {
+                    Tile.PATH, Tile.PEN_INTERIOR, Tile.TUNNEL, Tile.MONKEY_SPAWN -> {
                         // intentionally no decoration
                     }
                 }

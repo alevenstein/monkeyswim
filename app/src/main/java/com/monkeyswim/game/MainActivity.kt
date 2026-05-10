@@ -9,9 +9,13 @@ import android.os.Bundle
 import android.view.View
 import android.view.WindowInsets
 import android.view.WindowInsetsController
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.FrameLayout
+import android.widget.LinearLayout
 import android.widget.RadioGroup
+import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -33,6 +37,12 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
     private lateinit var splashDifficultyGroup: RadioGroup
     private lateinit var splashStartButton: Button
     private lateinit var splashPrivacyLink: TextView
+    private lateinit var debugBar: LinearLayout
+    private lateinit var debugLevelSpinner: Spinner
+
+    /** Suppresses the spinner's onItemSelected callback when we're updating the
+     *  selection programmatically (e.g. on level-up via natural progression). */
+    private var suppressDebugLevelChange = false
 
     /** True if showing the help overlay paused the game (so closing should resume). */
     private var helpPausedGame = false
@@ -59,6 +69,9 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
         splashDifficultyGroup = findViewById(R.id.splashDifficultyGroup)
         splashStartButton = findViewById(R.id.splashStartButton)
         splashPrivacyLink = findViewById(R.id.splashPrivacyLink)
+        debugBar = findViewById(R.id.debugBar)
+        debugLevelSpinner = findViewById(R.id.debugLevelSpinner)
+        setupDebugLevelSelector()
 
         splashPrivacyLink.paintFlags = splashPrivacyLink.paintFlags or Paint.UNDERLINE_TEXT_FLAG
         splashPrivacyLink.setOnClickListener {
@@ -128,11 +141,27 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
         }
 
         adMob = AdMobController(this).also { it.init() }
+
+        // Restore the previously persisted game (if any). A saved game skips the
+        // splash entirely; a saved GAME_OVER restores into the same overlay so
+        // the player can still choose watch-ad or restart.
+        SaveGame.load(this)?.let { snapshot ->
+            splashOverlay.visibility = View.GONE
+            gameView.gameState().restore(snapshot)
+        }
     }
 
     override fun onResume() {
         super.onResume()
         applyImmersiveFlags()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        val snapshot = gameView.gameState().snapshot()
+        if (SaveGame.shouldPersist(snapshot)) {
+            SaveGame.save(this, snapshot)
+        }
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
@@ -177,7 +206,44 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
     }
 
     override fun onLevelChanged(level: Int) {
-        runOnUiThread { levelLabel.text = getString(R.string.level_label, level) }
+        runOnUiThread {
+            levelLabel.text = getString(R.string.level_label, level)
+            // Keep the debug-only level spinner in sync when the game advances
+            // naturally so it always reflects the active level.
+            if (BuildConfig.DEBUG && ::debugLevelSpinner.isInitialized) {
+                val targetIdx = (level - 1).coerceIn(0, Levels.LEVEL_COUNT - 1)
+                if (debugLevelSpinner.selectedItemPosition != targetIdx) {
+                    suppressDebugLevelChange = true
+                    debugLevelSpinner.setSelection(targetIdx)
+                }
+            }
+        }
+    }
+
+    private fun setupDebugLevelSelector() {
+        if (!BuildConfig.DEBUG) {
+            debugBar.visibility = View.GONE
+            return
+        }
+        debugBar.visibility = View.VISIBLE
+        val levels = (1..Levels.LEVEL_COUNT).map { it.toString() }
+        debugLevelSpinner.adapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_item,
+            levels,
+        ).also { it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
+
+        debugLevelSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
+                if (suppressDebugLevelChange) {
+                    suppressDebugLevelChange = false
+                    return
+                }
+                gameView.gameState().jumpToLevel(position + 1)
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>) {}
+        }
     }
 
     override fun onGameOver() {
