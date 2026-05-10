@@ -41,7 +41,7 @@ class GameState(
     // Powerup state. Banana spawns periodically; collecting it triggers a
     // random Powerup. The four effects each have their own state + timer.
     private var banana: Pair<Int, Int>? = null
-    private var bananaTimer: Float = BANANA_INITIAL_DELAY
+    private var bananaTimer: Float = nextBananaInitialDelay()
     private var lightningFlashTimer: Float = 0f
     private var blackHole: Pair<Int, Int>? = null
     private var blackHoleTimer: Float = 0f
@@ -100,6 +100,12 @@ class GameState(
             !paused && phase == Phase.PAUSED -> Phase.PLAYING
             else -> phase
         }
+    }
+
+    /** Toggle pause from a screen tap — only flips between PLAYING and PAUSED. */
+    @Synchronized
+    fun togglePause() {
+        setPaused(phase == Phase.PLAYING)
     }
 
     /**
@@ -184,7 +190,9 @@ class GameState(
         }
 
         // Banana spawn / expiry — single timer flips between "spawn delay" and
-        // "active duration" depending on whether a banana is on the map.
+        // "active duration" depending on whether a banana is on the map. Spawn
+        // delays are randomized within a range so the appearance cadence isn't
+        // a metronome the player can plan around.
         bananaTimer -= dt
         if (bananaTimer <= 0f) {
             if (banana == null) {
@@ -192,7 +200,7 @@ class GameState(
                 bananaTimer = BANANA_ACTIVE_DURATION
             } else {
                 banana = null
-                bananaTimer = BANANA_RESPAWN_DELAY
+                bananaTimer = nextBananaRespawnDelay()
             }
         }
 
@@ -214,7 +222,7 @@ class GameState(
         val ban = banana
         if (ban != null && ban.first == monkey.tileCol && ban.second == monkey.tileRow) {
             banana = null
-            bananaTimer = BANANA_RESPAWN_DELAY
+            bananaTimer = nextBananaRespawnDelay()
             activatePowerup(Powerup.values().random())
         }
 
@@ -327,7 +335,7 @@ class GameState(
     /** Reset powerup state — called on life loss, level transition, full reset. */
     private fun clearPowerups() {
         banana = null
-        bananaTimer = BANANA_INITIAL_DELAY
+        bananaTimer = nextBananaInitialDelay()
         lightningFlashTimer = 0f
         blackHole = null
         blackHoleTimer = 0f
@@ -500,9 +508,20 @@ class GameState(
         canvas.drawText(text, x, y, bannerPaint)
     }
 
+    private fun nextBananaInitialDelay(): Float =
+        BANANA_INITIAL_MIN + (BANANA_INITIAL_MAX - BANANA_INITIAL_MIN) * kotlin.random.Random.nextFloat()
+
+    private fun nextBananaRespawnDelay(): Float =
+        BANANA_RESPAWN_MIN + (BANANA_RESPAWN_MAX - BANANA_RESPAWN_MIN) * kotlin.random.Random.nextFloat()
+
     companion object {
-        private const val BANANA_INITIAL_DELAY = 20f       // first banana spawn (s)
-        private const val BANANA_RESPAWN_DELAY = 25f       // delay between bananas (s)
+        // Banana spawn cadence is randomized within these ranges so the player
+        // can't memorize the schedule. Initial range is shorter than respawn so
+        // the first banana arrives sooner than later ones.
+        private const val BANANA_INITIAL_MIN = 10f         // first banana spawn min (s)
+        private const val BANANA_INITIAL_MAX = 20f         // first banana spawn max (s)
+        private const val BANANA_RESPAWN_MIN = 18f         // delay between bananas min (s)
+        private const val BANANA_RESPAWN_MAX = 40f         // delay between bananas max (s)
         private const val BANANA_ACTIVE_DURATION = 12f     // how long an uneaten banana stays (s)
         private const val LIGHTNING_FLASH_DURATION = 0.6f
         private const val BLACK_HOLE_DURATION = 15f

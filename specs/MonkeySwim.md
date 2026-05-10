@@ -4,7 +4,7 @@ Android-native game with gameplay nearly identical to Pac-Man, themed as a monke
 
 ### Splash screen
 
-When the app launches, the player sees a splash screen overlaid on the (frozen) game. It shows the title, the copyright "© 2026 Lionstone Software", a difficulty selector, a Start button, and a clickable "Privacy Policy" link to https://lionstone.dev/privacy/. Three difficulty levels:
+When the app launches, the player sees a splash screen overlaid on the (frozen) game. It shows the title, the copyright "© 2026 Lionstone Software", a brief instruction line — *"Help the monkey avoid piranhas and collect tasty snacks from the river!"* — a difficulty selector, a Start button, and a clickable "Privacy Policy" link to https://lionstone.dev/privacy/. Three difficulty levels:
 
 - **Easy** — 75% of base speed
 - **Medium** — 100% of base speed (default)
@@ -20,11 +20,11 @@ Each level is a water level: dark blue depth-gradient water with animated wavy b
 
 Three gateways:
 
-- **Left tunnel** at the tunnel row — the monkey (and any piranha) walking off the left edge wraps to the right edge.
-- **Right tunnel** — mirror; wraps to the left.
-- **Bottom gateway** — three locked tiles (rendered dark) centred at the bottom edge. Locks while pellets remain; unlocks (glowing animated cyan) once the last pellet is eaten. Walking into an unlocked gateway transitions the player to the next level.
+- **Top tunnel** — a 3-tile-wide opening at the top centre; the monkey (and any piranha) walking off the top edge through any of those columns wraps to the matching column at the bottom edge.
+- **Bottom tunnel** — mirror; wraps to the top.
+- **Right-wall portal** — three locked tiles (rendered dark) on the right border, vertically centred. Locks while pellets remain; unlocks (glowing animated cyan) once the last pellet is eaten. Walking into an unlocked portal transitions the player to the next level.
 
-The first level layout (15 cols × 22 rows) is a hand-laid level with two stacked 1-tile-tall passages at the bottom separated by a wall row, four power-pellet positions near the four corners of the playable area, and 1-tile-wide corridors throughout (no big open zones for the monkey to get lost in mid-air). All pellets reachable from spawn, no dead-end pellets.
+The first level layout (15 cols × 22 rows) is a hand-laid level with two stacked 1-tile-tall passages at the bottom separated by a wall row, four power-pellet positions near the four corners of the playable area, and 1-tile-wide corridors throughout (no big open zones for the monkey to get lost in mid-air). All pellets reachable from spawn, no dead-end pellets. The monkey spawns at the centre of the upper-bottom passage at (col 7, row 18). The wrap-tunnel mouths span cols 6-8 of rows 0 and 21; the right-wall portal occupies col 14 at rows 10-12.
 
 ### Power pellets — fruit
 
@@ -61,6 +61,8 @@ All sprites are procedurally drawn on Canvas (no bitmap assets):
 - **Piranhas** — gray oval body, red belly stripe, animated tail flick, side fins, jagged teeth, single eye. Frightened tint + low-time blink. Eaten mode renders as eyes-only at 0.45× scale.
 - **Shark, turtle, black hole** — used by the powerup system; each is a procedural Canvas draw.
 
-### HUD
+### HUD + controls
 
-Top bar shows Score, Level, Lives, and a Pause / Resume button.
+Top bar shows Score, Level, Lives, and a **`?`** Help button. The Help button opens a help overlay covering the screen (and pauses an actively-playing game while open) — content includes the same one-line instruction shown on the splash, a reminder that taps pause / resume, and a short list of what each banana powerup does. Closing the overlay resumes play if Help was the thing that paused it; a manually paused game stays paused.
+
+**Pause:** tapping anywhere on the game area (i.e., not on a button) toggles pause / resume. The existing swipe input distinguishes tap-vs-swipe by displacement threshold; small-displacement taps go to `togglePause`.

@@ -26,11 +26,16 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
     private lateinit var gameOverOverlay: FrameLayout
     private lateinit var restartButton: Button
     private lateinit var watchAdButton: Button
-    private lateinit var pauseButton: Button
+    private lateinit var helpButton: Button
+    private lateinit var helpOverlay: FrameLayout
+    private lateinit var helpCloseButton: Button
     private lateinit var splashOverlay: FrameLayout
     private lateinit var splashDifficultyGroup: RadioGroup
     private lateinit var splashStartButton: Button
     private lateinit var splashPrivacyLink: TextView
+
+    /** True if showing the help overlay paused the game (so closing should resume). */
+    private var helpPausedGame = false
 
     private lateinit var adMob: AdMobController
 
@@ -47,7 +52,9 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
         gameOverOverlay = findViewById(R.id.gameOverOverlay)
         restartButton = findViewById(R.id.restartButton)
         watchAdButton = findViewById(R.id.watchAdButton)
-        pauseButton = findViewById(R.id.pauseButton)
+        helpButton = findViewById(R.id.helpButton)
+        helpOverlay = findViewById(R.id.helpOverlay)
+        helpCloseButton = findViewById(R.id.helpCloseButton)
         splashOverlay = findViewById(R.id.splashOverlay)
         splashDifficultyGroup = findViewById(R.id.splashDifficultyGroup)
         splashStartButton = findViewById(R.id.splashStartButton)
@@ -80,15 +87,26 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
         restartButton.setOnClickListener {
             hideGameOver()
             gameView.gameState().reset()
-            pauseButton.setText(R.string.pause_action)
         }
-        pauseButton.setOnClickListener {
+        helpButton.setOnClickListener {
+            // Pause the game on help-open if it was actively playing — closing
+            // help will only resume in that case, so a manually-paused game
+            // stays paused after the player closes help.
             val state = gameView.gameState()
-            val currentlyPaused = state.phase == GameState.Phase.PAUSED
-            state.setPaused(!currentlyPaused)
-            pauseButton.setText(
-                if (state.phase == GameState.Phase.PAUSED) R.string.resume else R.string.pause_action
-            )
+            helpPausedGame = if (state.phase == GameState.Phase.PLAYING) {
+                state.setPaused(true)
+                true
+            } else {
+                false
+            }
+            helpOverlay.visibility = View.VISIBLE
+        }
+        helpCloseButton.setOnClickListener {
+            helpOverlay.visibility = View.GONE
+            if (helpPausedGame) {
+                gameView.gameState().setPaused(false)
+                helpPausedGame = false
+            }
         }
         watchAdButton.setOnClickListener {
             watchAdButton.isEnabled = false

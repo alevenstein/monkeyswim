@@ -92,6 +92,11 @@ class GameView @JvmOverloads constructor(
                     val dy = event.y - downY
                     if (abs(dx) >= swipeThresholdPx / 2 || abs(dy) >= swipeThresholdPx / 2) {
                         commitSwipe(dx, dy)
+                    } else {
+                        // Tap (negligible displacement) — toggle pause/resume.
+                        // togglePause is a no-op outside PLAYING/PAUSED, so taps
+                        // during READY / GAME_OVER / etc. won't do anything.
+                        state.togglePause()
                     }
                 }
                 return true

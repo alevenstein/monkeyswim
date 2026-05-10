@@ -82,9 +82,9 @@ class Monkey(
         x = nx
         y = ny
 
-        // Tunnel wrap (left/right edges of the maze).
-        if (x < 0f) x = maze.cols - 0.001f
-        else if (x >= maze.cols) x = 0.001f
+        // Tunnel wrap (top/bottom edges of the maze).
+        if (y < 0f) y = maze.rows - 0.001f
+        else if (y >= maze.rows) y = 0.001f
     }
 
     /** True if turning to dir from current tile is legal (next tile is walkable). */

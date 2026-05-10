@@ -35,10 +35,14 @@ class Maze(layout: List<String>) {
     // Cached gateway tile coords for level-transition detection.
     val gatewayTiles: List<Pair<Int, Int>>
 
-    // Tunnel exit columns at the tunnel row (used when an entity walks off-screen).
-    val tunnelRow: Int
-    private val tunnelLeftCol: Int
-    private val tunnelRightCol: Int
+    // Tunnel exit rows at the tunnel columns (used when an entity walks off the
+    // top or bottom of the maze). The wrap is vertical and per-column: stepping
+    // past the top T tile in column c re-enters at the bottom T tile in the
+    // same column c, and vice versa. Multiple adjacent T cells form a wider
+    // tunnel mouth.
+    val tunnelCols: Set<Int>
+    private val tunnelTopRow: Int
+    private val tunnelBottomRow: Int
 
     // Corridor tile directly above the middle of the pen door. Piranhas in
     // LEAVING_PEN mode home in on this tile to escape the pen.
@@ -54,9 +58,8 @@ class Maze(layout: List<String>) {
         val gw = mutableListOf<Pair<Int, Int>>()
         val penDoors = mutableListOf<Pair<Int, Int>>()
         val ppFruits = mutableMapOf<Pair<Int, Int>, FruitRenderer.FruitType>()
-        var foundTunnelRow = -1
-        var leftT = -1
-        var rightT = -1
+        val tunnelColsSet = mutableSetOf<Int>()
+        val tunnelRowsSet = mutableSetOf<Int>()
         for (r in 0 until rows) {
             for (c in 0 until cols) {
                 when (tiles[r][c]) {
@@ -68,8 +71,8 @@ class Maze(layout: List<String>) {
                     Tile.BOTTOM_GATEWAY -> gw += c to r
                     Tile.PEN_DOOR -> penDoors += c to r
                     Tile.TUNNEL -> {
-                        if (foundTunnelRow == -1) foundTunnelRow = r
-                        if (leftT == -1) leftT = c else rightT = c
+                        tunnelColsSet += c
+                        tunnelRowsSet += r
                     }
                     else -> {}
                 }
@@ -78,9 +81,9 @@ class Maze(layout: List<String>) {
         totalPellets = pellets
         pelletsRemaining = pellets
         gatewayTiles = gw
-        tunnelRow = foundTunnelRow
-        tunnelLeftCol = leftT
-        tunnelRightCol = rightT
+        tunnelCols = tunnelColsSet
+        tunnelTopRow = tunnelRowsSet.minOrNull() ?: -1
+        tunnelBottomRow = tunnelRowsSet.maxOrNull() ?: -1
         powerPelletFruit = ppFruits
 
         penExitTile = if (penDoors.isNotEmpty()) {
@@ -103,11 +106,12 @@ class Maze(layout: List<String>) {
     }
 
     fun isMonkeyWalkable(col: Int, row: Int): Boolean {
-        // Off-grid on the tunnel row is walkable — the wrap logic will pull the
-        // entity to the opposite side. Without this, leading-edge tile probes
-        // block right-to-left wrap before the position-wrap can fire (Float.toInt
-        // truncates toward zero, so the equivalent left-to-right case slips through).
-        if (row == tunnelRow && (col < 0 || col >= cols)) return true
+        // Off-grid on a tunnel column is walkable — the wrap logic will pull
+        // the entity to the opposite side. Without this, leading-edge tile
+        // probes block bottom-to-top wrap before the position-wrap can fire
+        // (Float.toInt truncates toward zero, so the equivalent top-to-bottom
+        // case slips through).
+        if (col in tunnelCols && (row < 0 || row >= rows)) return true
         val t = tileAt(col, row)
         return when (t) {
             Tile.PATH, Tile.PELLET, Tile.POWER_PELLET, Tile.TUNNEL -> true
@@ -117,7 +121,7 @@ class Maze(layout: List<String>) {
     }
 
     fun isPiranhaWalkable(col: Int, row: Int): Boolean {
-        if (row == tunnelRow && (col < 0 || col >= cols)) return true
+        if (col in tunnelCols && (row < 0 || row >= rows)) return true
         val t = tileAt(col, row)
         return when (t) {
             Tile.PATH, Tile.PELLET, Tile.POWER_PELLET, Tile.TUNNEL,
@@ -130,10 +134,10 @@ class Maze(layout: List<String>) {
 
     /** Returns the wrap target if (col,row) is a tunnel exit; otherwise null. */
     fun tunnelWrap(col: Int, row: Int): Pair<Int, Int>? {
-        if (row != tunnelRow) return null
+        if (col !in tunnelCols) return null
         return when {
-            col < tunnelLeftCol -> tunnelRightCol to tunnelRow
-            col > tunnelRightCol -> tunnelLeftCol to tunnelRow
+            row < tunnelTopRow -> col to tunnelBottomRow
+            row > tunnelBottomRow -> col to tunnelTopRow
             else -> null
         }
     }

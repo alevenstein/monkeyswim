@@ -51,14 +51,14 @@
             tools:text="Lives 3" />
 
         <Button
-            android:id="@+id/pauseButton"
+            android:id="@+id/helpButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:minWidth="0dp"
             android:minHeight="0dp"
             android:padding="6dp"
             android:layout_marginStart="12dp"
-            android:text="@string/pause_action"
+            android:text="@string/help_button"
             android:textColor="@color/button_text"
             android:backgroundTint="@color/button_bg"
             android:textSize="14sp"
@@ -165,7 +165,17 @@
                     android:textSize="14sp"
                     android:gravity="center"
                     android:layout_marginTop="12dp"
-                    android:layout_marginBottom="48dp" />
+                    android:layout_marginBottom="32dp" />
+
+                <TextView
+                    android:id="@+id/splashInstructions"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/splash_instructions"
+                    android:textColor="@color/pellet"
+                    android:textSize="16sp"
+                    android:gravity="center"
+                    android:layout_marginBottom="40dp" />
 
                 <TextView
                     android:id="@+id/splashDifficultyLabel"
@@ -236,6 +246,129 @@
                     android:textColor="@color/power_pellet"
                     android:textSize="14sp"
                     android:padding="12dp" />
+            </LinearLayout>
+        </ScrollView>
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/helpOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/splash_bg"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone">
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center_horizontal"
+                android:paddingHorizontal="32dp"
+                android:paddingTop="48dp"
+                android:paddingBottom="32dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/help_title"
+                    android:textColor="@color/power_pellet"
+                    android:textSize="32sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="20dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/splash_instructions"
+                    android:textColor="@color/pellet"
+                    android:textSize="16sp"
+                    android:gravity="center"
+                    android:layout_marginBottom="16dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/help_pause_hint"
+                    android:textColor="@color/hud_text"
+                    android:textSize="14sp"
+                    android:gravity="center"
+                    android:layout_marginBottom="32dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/help_powerups_label"
+                    android:textColor="@color/pellet"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="12dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/help_banana"
+                    android:textColor="@color/hud_text"
+                    android:textSize="14sp"
+                    android:gravity="start"
+                    android:lineSpacingExtra="2dp"
+                    android:layout_marginBottom="6dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/help_lightning"
+                    android:textColor="@color/hud_text"
+                    android:textSize="14sp"
+                    android:gravity="start"
+                    android:lineSpacingExtra="2dp"
+                    android:layout_marginBottom="6dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/help_blackhole"
+                    android:textColor="@color/hud_text"
+                    android:textSize="14sp"
+                    android:gravity="start"
+                    android:lineSpacingExtra="2dp"
+                    android:layout_marginBottom="6dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/help_shark"
+                    android:textColor="@color/hud_text"
+                    android:textSize="14sp"
+                    android:gravity="start"
+                    android:lineSpacingExtra="2dp"
+                    android:layout_marginBottom="6dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/help_turtle"
+                    android:textColor="@color/hud_text"
+                    android:textSize="14sp"
+                    android:gravity="start"
+                    android:lineSpacingExtra="2dp"
+                    android:layout_marginBottom="32dp" />
+
+                <Button
+                    android:id="@+id/helpCloseButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:minWidth="180dp"
+                    android:text="@string/help_close"
+                    android:textColor="@color/button_text"
+                    android:backgroundTint="@color/button_bg"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
             </LinearLayout>
         </ScrollView>
     </FrameLayout>

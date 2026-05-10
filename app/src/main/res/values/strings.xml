@@ -7,8 +7,6 @@
     <string name="loading_ad">Loading ad…</string>
     <string name="ad_failed">No ad available — try again</string>
     <string name="paused">Paused</string>
-    <string name="pause_action">Pause</string>
-    <string name="resume">Resume</string>
     <string name="level_label">Level %1$d</string>
     <string name="score_label">Score %1$d</string>
     <string name="lives_label">Lives %1$d</string>
@@ -20,4 +18,15 @@
     <string name="difficulty_hard">Hard (125%)</string>
     <string name="privacy_policy">Privacy Policy</string>
     <string name="start_game">Start Game</string>
+    <string name="splash_instructions">Help the monkey avoid piranhas and collect tasty snacks from the river!</string>
+    <string name="help_button">?</string>
+    <string name="help_title">How to Play</string>
+    <string name="help_close">Close</string>
+    <string name="help_powerups_label">Powerups</string>
+    <string name="help_banana">Banana — collect for a random powerup</string>
+    <string name="help_lightning">Lightning — sends all piranhas back to the pen</string>
+    <string name="help_blackhole">Black hole — kills any character that touches it</string>
+    <string name="help_shark">Shark — chases and eats piranhas</string>
+    <string name="help_turtle">Turtle — piranhas slow to half speed for 10 seconds</string>
+    <string name="help_pause_hint">Tap the screen to pause or resume</string>
 </resources>

@@ -58,8 +58,8 @@ class Shark(
             direction = pickDirection(target).takeUnless { it == Direction.NONE } ?: Direction.UP
         }
         x = nx; y = ny
-        if (x < 0f) x = maze.cols - 0.001f
-        else if (x >= maze.cols) x = 0.001f
+        if (y < 0f) y = maze.rows - 0.001f
+        else if (y >= maze.rows) y = 0.001f
     }
 
     private fun nearestTarget(piranhas: List<Piranha>): Piranha? {

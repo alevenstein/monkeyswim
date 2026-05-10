@@ -159,8 +159,9 @@ class Piranha(
 
         x = nx; y = ny
 
-        if (x < 0f) x = maze.cols - 0.001f
-        else if (x >= maze.cols) x = 0.001f
+        // Tunnel wrap (top/bottom edges of the maze).
+        if (y < 0f) y = maze.rows - 0.001f
+        else if (y >= maze.rows) y = 0.001f
     }
 
     /** Choose a target tile based on personality + mode. */
