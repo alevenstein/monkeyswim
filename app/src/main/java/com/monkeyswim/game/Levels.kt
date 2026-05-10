@@ -26,10 +26,10 @@ object Levels {
         "W.....W.W.....W", //  5
         "W.WWW.....WWW.W", //  6  ← (7,6) corridor must stay open for pen exit
         "W.....W W.....W", //  7  ← (6,7)/(8,7) walls anchor gate; (7,7) PATH avoids dead-end pellet
-        "W..WWWW-WWWW..W", //  8  ← pen door (single tile at col 7); spike & bump removed
-        "W....W===W....W", //  9  ← pen interior; col 13 opened so (13,10) isn't a dead end
-        "W....W===W....X", // 10  ← pen interior + level-portal cell on right wall
-        "W..WWWWWWWWW.WX", // 11  ← pen base + level-portal cell (middle of 3-tile portal)
+        "W.WW.WW-WW.WW.W", //  8  ← pen door at col 7; pen-flanking corridors at cols 4 & 10
+        "W.WW.W===W.WW.W", //  9  ← pen interior; vertical corridors at cols 1, 4, 10, 13
+        "W.WW.W===W.WW.X", // 10  ← pen interior + level-portal cell on right wall
+        "W.WW.WWWWW.WW.X", // 11  ← pen base + level-portal cell (middle of 3-tile portal)
         "W.............X", // 12  ← below-pen corridor + level-portal cell on right wall
         "W.WWWW.W.WWWW.W", // 13  ← walls at col 5,7,9 break 2x2 with row 12
         "W.............W", // 14  ← lower outer corridor

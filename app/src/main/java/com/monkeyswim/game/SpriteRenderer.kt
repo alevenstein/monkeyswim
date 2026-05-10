@@ -105,6 +105,13 @@ object SpriteRenderer {
     private val lightningPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.WHITE; style = Paint.Style.FILL
     }
+    // Heart (extra-life powerup) — colors mirror Brick Basher's pink-powerup heart.
+    private val heartFill = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+    }
+    private val heartStroke = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE; strokeWidth = 5f
+    }
 
     private val tmpRect = RectF()
     private val tmpPath = Path()
@@ -419,6 +426,34 @@ object SpriteRenderer {
             tmpPath.close()
             canvas.drawPath(tmpPath, turtleHexStroke)
         }
+    }
+
+    /**
+     * Pink heart that pops centre-screen when the extra-life powerup is collected,
+     * then fades out over [duration]. Visual style copied from Brick Basher's
+     * pink-powerup heart (cubic-Bezier path, hot-pink fill with light-pink stroke).
+     */
+    fun drawHeart(
+        canvas: Canvas,
+        cx: Float, cy: Float,
+        size: Float,
+        timeLeft: Float,
+        duration: Float,
+    ) {
+        val popScale = if (timeLeft > duration - 0.25f) (duration - timeLeft) / 0.25f else 1.0f
+        val s = size * popScale
+        val alpha = ((timeLeft / duration) * 255f).toInt().coerceIn(0, 255)
+
+        tmpPath.reset()
+        tmpPath.moveTo(cx, cy - s * 0.2f)
+        tmpPath.cubicTo(cx + s * 0.5f, cy - s * 0.9f, cx + s, cy - s * 0.3f, cx, cy + s * 0.7f)
+        tmpPath.cubicTo(cx - s, cy - s * 0.3f, cx - s * 0.5f, cy - s * 0.9f, cx, cy - s * 0.2f)
+        tmpPath.close()
+
+        heartFill.color = Color.argb(alpha, 255, 80, 160)
+        canvas.drawPath(tmpPath, heartFill)
+        heartStroke.color = Color.argb(alpha, 255, 210, 230)
+        canvas.drawPath(tmpPath, heartStroke)
     }
 
     fun drawBlackHole(canvas: Canvas, cx: Float, cy: Float, cellSize: Float, animTime: Float) {

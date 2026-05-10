@@ -46,7 +46,7 @@ See **`specs/Powerups.md`** for the full powerup spec. Bananas appear periodical
 
 ### Lives + game over
 
-The player starts with 3 lives. On collision with a non-frightened piranha, the monkey shrinks (death animation) and respawns at spawn. When all lives are used the game-over splash screen offers two buttons:
+The player starts with 5 lives. On collision with a non-frightened piranha, the monkey shrinks (death animation) and respawns at spawn. When all lives are used the game-over splash screen offers two buttons:
 
 - **Restart** — start a fresh game.
 - **Watch Ad for +3 Lives** — Google AdMob rewarded interstitial; on reward, +3 lives and the player resumes mid-level with the maze and score preserved.

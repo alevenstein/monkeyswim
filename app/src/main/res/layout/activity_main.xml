@@ -357,6 +357,16 @@
                     android:textSize="14sp"
                     android:gravity="start"
                     android:lineSpacingExtra="2dp"
+                    android:layout_marginBottom="6dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/help_heart"
+                    android:textColor="@color/hud_text"
+                    android:textSize="14sp"
+                    android:gravity="start"
+                    android:lineSpacingExtra="2dp"
                     android:layout_marginBottom="32dp" />
 
                 <Button

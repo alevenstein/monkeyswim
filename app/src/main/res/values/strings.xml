@@ -28,5 +28,6 @@
     <string name="help_blackhole">Black hole — kills any character that touches it</string>
     <string name="help_shark">Shark — chases and eats piranhas</string>
     <string name="help_turtle">Turtle — piranhas slow to half speed for 10 seconds</string>
+    <string name="help_heart">Heart — extra life</string>
     <string name="help_pause_hint">Tap the screen to pause or resume</string>
 </resources>

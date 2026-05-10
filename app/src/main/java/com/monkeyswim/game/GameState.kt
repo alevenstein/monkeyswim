@@ -10,12 +10,12 @@ import android.graphics.Typeface
  * Methods are synchronized so the game thread and UI thread can call them safely.
  */
 class GameState(
-    initialLives: Int = 3,
+    initialLives: Int = 5,
     var listener: Listener? = null,
 ) {
     enum class Phase { AWAITING_START, READY, PLAYING, LIFE_LOST, LEVEL_COMPLETE, GAME_OVER, PAUSED }
 
-    enum class Powerup { LIGHTNING, BLACK_HOLE, SHARK, SLOW_PIRANHAS }
+    enum class Powerup { LIGHTNING, BLACK_HOLE, SHARK, SLOW_PIRANHAS, EXTRA_LIFE }
 
     interface Listener {
         fun onScoreChanged(score: Int) {}
@@ -49,6 +49,7 @@ class GameState(
     private var sharkTimer: Float = 0f
     private var slowPiranhaTimer: Float = 0f
     private var turtleTimer: Float = 0f
+    private var heartTimer: Float = 0f
 
     /**
      * Global speed multiplier from the difficulty selection on the splash screen.
@@ -70,7 +71,7 @@ class GameState(
     }
 
     @Synchronized
-    fun reset(initialLives: Int = 3) {
+    fun reset(initialLives: Int = 5) {
         level = 1
         score = 0
         lives = initialLives
@@ -176,6 +177,7 @@ class GameState(
         // Powerup effect timers.
         if (lightningFlashTimer > 0f) lightningFlashTimer -= dt
         if (turtleTimer > 0f) turtleTimer -= dt
+        if (heartTimer > 0f) heartTimer -= dt
         if (blackHoleTimer > 0f) {
             blackHoleTimer -= dt
             if (blackHoleTimer <= 0f) blackHole = null
@@ -297,6 +299,11 @@ class GameState(
                 turtleTimer = TURTLE_VISIBLE_DURATION
                 applyEntitySpeeds()
             }
+            Powerup.EXTRA_LIFE -> {
+                lives++
+                listener?.onLivesChanged(lives)
+                heartTimer = HEART_VISIBLE_DURATION
+            }
         }
     }
 
@@ -343,6 +350,7 @@ class GameState(
         sharkTimer = 0f
         slowPiranhaTimer = 0f
         turtleTimer = 0f
+        heartTimer = 0f
     }
 
     private fun onLifeLost() {
@@ -482,6 +490,17 @@ class GameState(
             )
         }
 
+        // Brief heart visual when the extra-life powerup activates — same
+        // pop-and-fade pattern as the turtle, mirroring Brick Basher's
+        // pink-powerup heart.
+        if (heartTimer > 0f) {
+            val hx = viewWidth / 2f
+            val hy = hudHeightPx + playableHeight / 2f
+            SpriteRenderer.drawHeart(
+                canvas, hx, hy, cellSize * 1.8f, heartTimer, HEART_VISIBLE_DURATION,
+            )
+        }
+
         // Lightning flash — full-screen white wash that fades over the duration.
         if (lightningFlashTimer > 0f) {
             val alpha = (lightningFlashTimer / LIGHTNING_FLASH_DURATION).coerceIn(0f, 1f)
@@ -522,11 +541,12 @@ class GameState(
         private const val BANANA_INITIAL_MAX = 20f         // first banana spawn max (s)
         private const val BANANA_RESPAWN_MIN = 18f         // delay between bananas min (s)
         private const val BANANA_RESPAWN_MAX = 40f         // delay between bananas max (s)
-        private const val BANANA_ACTIVE_DURATION = 12f     // how long an uneaten banana stays (s)
+        private const val BANANA_ACTIVE_DURATION = 24f     // how long an uneaten banana stays (s)
         private const val LIGHTNING_FLASH_DURATION = 0.6f
         private const val BLACK_HOLE_DURATION = 15f
         private const val SHARK_DURATION = 15f
         private const val SLOW_DURATION = 10f
         private const val TURTLE_VISIBLE_DURATION = 1.5f
+        private const val HEART_VISIBLE_DURATION = 1.5f
     }
 }
