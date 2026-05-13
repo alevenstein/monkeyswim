@@ -4,7 +4,9 @@ package com.monkeyswim.game
  * Level catalog. Each level is a 22×15 layout that *must* contain:
  *   • exactly one 'M' (monkey spawn)
  *   • one '-' (pen door) and a contiguous '===' pen interior block
- *   • 'T' tunnel-mouth cells
+ *   • 'T' tunnel-mouth cells (top + bottom rows; cols MUST match top↔bottom
+ *     since `tunnelWrap` in Maze.kt teleports by column without verifying
+ *     the destination is also a T)
  *   • 'X' level-portal cells
  *   • four 'o' power pellets
  *   • only 1-tile-wide corridors (no 2x2 path/pellet areas)
@@ -16,21 +18,26 @@ package com.monkeyswim.game
  *   (space) = empty water (no pellet)
  *   M = monkey spawn (PATH; no pellet)
  *   - = piranha pen door
- *   = = piranha pen interior (also acts as a piranha spawn cell)
+ *   = = piranha pen interior (also defines piranha spawn cells via bounding-box corners)
  *   T = tunnel mouth (wraps to opposite side along the same column)
  *   X = level portal (locked until last pellet eaten)
  *
- * All 10 levels share the same pen, top/bottom tunnels, right-wall portal,
- * and monkey spawn position — these are the structural elements the piranha
- * AI and pen-exit logic depend on. What varies per level: the corridor and
- * wall patterns in rows 1-7 (top half) and 12-16 (mid-low band), plus the
- * positions of the 4 power pellets. Difficulty also ramps via piranha speed
+ * Level 1 is the hand-laid baseline (pen + portal + tunnels all centered).
+ * Levels 2-10 each carry their own pen position, portal wall, and tunnel
+ * column set so the gameplay feel changes per level — piranhas emerge from
+ * a different direction, the exit is in a different place, and the wrap
+ * tunnels are not always centered. The monkey spawn stays at (col 7, row 18)
+ * across all levels so the player always starts in the same orientation;
+ * what varies is how far the pen is from the spawn and which way the chase
+ * develops. Piranha AI + pen-exit logic are fully driven from the layout
+ * chars (`maze.penExitTile`, `maze.piranhaSpawnTiles`), so moving the pen
+ * needs no AI changes. Difficulty also ramps via piranha speed
  * (Levels.piranhaSpeedScale).
  */
 object Levels {
 
-    // Level 1 — the hand-laid baseline: 3-block top/bottom row, corner power
-    // pellets, central narrow gap above the pen exit.
+    // Level 1 — the hand-laid baseline: pen center, portal on right wall,
+    // tunnels centered, corner power pellets.
     private val LEVEL_1: List<String> = listOf(
         "WWWWWWTTTWWWWWW",
         "W.............W",
@@ -56,237 +63,237 @@ object Levels {
         "WWWWWWTTTWWWWWW",
     )
 
-    // Level 2 — Inner power pellets: PPs pulled off the corners onto row 5 /
-    // row 14, sitting one tile inside the upper-row pillar columns so the
-    // player has to detour through the mid-band corridor to grab them.
+    // Level 2 — Pen TOP-CENTER (rows 4-7), portal LEFT WALL, tunnels SPLIT
+    // (cols 1-3 + 11-13). Piranhas now spawn near the top and have to chase
+    // the monkey downward; the exit is on the opposite wall from L1.
     private val LEVEL_2: List<String> = listOf(
-        "WWWWWWTTTWWWWWW",
+        "WTTTWWWWWWWTTTW",
         "W.............W",
-        "W.WWW.WWW.WWW.W",
-        "W.W.........W.W",
-        "W.W.WWW.WWW.W.W",
-        "W..o..W.W..o..W",
-        "W.WWW.....WWW.W",
+        "W.WWW.W.W.WWW.W",
         "W.....W W.....W",
         "W.WW.WW-WW.WW.W",
         "W.WW.W===W.WW.W",
-        "W.WW.W===W.WW.X",
-        "W.WW.WWWWW.WW.X",
-        "W.............X",
-        "W.WWWW.W.WWWW.W",
-        "W..o..WWW..o..W",
+        "W.WW.W===W.WW.W",
+        "W.WW.WWWWW.WW.W",
+        "W.............W",
+        "W.WWW.W.W.WWW.W",
+        "XoW.........WoW",
+        "X.W.WWWWWWW.W.W",
+        "X.............W",
         "W.WWW.WWW.WWW.W",
+        "W.............W",
+        "WoW.WWW.WWW.WoW",
         "W.W.........W.W",
         "W.W.WWW.WWW.W.W",
         "W......M......W",
         "W.WWW.WWW.WWW.W",
         "W.............W",
-        "WWWWWWTTTWWWWWW",
+        "WTTTWWWWWWWTTTW",
     )
 
-    // Level 3 — Picket fence: row 2 / row 17 swap the three-block pattern for a
-    // continuous picket of 1-cell walls, opening up more cross-traffic.
+    // Level 3 — Pen BOTTOM-CENTER (rows 13-16), portal RIGHT WALL, tunnels
+    // WIDE-CENTER (cols 5-9). With the pen just two rows above the monkey
+    // spawn, early-game pressure is high — piranhas reach the player fast.
     private val LEVEL_3: List<String> = listOf(
-        "WWWWWWTTTWWWWWW",
+        "WWWWWTTTTTWWWWW",
         "W.............W",
-        "W.W.W.W.W.W.W.W",
+        "W.WWW.W.W.WWW.W",
+        "W.W.........W.W",
+        "W.W.WWW.WWW.W.W",
         "WoW.........WoW",
-        "W.WWW.WWW.WWW.W",
+        "W.WWW.W.W.WWW.W",
         "W.....W.W.....W",
-        "W.WWW.....WWW.W",
-        "W.....W W.....W",
+        "W.WWW.W.W.WWW.W",
+        "W.............W",
+        "W.WWW.W W.WWW.X",
+        "WoW.WWW WWW.WoX",
+        "W.....W W.....X",
         "W.WW.WW-WW.WW.W",
         "W.WW.W===W.WW.W",
-        "W.WW.W===W.WW.X",
-        "W.WW.WWWWW.WW.X",
-        "W.............X",
-        "W.WWWW.W.WWWW.W",
-        "W.............W",
+        "W.WW.W===W.WW.W",
+        "W.WW.WWWWW.WW.W",
         "W.WWW.WWW.WWW.W",
-        "WoW.........WoW",
-        "W.W.W.W.W.W.W.W",
         "W......M......W",
         "W.WWW.WWW.WWW.W",
         "W.............W",
-        "WWWWWWTTTWWWWWW",
+        "WWWWWTTTTTWWWWW",
     )
 
-    // Level 4 — Tall pillars: the four short wall fingers in row 4/17 are
-    // extended down into row 5/16, becoming taller pillars that funnel the
-    // monkey through narrower vertical lanes.
+    // Level 4 — Pen LEFT-CENTER (rows 8-11, cols 1-5), portal RIGHT WALL,
+    // tunnels RIGHT-ONLY (cols 10-12). Pen abuts the left bank, so piranhas
+    // emerge facing right and the chase plays out horizontally.
     private val LEVEL_4: List<String> = listOf(
-        "WWWWWWTTTWWWWWW",
+        "WWWWWWWWWWTTTWW",
         "W.............W",
         "W.WWW.WWW.WWW.W",
         "WoW.........WoW",
         "W.W.WWW.WWW.W.W",
         "W.W...W.W...W.W",
-        "W.WWW.....WWW.W",
-        "W.....W W.....W",
-        "W.WW.WW-WW.WW.W",
-        "W.WW.W===W.WW.W",
-        "W.WW.W===W.WW.X",
-        "W.WW.WWWWW.WW.X",
+        "W.W.W.WWW.WWW.W",
+        "W.W W.........W",
+        "WWW-WW.WW.WW.WW",
+        "WW===W.WW.WW.WW",
+        "WW===W.WW.WW.WX",
+        "WWWWWW.WW.WW.WX",
         "W.............X",
-        "W.WWWW.W.WWWW.W",
-        "W.W...WWW...W.W",
-        "W.W.WWW.WWW.W.W",
-        "WoW.........WoW",
         "W.WWW.WWW.WWW.W",
+        "W.............W",
+        "WoW.WWW.WWW.WoW",
+        "W.W.........W.W",
+        "W.W.WWW.WWW.W.W",
         "W......M......W",
         "W.WWW.WWW.WWW.W",
         "W.............W",
-        "WWWWWWTTTWWWWWW",
+        "WWWWWWWWWWTTTWW",
     )
 
-    // Level 5 — Picket-on-picket: row 4 / row 15 use the modified pattern that
-    // adds wall pillars at cols 2 & 12, and row 5 / row 14 are full pickets
-    // (alternating 1-cell walls every other column). Lots of vertical 1-tile
-    // pickets gives the upper / lower halves a denser, more structured feel.
+    // Level 5 — Pen RIGHT-CENTER (rows 8-11, cols 9-13), portal LEFT WALL,
+    // tunnels LEFT-ONLY (cols 2-4). Mirror of L4.
     private val LEVEL_5: List<String> = listOf(
-        "WWWWWWTTTWWWWWW",
+        "WWTTTWWWWWWWWWW",
         "W.............W",
         "W.WWW.WWW.WWW.W",
         "WoW.........WoW",
-        "W.W.W.WWW.W.W.W",
-        "W.W.W.W.W.W.W.W",
-        "W.WWW.....WWW.W",
-        "W.....W W.....W",
-        "W.WW.WW-WW.WW.W",
-        "W.WW.W===W.WW.W",
-        "W.WW.W===W.WW.X",
-        "W.WW.WWWWW.WW.X",
-        "W.............X",
-        "W.WWWW.W.WWWW.W",
-        "W.W.W.WWW.W.W.W",
-        "W.W.W.WWW.W.W.W",
-        "WoW.........WoW",
+        "W.W.WWW.WWW.W.W",
+        "W.W...W.W...W.W",
+        "W.WWW.WWW.W.W.W",
+        "W.........W W.W",
+        "WW.WW.WW.WW-WWW",
+        "WW.WW.WW.W===WW",
+        "XW.WW.WW.W===WW",
+        "XW.WW.WW.WWWWWW",
+        "X.............W",
         "W.WWW.WWW.WWW.W",
+        "W.............W",
+        "WoW.WWW.WWW.WoW",
+        "W.W.........W.W",
+        "W.W.WWW.WWW.W.W",
         "W......M......W",
         "W.WWW.WWW.WWW.W",
         "W.............W",
-        "WWWWWWTTTWWWWWW",
+        "WWTTTWWWWWWWWWW",
     )
 
-    // Level 6 — Bridge ceiling: a long horizontal wall in row 6 / row 13 splits
-    // the upper / lower halves into clear "rooms" that the player can only cross
-    // at the edges (cols 1, 5, 9, 13).
+    // Level 6 — Pen TOP-LEFT (rows 4-7, cols 1-5), portal RIGHT WALL, tunnels
+    // RIGHT-ONLY (cols 10-12). Pen and portal are on opposite corners; long
+    // diagonal chase to the exit.
     private val LEVEL_6: List<String> = listOf(
-        "WWWWWWTTTWWWWWW",
+        "WWWWWWWWWWTTTWW",
         "W.............W",
-        "W.WWW.WWW.WWW.W",
-        "WoW.........WoW",
-        "W.W.WWW.WWW.W.W",
-        "W.W.........W.W",
-        "W.WWWWW.WWWWW.W",
-        "W.....W W.....W",
-        "W.WW.WW-WW.WW.W",
-        "W.WW.W===W.WW.W",
-        "W.WW.W===W.WW.X",
-        "W.WW.WWWWW.WW.X",
+        "W.W W.WWW.WWW.W",
+        "W.W W.........W",
+        "WWW-WW.WW.WW.WW",
+        "WW===W.WW.WW.WW",
+        "WW===W.WW.WW.WW",
+        "WWWWWW.WW.WW.WW",
+        "W.............W",
+        "W.WWW.W.W.WWW.W",
+        "WoW.........WoX",
+        "W.W.WWWWWWW.W.X",
         "W.............X",
-        "W.WWWWW.WWWWW.W",
+        "W.WWW.WWW.WWW.W",
+        "W.............W",
+        "WoW.WWW.WWW.WoW",
         "W.W.........W.W",
         "W.W.WWW.WWW.W.W",
-        "WoW.........WoW",
-        "W.WWW.WWW.WWW.W",
         "W......M......W",
         "W.WWW.WWW.WWW.W",
         "W.............W",
-        "WWWWWWTTTWWWWWW",
+        "WWWWWWWWWWTTTWW",
     )
 
-    // Level 7 — Twin chevrons: row 5 / row 14 carry the chevron pattern
-    // (4-wall-pillar baffle). The picket row 15 below the lower chevron exists
-    // so the chevron's odd-column path cells can connect downward — without it,
-    // (5, 14) and (9, 14) would be 1-tile pellets isolated by walls on every
-    // side.
+    // Level 7 — Pen TOP-RIGHT (rows 4-7, cols 9-13), portal LEFT WALL,
+    // tunnels LEFT-ONLY (cols 2-4). Mirror of L6.
     private val LEVEL_7: List<String> = listOf(
-        "WWWWWWTTTWWWWWW",
+        "WWTTTWWWWWWWWWW",
+        "W.............W",
+        "W.WWW.WWW.W W.W",
+        "W.........W W.W",
+        "WW.WW.WW.WW-WWW",
+        "WW.WW.WW.W===WW",
+        "WW.WW.WW.W===WW",
+        "WW.WW.WW.WWWWWW",
+        "W.............W",
+        "W.WWW.W.W.WWW.W",
+        "XoW.........WoW",
+        "X.W.WWWWWWW.W.W",
+        "X.............W",
+        "W.WWW.WWW.WWW.W",
+        "W.............W",
+        "WoW.WWW.WWW.WoW",
+        "W.W.........W.W",
+        "W.W.WWW.WWW.W.W",
+        "W......M......W",
+        "W.WWW.WWW.WWW.W",
+        "W.............W",
+        "WWTTTWWWWWWWWWW",
+    )
+
+    // Level 8 — Pen BOTTOM-LEFT (rows 13-16, cols 1-5), portal RIGHT WALL,
+    // tunnels VERY WIDE (cols 4-10). Pen and monkey share the lower half of
+    // the maze, so the player is herded toward the upper area early.
+    private val LEVEL_8: List<String> = listOf(
+        "WWWWTTTTTTTWWWW",
         "W.............W",
         "W.WWW.WWW.WWW.W",
         "WoW.........WoW",
         "W.W.WWW.WWW.W.W",
-        "W...W.W.W.W...W",
-        "W.WWW.....WWW.W",
-        "W.....W W.....W",
-        "W.WW.WW-WW.WW.W",
-        "W.WW.W===W.WW.W",
-        "W.WW.W===W.WW.X",
-        "W.WW.WWWWW.WW.X",
-        "W.............X",
-        "W.WWWW.W.WWWW.W",
-        "W...W.W.W.W...W",
-        "W.W.W.W.W.W.W.W",
-        "WoW.........WoW",
-        "W.WWW.WWW.WWW.W",
-        "W......M......W",
-        "W.WWW.WWW.WWW.W",
-        "W.............W",
-        "WWWWWWTTTWWWWWW",
-    )
-
-    // Level 8 — Stout pillars: the four short finger walls in row 4 / row 17
-    // are replaced with a centered three-pillar pattern (cols 3-4, 7, 10-11),
-    // shifting the maze's vertical-corridor grid.
-    private val LEVEL_8: List<String> = listOf(
-        "WWWWWWTTTWWWWWW",
-        "W.............W",
-        "W.WWW.WWW.WWW.W",
-        "WoW.........WoW",
+        "W.W...W.W...W.W",
         "W.WWW.W.W.WWW.W",
         "W.....W.W.....W",
         "W.WWW.....WWW.W",
-        "W.....W W.....W",
-        "W.WW.WW-WW.WW.W",
-        "W.WW.W===W.WW.W",
-        "W.WW.W===W.WW.X",
-        "W.WW.WWWWW.WW.X",
-        "W.............X",
-        "W.WWWW.W.WWWW.W",
         "W.............W",
-        "W.WWW.WWW.WWW.W",
-        "WoW.........WoW",
         "W.WWW.W.W.WWW.W",
+        "WoW.........WoW",
+        "W.W W.........W",
+        "WWW-WW.WW.WW.WW",
+        "WW===W.WW.WW.WW",
+        "WW===W.WW.WW.WX",
+        "WWWWWW.WW.WW.WX",
+        "W.............X",
         "W......M......W",
         "W.WWW.WWW.WWW.W",
         "W.............W",
-        "WWWWWWTTTWWWWWW",
+        "WWWWTTTTTTTWWWW",
     )
 
-    // Level 9 — Stepped pillars: short L-shaped wall steps at rows 4-5 / 14-15
-    // give the upper + lower halves a "stepped pyramid" feel.
+    // Level 9 — Pen BOTTOM-RIGHT (rows 13-16, cols 9-13), portal LEFT WALL,
+    // tunnels SPLIT (cols 1-3 + 11-13). Mirror of L8 with the portal on the
+    // opposite wall. Rows 8, 11, 17 are deliberately broken up so adjacent
+    // rows never both turn into wide horizontal corridors (no 2x2 path
+    // blocks). Row 11 cols 11-12 are kept open so piranhas leaving the
+    // vestibule at (11,12) can swim right past the PP at (13,11) and escape
+    // upward — without the gap, every neighbor of (11,11) is a wall.
     private val LEVEL_9: List<String> = listOf(
-        "WWWWWWTTTWWWWWW",
+        "WTTTWWWWWWWTTTW",
         "W.............W",
         "W.WWW.WWW.WWW.W",
         "WoW.........WoW",
-        "W.WWW.W.W.WWW.W",
-        "W...W.....W...W",
         "W.W.WWW.WWW.W.W",
-        "W.....W W.....W",
-        "W.WW.WW-WW.WW.W",
-        "W.WW.W===W.WW.W",
-        "W.WW.W===W.WW.X",
-        "W.WW.WWWWW.WW.X",
-        "W.............X",
-        "W.WWWW.W.WWWW.W",
-        "W...W.....W...W",
-        "W.WWW.W.W.WWW.W",
-        "WoW.........WoW",
+        "W.W...W.W...W.W",
         "W.WWW.WWW.WWW.W",
+        "W.....W.W.....W",
+        "W.WWW.W.W.WWW.W",
+        "W.............W",
+        "W.WWW.W.W.WWW.W",
+        "WoW.WWW.WWW..oW",
+        "W.........W W.W",
+        "WW.WW.WW.WW-WWW",
+        "WW.WW.WW.W===WW",
+        "XW.WW.WW.W===WW",
+        "XW.WW.WW.WWWWWW",
+        "X..WW.WW.WWWW.W",
         "W......M......W",
         "W.WWW.WWW.WWW.W",
         "W.............W",
-        "WWWWWWTTTWWWWWW",
+        "WTTTWWWWWWWTTTW",
     )
 
-    // Level 10 — Densest: combines Level 6's bridge ceiling with Level 4's tall
-    // pillars and Level 3's picket-fence rows for the most claustrophobic of
-    // the ten layouts. Power pellets stay in the corners so they're worth a
-    // detour through the tighter corridors.
+    // Level 10 — Densest combo: pen back to CENTER, but portals on BOTH walls
+    // (left + right, rows 10-12) and THREE tunnel groups (cols 2-4 + 6-8 +
+    // 11-13). Tighter corridor patterns top and bottom. Maximum chaos.
     private val LEVEL_10: List<String> = listOf(
-        "WWWWWWTTTWWWWWW",
+        "WWTTTWTTTWWTTTW",
         "W.............W",
         "W.W.W.W.W.W.W.W",
         "WoW.........WoW",
@@ -296,18 +303,18 @@ object Levels {
         "W.....W W.....W",
         "W.WW.WW-WW.WW.W",
         "W.WW.W===W.WW.W",
-        "W.WW.W===W.WW.X",
-        "W.WW.WWWWW.WW.X",
-        "W.............X",
+        "X.WW.W===W.WW.X",
+        "X.WW.WWWWW.WW.X",
+        "X.............X",
         "W.WWWWW.WWWWW.W",
         "W.W...W.W...W.W",
-        "W.W.WWW.WWW.W.W",
-        "WoW.........WoW",
+        "WoW.WWW.WWW.WoW",
+        "W.W.........W.W",
         "W.W.W.W.W.W.W.W",
         "W......M......W",
         "W.WWW.WWW.WWW.W",
         "W.............W",
-        "WWWWWWTTTWWWWWW",
+        "WWTTTWTTTWWTTTW",
     )
 
     private val LEVELS: List<List<String>> = listOf(
