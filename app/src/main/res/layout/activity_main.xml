@@ -175,6 +175,65 @@
         tools:text="Ready!" />
 
     <FrameLayout
+        android:id="@+id/allLevelsCompleteOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/splash_bg"
+        android:visibility="gone"
+        android:clickable="true"
+        android:focusable="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="32dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/all_levels_complete_title"
+                android:textColor="@color/power_pellet"
+                android:textSize="40sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="16dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/all_levels_complete_subtitle"
+                android:textColor="@color/hud_text"
+                android:textSize="16sp"
+                android:gravity="center"
+                android:layout_marginBottom="32dp" />
+
+            <Button
+                android:id="@+id/continueChallengeButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minWidth="240dp"
+                android:text="@string/continue_challenge"
+                android:textColor="@color/button_text"
+                android:backgroundTint="@color/button_bg"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="16dp" />
+
+            <Button
+                android:id="@+id/restartFromCompleteButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minWidth="240dp"
+                android:text="@string/restart_from_start"
+                android:textColor="@color/button_text"
+                android:backgroundTint="@color/button_bg"
+                android:textSize="18sp" />
+        </LinearLayout>
+    </FrameLayout>
+
+    <FrameLayout
         android:id="@+id/splashOverlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

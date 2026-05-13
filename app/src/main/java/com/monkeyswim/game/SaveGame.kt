@@ -26,6 +26,7 @@ object SaveGame {
         val difficultyMultiplier: Float,
         val mazeLayout: List<String>,
         val fruitMap: Map<Pair<Int, Int>, FruitRenderer.FruitType>,
+        val challengeMode: Boolean = false,
     )
 
     /**
@@ -53,6 +54,7 @@ object SaveGame {
                 })
             }
             put("fruits", fruits)
+            put("challenge", snapshot.challengeMode)
         }
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit()
@@ -83,6 +85,9 @@ object SaveGame {
                 difficultyMultiplier = json.getDouble("difficulty").toFloat(),
                 mazeLayout = layout,
                 fruitMap = fruitMap,
+                // Pre-challenge-mode saves omit this key; default to false so
+                // an in-progress first run-through restores normally.
+                challengeMode = json.optBoolean("challenge", false),
             )
         } catch (_: Exception) {
             // Malformed payload (corrupted prefs, schema drift slipping past the

@@ -13,7 +13,7 @@ class GameState(
     initialLives: Int = 5,
     var listener: Listener? = null,
 ) {
-    enum class Phase { AWAITING_START, READY, PLAYING, LIFE_LOST, LEVEL_COMPLETE, GAME_OVER, PAUSED }
+    enum class Phase { AWAITING_START, READY, PLAYING, LIFE_LOST, LEVEL_COMPLETE, ALL_LEVELS_COMPLETE, GAME_OVER, PAUSED }
 
     enum class Powerup { LIGHTNING, BLACK_HOLE, SHARK, SLOW_PIRANHAS, EXTRA_LIFE }
 
@@ -22,6 +22,7 @@ class GameState(
         fun onLivesChanged(lives: Int) {}
         fun onLevelChanged(level: Int) {}
         fun onGameOver() {}
+        fun onAllLevelsComplete() {}
     }
 
     var level: Int = 1
@@ -37,6 +38,30 @@ class GameState(
     private var animTime: Float = 0f
     private var frightTimer: Float = 0f
     private var frightChainBonus: Int = 200
+
+    /**
+     * False during the first run-through (levels 1..LEVEL_COUNT) — piranha speed
+     * stays at 1.0x and there are always 4 piranhas. After clearing every level
+     * the player chooses Restart (resets this) or Continue (sets this to true).
+     * In challenge mode the level counter resets to 1 but `piranhaSpeedScaleForLevel`
+     * applies the per-level ramp and `piranhaCountForLevel` adds one piranha at
+     * every level divisible by 5.
+     */
+    private var challengeMode: Boolean = false
+
+    /**
+     * Banner text shown alongside "Ready!" at the start of a level. Set when
+     * loadLevel detects a change in challenge speed/piranha count (or on entry
+     * to challenge mode); consumed by the READY-phase banner draw + cleared on
+     * the next loadLevel. Null means no extra banner (first run-through, or a
+     * challenge level where nothing changed vs. the previous one).
+     */
+    private var levelIntroBanner: String? = null
+
+    // Track last level's speed/count so loadLevel can compute the delta-vs-previous
+    // banner without recomputing the entire history.
+    private var lastSpeedScale: Float = 1.0f
+    private var lastPiranhaCount: Int = 4
 
     // Powerup state. Banana spawns periodically; collecting it triggers a
     // random Powerup. The four effects each have their own state + timer.
@@ -75,10 +100,37 @@ class GameState(
         level = 1
         score = 0
         lives = initialLives
+        challengeMode = false
+        lastSpeedScale = 1.0f
+        lastPiranhaCount = 4
+        levelIntroBanner = null
         loadLevel(1)
         phase = Phase.READY
         phaseTimer = 2.0f
         emitAll()
+    }
+
+    /**
+     * "Continue" action from the all-levels-complete overlay: drop into
+     * challenge mode at level 1 with score + lives preserved. The READY banner
+     * for L1 announces the mode itself; subsequent levels announce only the
+     * speed/piranha-count deltas computed by loadLevel.
+     */
+    @Synchronized
+    fun acceptChallenge() {
+        challengeMode = true
+        level = 1
+        // Reset the delta baselines so loadLevel's first comparison treats the
+        // jump from first-run-end (1.0x, 4) into challenge-L1 (also 1.0x, 4) as
+        // a "no change" — we override that with the explicit "Challenge!" intro
+        // below instead of a misleading "Speed Up".
+        lastSpeedScale = piranhaSpeedScaleForLevel(1)
+        lastPiranhaCount = piranhaCountForLevel(1)
+        loadLevel(1)
+        levelIntroBanner = "Challenge!"
+        phase = Phase.READY
+        phaseTimer = 2.0f
+        listener?.onLevelChanged(level)
     }
 
     @Synchronized
@@ -90,6 +142,7 @@ class GameState(
         difficultyMultiplier = difficultyMultiplier,
         mazeLayout = maze.snapshotLayout(),
         fruitMap = maze.powerPelletFruits.toMap(),
+        challengeMode = challengeMode,
     )
 
     /**
@@ -108,13 +161,49 @@ class GameState(
         score = snapshot.score
         lives = snapshot.lives
         difficultyMultiplier = snapshot.difficultyMultiplier
+        challengeMode = snapshot.challengeMode
+        // Restoring mid-game shouldn't fire a delta banner — reset baselines to
+        // the current level so loadLevel computes "no change."
+        lastSpeedScale = piranhaSpeedScaleForLevel(level)
+        lastPiranhaCount = piranhaCountForLevel(level)
+        levelIntroBanner = null
         when (snapshot.phase) {
             Phase.LEVEL_COMPLETE -> {
-                level++
-                loadLevel(level)
-                phase = Phase.READY
-                phaseTimer = 2.0f
+                // Mid-completion: advance to the next level on restore, OR
+                // surface the all-levels-complete overlay if the player had
+                // just cleared the final first-run level. In the overlay case
+                // we still need to rehydrate the maze from the snapshot so
+                // the background behind the overlay shows the cleared level
+                // instead of a default level-1 layout.
+                if (!challengeMode && level >= Levels.LEVEL_COUNT) {
+                    maze = Maze(snapshot.mazeLayout, snapshot.fruitMap)
+                    monkey = Monkey(maze, maze.monkeySpawn.first, maze.monkeySpawn.second)
+                    piranhas = createPiranhas(maze, level)
+                    clearPowerups()
+                    applyEntitySpeeds()
+                    frightTimer = 0f
+                    phase = Phase.ALL_LEVELS_COMPLETE
+                    emitAll()
+                    listener?.onAllLevelsComplete()
+                } else {
+                    level++
+                    loadLevel(level)
+                    phase = Phase.READY
+                    phaseTimer = 2.0f
+                    emitAll()
+                }
+            }
+            Phase.ALL_LEVELS_COMPLETE -> {
+                // Saved while the overlay was up — keep showing it.
+                maze = Maze(snapshot.mazeLayout, snapshot.fruitMap)
+                monkey = Monkey(maze, maze.monkeySpawn.first, maze.monkeySpawn.second)
+                piranhas = createPiranhas(maze, level)
+                clearPowerups()
+                applyEntitySpeeds()
+                frightTimer = 0f
+                phase = Phase.ALL_LEVELS_COMPLETE
                 emitAll()
+                listener?.onAllLevelsComplete()
             }
             else -> {
                 maze = Maze(snapshot.mazeLayout, snapshot.fruitMap)
@@ -190,6 +279,10 @@ class GameState(
                 phaseTimer -= dt
                 if (phaseTimer <= 0f) {
                     phase = Phase.PLAYING
+                    // The challenge-mode level-intro banner only applies to
+                    // its own READY window — clear it so a later READY (after
+                    // life loss, etc.) shows the plain "Ready!" banner.
+                    levelIntroBanner = null
                 }
             }
             Phase.PLAYING -> updatePlaying(dt)
@@ -209,14 +302,25 @@ class GameState(
             Phase.LEVEL_COMPLETE -> {
                 phaseTimer -= dt
                 if (phaseTimer <= 0f) {
-                    level++
-                    loadLevel(level)
-                    phase = Phase.READY
-                    phaseTimer = 2.0f
-                    listener?.onLevelChanged(level)
+                    // First run-through ends at Levels.LEVEL_COUNT — stop and
+                    // present the Restart / Continue choice. In challenge mode
+                    // the player has already opted in; keep cycling forever
+                    // and let the per-level banner announce ramp changes.
+                    if (!challengeMode && level >= Levels.LEVEL_COUNT) {
+                        phase = Phase.ALL_LEVELS_COMPLETE
+                        listener?.onAllLevelsComplete()
+                    } else {
+                        level++
+                        loadLevel(level)
+                        phase = Phase.READY
+                        phaseTimer = 2.0f
+                        listener?.onLevelChanged(level)
+                    }
                 }
             }
-            Phase.AWAITING_START, Phase.GAME_OVER, Phase.PAUSED -> { /* no-op until resumed */ }
+            Phase.AWAITING_START, Phase.GAME_OVER, Phase.PAUSED, Phase.ALL_LEVELS_COMPLETE -> {
+                // No-op until the player chooses an action (resume, restart, continue).
+            }
         }
     }
 
@@ -430,7 +534,38 @@ class GameState(
         clearPowerups()
         applyEntitySpeeds()
         frightTimer = 0f
+
+        // Recompute the level-intro banner from the speed/count delta. Only
+        // applies in challenge mode — first run-through has no per-level
+        // changes to announce. The check `levelIntroBanner == null` lets
+        // `acceptChallenge` overwrite our result with "Challenge!" *after*
+        // this method returns; we just produce the natural delta here.
+        val newSpeed = piranhaSpeedScaleForLevel(lvl)
+        val newCount = piranhaCountForLevel(lvl)
+        if (challengeMode && levelIntroBanner == null) {
+            val speedUp = newSpeed > lastSpeedScale + 0.001f
+            val moreFish = newCount > lastPiranhaCount
+            levelIntroBanner = when {
+                speedUp && moreFish -> "Speed Up · +1 Piranha"
+                speedUp -> "Speed Up"
+                moreFish -> "+1 Piranha"
+                else -> null
+            }
+        }
+        lastSpeedScale = newSpeed
+        lastPiranhaCount = newCount
     }
+
+    /** Piranhas-per-level: always 4 during the first run-through; in challenge
+     * mode an extra piranha is added at every level divisible by 5 (L5 = 5,
+     * L10 = 6, L15 = 7, …). */
+    private fun piranhaCountForLevel(lvl: Int): Int =
+        if (!challengeMode) 4 else 4 + (lvl / 5)
+
+    /** Per-level piranha speed scale. First run-through is a flat 1.0x; in
+     * challenge mode the existing `Levels.piranhaSpeedScale` ramp applies. */
+    private fun piranhaSpeedScaleForLevel(lvl: Int): Float =
+        if (!challengeMode) 1.0f else Levels.piranhaSpeedScale(lvl)
 
     /**
      * Debug-only level jump: load the requested level mid-game while preserving
@@ -456,22 +591,26 @@ class GameState(
     }
 
     private fun createPiranhas(m: Maze, lvl: Int): List<Piranha> {
-        val scale = Levels.piranhaSpeedScale(lvl)
+        val scale = piranhaSpeedScaleForLevel(lvl)
+        val count = piranhaCountForLevel(lvl)
         val personalities = listOf(
             Piranha.Personality.DIRECT,
             Piranha.Personality.AHEAD2,
             Piranha.Personality.AHEAD4,
             Piranha.Personality.ROAMER,
         )
-        // Staggered release: Blinky out instantly, then 4s, 8s, 12s.
-        val releaseDelays = listOf(0f, 4f, 8f, 12f)
-        return m.piranhaSpawnTiles.mapIndexed { i, (c, r) ->
+        // Staggered release: instant, then every 4 seconds. Extends naturally
+        // beyond the original 4 piranhas so each new fish enters after the
+        // previous one is already loose.
+        val spawnTiles = m.piranhaSpawnTiles
+        return (0 until count).map { i ->
+            val (c, r) = spawnTiles[i % spawnTiles.size]
             Piranha(
                 m,
                 personalities[i % personalities.size],
                 c,
                 r,
-                releaseDelays[i % releaseDelays.size],
+                i * 4f,
             ).also {
                 it.speedScale = scale * difficultyMultiplier
             }
@@ -480,7 +619,7 @@ class GameState(
 
     private fun applyEntitySpeeds() {
         monkey.speedScale = difficultyMultiplier
-        val pscale = Levels.piranhaSpeedScale(level)
+        val pscale = piranhaSpeedScaleForLevel(level)
         // Slow-piranhas powerup halves the piranha speed; the monkey's speed is
         // unaffected (per the spec).
         val slowMult = if (slowPiranhaTimer > 0f) 0.5f else 1f
@@ -591,7 +730,14 @@ class GameState(
         val cxScreen = viewWidth / 2f
         val cyScreen = hudHeightPx + playableHeight / 2f
         when (phase) {
-            Phase.READY -> drawBanner(canvas, "Ready!", cxScreen, cyScreen, cellSize * 1.6f)
+            Phase.READY -> {
+                drawBanner(canvas, "Ready!", cxScreen, cyScreen, cellSize * 1.6f)
+                // In challenge mode, announce speed-up / +piranha just above
+                // the "Ready!" so the player sees both before play begins.
+                levelIntroBanner?.let {
+                    drawBanner(canvas, it, cxScreen, cyScreen - cellSize * 1.4f, cellSize * 0.9f)
+                }
+            }
             Phase.LEVEL_COMPLETE -> drawBanner(canvas, "Level $level cleared!", cxScreen, cyScreen, cellSize * 1.2f)
             Phase.PAUSED -> drawBanner(canvas, "Paused", cxScreen, cyScreen, cellSize * 1.6f)
             else -> {}

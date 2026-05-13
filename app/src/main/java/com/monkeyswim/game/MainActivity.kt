@@ -30,6 +30,9 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
     private lateinit var gameOverOverlay: FrameLayout
     private lateinit var restartButton: Button
     private lateinit var watchAdButton: Button
+    private lateinit var allLevelsCompleteOverlay: FrameLayout
+    private lateinit var continueChallengeButton: Button
+    private lateinit var restartFromCompleteButton: Button
     private lateinit var helpButton: Button
     private lateinit var helpOverlay: FrameLayout
     private lateinit var helpCloseButton: Button
@@ -63,6 +66,9 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
         gameOverOverlay = findViewById(R.id.gameOverOverlay)
         restartButton = findViewById(R.id.restartButton)
         watchAdButton = findViewById(R.id.watchAdButton)
+        allLevelsCompleteOverlay = findViewById(R.id.allLevelsCompleteOverlay)
+        continueChallengeButton = findViewById(R.id.continueChallengeButton)
+        restartFromCompleteButton = findViewById(R.id.restartFromCompleteButton)
         helpButton = findViewById(R.id.helpButton)
         helpOverlay = findViewById(R.id.helpOverlay)
         helpCloseButton = findViewById(R.id.helpCloseButton)
@@ -101,6 +107,14 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
 
         restartButton.setOnClickListener {
             hideGameOver()
+            gameView.gameState().reset()
+        }
+        continueChallengeButton.setOnClickListener {
+            allLevelsCompleteOverlay.visibility = View.GONE
+            gameView.gameState().acceptChallenge()
+        }
+        restartFromCompleteButton.setOnClickListener {
+            allLevelsCompleteOverlay.visibility = View.GONE
             gameView.gameState().reset()
         }
         helpButton.setOnClickListener {
@@ -254,6 +268,10 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
 
     override fun onGameOver() {
         runOnUiThread { showGameOver() }
+    }
+
+    override fun onAllLevelsComplete() {
+        runOnUiThread { allLevelsCompleteOverlay.visibility = View.VISIBLE }
     }
 
     private fun showGameOver() {
