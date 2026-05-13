@@ -52,8 +52,10 @@ class Maze(
     val penExitTile: Pair<Int, Int>
 
     // Cell coordinates of the monkey's spawn (the unique 'M' tile in the layout)
-    // and the piranha spawn cells (every '=' pen-interior tile). Both are derived
-    // from the layout itself so each level can carry its own spawn config.
+    // and the four piranha spawn cells (the 4 corners of the '=' pen-interior
+    // bounding box — the spec mandates exactly four piranhas per level). Both
+    // are derived from the layout itself so each level can carry its own pen
+    // dimensions without changing the count.
     val monkeySpawn: Pair<Int, Int>
     val piranhaSpawnTiles: List<Pair<Int, Int>>
 
@@ -107,7 +109,21 @@ class Maze(
         monkeySpawn = requireNotNull(monkeySpawnFound) {
             "Layout is missing an 'M' (monkey-spawn) tile"
         }
-        piranhaSpawnTiles = piranhaSpawns
+        // Pin spawns to the 4 corners of the pen-interior bounding box. For the
+        // current 3x2 pens this gives a symmetric corner layout (top-left,
+        // top-right, bottom-left, bottom-right) that aligns 1:1 with the four
+        // piranha personalities + staggered release delays in createPiranhas.
+        require(piranhaSpawns.isNotEmpty()) { "Layout is missing '=' pen-interior tiles" }
+        val minC = piranhaSpawns.minOf { it.first }
+        val maxC = piranhaSpawns.maxOf { it.first }
+        val minR = piranhaSpawns.minOf { it.second }
+        val maxR = piranhaSpawns.maxOf { it.second }
+        piranhaSpawnTiles = listOf(
+            minC to minR,
+            maxC to minR,
+            minC to maxR,
+            maxC to maxR,
+        )
 
         penExitTile = if (penDoors.isNotEmpty()) {
             val doorRow = penDoors.minOf { it.second }
