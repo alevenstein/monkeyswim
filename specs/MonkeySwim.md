@@ -18,15 +18,20 @@ The monkey starts stationary at spawn — the game waits for the player's first 
 
 Each level is a water level: dark blue depth-gradient water with animated wavy bands and drifting caustic highlights, surrounded by canal-bank "walls" (dark brown rounded rectangles inset on path-facing sides so corridors look wider).
 
-Three gateways:
+Three kinds of gateway:
 
-- **Top tunnel** — a 3-tile-wide opening at the top centre; the monkey (and any piranha) walking off the top edge through any of those columns wraps to the matching column at the bottom edge.
-- **Bottom tunnel** — mirror; wraps to the top.
-- **Right-wall portal** — three locked tiles (rendered dark) on the right border, vertically centred. Locks while pellets remain; unlocks (glowing animated cyan) once the last pellet is eaten. Walking into an unlocked portal transitions the player to the next level.
+- **Wrap tunnels** — a contiguous span of `T` tiles on the top row wraps to the matching span on the bottom row of the same columns. Per-level: the tunnel column set varies (centred, wide-centred, split left+right, left-only, right-only, three-group, etc.). The two ends must use the same column set since `Maze.tunnelWrap` teleports by column without verifying the destination is also a `T`.
+- **Level portal** — `X` tiles, normally on the left or right wall (one wall, or both). Locks while pellets remain; unlocks (glowing animated cyan) once the last pellet is eaten. Walking into an unlocked portal transitions the player to the next level.
 
-Every level is 15 cols × 22 rows and shares the same structural skeleton: pen-flanking 1-tile vertical corridors at cols 1, 4, 10, 13; pen interior `===` at cols 6-8 rows 9-10 with a single 1-tile pen door at (col 7, row 8); pen base (cols 6-8 row 11); top + bottom 3-tile-wide wrap-tunnel mouths spanning cols 6-8 of rows 0 and 21; right-wall portal at col 14 rows 10-12 (locks while pellets remain; unlocks — glowing animated cyan — once the last pellet is eaten); monkey spawn at (col 7, row 18). Layouts ship as 22 strings of 15 chars; the monkey-spawn cell is marked `M` and piranha-spawn cells are derived from the `===` pen interior. The corridor and wall patterns above and below the pen vary per level — there are 10 hand-laid levels in `Levels.kt` (levels beyond 10 cycle back to level 1; difficulty keeps ramping via piranha speed). Every level keeps four power-pellet positions, 1-tile-wide corridors throughout (no big open zones — the player should never need a mid-air change of direction), all pellets reachable from spawn, and no dead-end pellets.
+Every level is 15 cols × 22 rows. Each layout ships as 22 strings of 15 chars; the monkey-spawn cell is marked `M` and piranha-spawn cells are derived from the `===` pen-interior bounding box (always the four corners). The monkey spawn stays at **(col 7, row 18)** across all levels so the player's starting orientation is constant — what varies per level is the pen position, the portal wall, and the tunnel columns:
 
-In debug builds (`BuildConfig.DEBUG`) a small "DEBUG · Level" Spinner appears under the HUD letting the developer jump directly to any of the ten levels without having to clear the previous one. Hidden in release builds.
+- **Level 1** — pen centre, portal right wall, tunnels centred (baseline).
+- **Levels 2-9** — each level carries a unique combination of pen position (top/middle/bottom × left/centre/right), portal wall (left, right, or both), and tunnel column set, so the gameplay feel changes per level: piranhas emerge from a different direction and the exit is in a different place.
+- **Level 10** — densest. Pen centre, **both** left and right walls hold portal tiles, three split tunnel groups.
+
+Levels beyond 10 cycle back to layout 1 but the difficulty knobs (speed, piranha count) keep applying — see "Challenge mode" below. Every level keeps four power-pellet positions, 1-tile-wide corridors as a guideline (a few small 2×2 walkable cells are allowed near portal-access cells or vestibules when strict avoidance would wall in piranhas or isolate pellets), all pellets reachable from spawn, and no dead-end pellets. Piranha AI is fully data-driven from the layout chars (`maze.penExitTile` and `maze.piranhaSpawnTiles`), so the per-level pen position needs no AI changes.
+
+In debug builds (`BuildConfig.DEBUG`) a small bar appears under the HUD with two controls: a **"DEBUG · Level" Spinner** that jumps directly to any of the ten levels without having to clear the previous one, and a **"FRUIT" button** that triggers the power-pellet fright effect (piranhas frightened for 6.5s, chain bonus reset) without needing to find and eat one. Both are hidden in release builds.
 
 ### Power pellets — fruit
 
@@ -34,11 +39,15 @@ Each power-pellet position renders as a randomly-chosen fruit, picked once at le
 
 ### Piranha pen + staggered release
 
-Four piranhas spawn inside a 3×2 pen near the centre of the maze. The pen has a single 1-tile gate at the top, rendered as a horizontal pink bar that bridges across the door's actual entryway (extends slightly into the flanking walls' insetted edges so it visually "anchors" to them). Piranhas are released through the gate on a staggered schedule from level start — first immediately, then at 4 s, 8 s, and 12 s. After a piranha is killed (eaten frightened, hit by a powerup, etc.) it returns to its spawn corner via a pre-computed BFS shortest-path "flow field" — always optimal, never gets lost.
+Each level has a 3×2 pen; **position varies per level** (top/middle/bottom × left/centre/right). The pen door always sits at the top of the pen (`Maze.penExitTile` is hard-coded as `doorRow - 1`), rendered as a horizontal pink bar that bridges across the door's actual entryway (extends slightly into the flanking walls' insetted edges so it visually "anchors" to them). The cell directly above the door is the **vestibule** — non-wall (often a space) and the target piranhas home to in `LEAVING_PEN` mode.
+
+During the **first run-through (levels 1-10)** exactly four piranhas spawn at the four corners of the pen-interior bounding box. They're released through the gate on a staggered schedule from level start — first immediately, then at 4 s, 8 s, and 12 s. In **challenge mode** the count rises by one every five levels (see "Challenge mode" below); extras cycle through the same four spawn corners with their own staggered release (`i * 4f` seconds), so an L10 challenge level has six piranhas trickling out across the first 20 seconds.
+
+After a piranha is killed (eaten frightened, hit by a powerup, etc.) it returns to its spawn corner via a pre-computed BFS shortest-path "flow field" — always optimal, never gets lost.
 
 Piranha behaviours:
 
-- Four personalities (Pac-Man-style): **DIRECT** (Blinky), **AHEAD2** (Pinky), **AHEAD4** (Inky), **ROAMER** (Clyde).
+- Four personalities (Pac-Man-style): **DIRECT** (Blinky), **AHEAD2** (Pinky), **AHEAD4** (Inky), **ROAMER** (Clyde). Extra challenge-mode piranhas cycle through the same four personalities.
 - Three modes: **CHASE**, **FRIGHTENED**, **EATEN** (returning to spawn as eyes only). A fourth state, **LEAVING_PEN**, drives the staggered exit.
 - Pac-Man tie-break order at junctions: UP, LEFT, DOWN, RIGHT.
 
@@ -50,10 +59,34 @@ See **`specs/Powerups.md`** for the full powerup spec. Bananas appear periodical
 
 The player starts with 5 lives. On collision with a non-frightened piranha, the monkey shrinks (death animation) and respawns at spawn. When all lives are used the game-over splash screen offers two buttons:
 
-- **Restart** — start a fresh game.
-- **Watch Ad for +3 Lives** — Google AdMob rewarded interstitial; on reward, +3 lives and the player resumes mid-level with the maze and score preserved.
+- **Restart** — start a fresh game (also clears challenge mode if it was active).
+- **Watch Ad for +3 Lives** — Google AdMob rewarded interstitial; on reward, +3 lives and the player resumes mid-level with the maze, score, and challenge-mode state preserved.
 
 AdMob is currently wired to Google's official **test** App ID and rewarded-ad unit ID, with TODOs to swap in production identifiers before publishing.
+
+### Challenge mode
+
+The first run-through (levels 1-10) is intentionally flat: piranha speed stays at **1.0x** every level and the piranha count stays at **4**. After clearing level 10 the game enters a new `ALL_LEVELS_COMPLETE` phase and an overlay appears with two choices:
+
+- **Restart** — full reset; level 1, score 0, lives 5, challenge mode off.
+- **Continue (Harder)** — sets `challengeMode = true`, drops the player back at level 1, **preserves current score and lives**.
+
+In challenge mode two difficulty knobs become active, both routed through GameState helpers (`piranhaSpeedScaleForLevel`, `piranhaCountForLevel`) so the conditional logic lives in one place:
+
+- **Speed ramp** — the existing `Levels.piranhaSpeedScale` ramp applies: `1.0 + 0.08 * (level - 1)`, capped at `1.6x`. So challenge L1 = 1.0x, L2 = 1.08x, …, L9 onward = 1.6x.
+- **Piranha count** — `4 + (level / 5)` (integer division). L1-L4 = 4, L5-L9 = 5, L10-L14 = 6, L15-L19 = 7, etc.
+
+Before each level begins, a small banner is rendered above the "Ready!" text announcing what changed vs the previous level:
+
+- Entering challenge mode at L1: **"Challenge!"**
+- Speed-only change: **"Speed Up"**
+- Piranha-count only: **"+1 Piranha"**
+- Both: **"Speed Up · +1 Piranha"**
+- No change (e.g. challenge L11-L14, where speed is already capped and no piranha bump): no banner.
+
+The overlay appears **only once per game** — completing 10 more levels in challenge mode does not re-trigger it; challenge mode loops indefinitely with the difficulty knobs still applied. Restarting from game over (lives = 0) clears challenge mode.
+
+Saved games persist the challenge-mode flag (`challenge` JSON field in the snapshot; older saves without the field default to `false`).
 
 ### Sprites
 
