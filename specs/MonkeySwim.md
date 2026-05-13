@@ -20,14 +20,14 @@ Each level is a water level: dark blue depth-gradient water with animated wavy b
 
 Three kinds of gateway:
 
-- **Wrap tunnels** — a contiguous span of `T` tiles on the top row wraps to the matching span on the bottom row of the same columns. Per-level: the tunnel column set varies (centred, wide-centred, split left+right, left-only, right-only, three-group, etc.). The two ends must use the same column set since `Maze.tunnelWrap` teleports by column without verifying the destination is also a `T`.
-- **Level portal** — `X` tiles, normally on the left or right wall (one wall, or both). Locks while pellets remain; unlocks (glowing animated cyan) once the last pellet is eaten. Walking into an unlocked portal transitions the player to the next level.
+- **Wrap tunnels** — a single contiguous span of three `T` tiles on the top row, with a matching three-tile span on the bottom row in the same columns; the monkey (and any piranha) walking off one edge through those columns wraps to the other. Each level has **exactly one** such 3-cell tunnel — never split into multiple groups and never wider than 3 — because the player perceives a wider/split span as multiple distinct portals. The position of the 3-cell group varies per level for visual identity (e.g. L1 cols 6-8, L2 cols 4-6, L8 cols 8-10, L10 cols 11-13, etc.). The two ends must use the same column set since `Maze.tunnelWrap` teleports by column without verifying the destination is also a `T`.
+- **Level portal** — `X` tiles, on either the left or right wall (exactly one wall per level, three vertically-adjacent cells). Locks while pellets remain; unlocks (glowing animated cyan) once the last pellet is eaten. Walking into an unlocked portal transitions the player to the next level.
 
 Every level is 15 cols × 22 rows. Each layout ships as 22 strings of 15 chars; the monkey-spawn cell is marked `M` and piranha-spawn cells are derived from the `===` pen-interior bounding box (always the four corners). The monkey spawn stays at **(col 7, row 18)** across all levels so the player's starting orientation is constant — what varies per level is the pen position, the portal wall, and the tunnel columns:
 
-- **Level 1** — pen centre, portal right wall, tunnels centred (baseline).
-- **Levels 2-9** — each level carries a unique combination of pen position (top/middle/bottom × left/centre/right), portal wall (left, right, or both), and tunnel column set, so the gameplay feel changes per level: piranhas emerge from a different direction and the exit is in a different place.
-- **Level 10** — densest. Pen centre, **both** left and right walls hold portal tiles, three split tunnel groups.
+- **Level 1** — pen centre, portal right wall, tunnel cols 6-8 (baseline).
+- **Levels 2-9** — each level carries a unique combination of pen position (top/middle/bottom × left/centre/right), portal wall (left or right), and tunnel column triple, so the gameplay feel changes per level: piranhas emerge from a different direction and the exit is in a different place.
+- **Level 10** — densest corridor patterns. Pen centre, portal on the left wall (mirror of L1's right-wall default), tunnel cols 11-13 (far right, opposite the portal).
 
 Levels beyond 10 cycle back to layout 1 but the difficulty knobs (speed, piranha count) keep applying — see "Challenge mode" below. Every level keeps four power-pellet positions, 1-tile-wide corridors as a guideline (a few small 2×2 walkable cells are allowed near portal-access cells or vestibules when strict avoidance would wall in piranhas or isolate pellets), all pellets reachable from spawn, and no dead-end pellets. Piranha AI is fully data-driven from the layout chars (`maze.penExitTile` and `maze.piranhaSpawnTiles`), so the per-level pen position needs no AI changes.
 
@@ -87,6 +87,14 @@ Before each level begins, a small banner is rendered above the "Ready!" text ann
 The overlay appears **only once per game** — completing 10 more levels in challenge mode does not re-trigger it; challenge mode loops indefinitely with the difficulty knobs still applied. Restarting from game over (lives = 0) clears challenge mode.
 
 Saved games persist the challenge-mode flag (`challenge` JSON field in the snapshot; older saves without the field default to `false`).
+
+### Sound
+
+All SFX are procedurally synthesised in `SoundEngine.kt` (no audio assets). Each effect is generated once at app start into a 16-bit PCM `ShortArray` and uploaded into its own `AudioTrack` in `MODE_STATIC`; `play()` rewinds and re-triggers. Different effects can play simultaneously because each has its own track. See **`specs/SoundEffects.md`** for the per-effect design log (character, fire-point, synthesis recipe).
+
+Effects in the current catalogue: PELLET, FRUIT, LIGHTNING, BLACK_HOLE, SHARK, SLOW_PIRANHAS, EXTRA_LIFE, DEATH, PIRANHA_EATEN, PORTAL, LEVEL_COMPLETE. Triggered from `GameState.updatePlaying` (pellet hook, piranha-eaten branch, gateway-hit branch), `activatePowerup` (powerup hooks), and `onLifeLost`.
+
+`SoundEngine` is owned by `MainActivity` and handed to `GameState` via the `soundEngine` field — null-safe so headless tests don't need an audio device. The HUD top bar has a **🔊 / 🔇** button (rightmost, alongside the `?` Help button); tapping it toggles `SoundEngine.enabled`, which is persisted to `SharedPreferences` (`monkeyswim_settings` / `soundEnabled`, default `true`). When disabled, every `play()` is a no-op. Visual contract matches Brick Basher's Canvas-drawn sound button — white when on, muted gray `#546E7A` when off.
 
 ### Sprites
 

@@ -32,6 +32,8 @@
     <string name="help_pause_hint">Tap the screen to pause or resume</string>
     <string name="debug_level_selector_label">DEBUG · Level</string>
     <string name="debug_fruit_button">FRUIT</string>
+    <string name="sound_on">🔊</string>
+    <string name="sound_off">🔇</string>
     <string name="all_levels_complete_title">River Cleared!</string>
     <string name="all_levels_complete_subtitle">You\'ve completed every level.</string>
     <string name="continue_challenge">Continue (Harder)</string>

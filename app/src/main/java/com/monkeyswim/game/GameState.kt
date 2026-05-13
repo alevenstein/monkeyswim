@@ -77,6 +77,13 @@ class GameState(
     private var heartTimer: Float = 0f
 
     /**
+     * Procedural SFX engine. Optional — null is a no-op so unit tests and
+     * pre-init startup paths don't need a real audio device. MainActivity sets
+     * this in onCreate after the engine has been init()'d.
+     */
+    var soundEngine: SoundEngine? = null
+
+    /**
      * Global speed multiplier from the difficulty selection on the splash screen.
      * Setter applies to the existing monkey + piranhas immediately so a difficulty
      * picked at startup takes effect before the game leaves the READY phase.
@@ -375,6 +382,9 @@ class GameState(
             if (kind == Tile.POWER_PELLET) {
                 frightTimer = 6.5f
                 frightChainBonus = 200
+                soundEngine?.play(SoundEngine.Sfx.FRUIT)
+            } else {
+                soundEngine?.play(SoundEngine.Sfx.PELLET)
             }
             listener?.onScoreChanged(score)
         }
@@ -407,8 +417,12 @@ class GameState(
             }
         }
 
-        // Bottom gateway -> level complete.
+        // Bottom gateway -> level complete. The portal whoosh + the cheerful
+        // arpeggio fire together: they have very different timbres so the ear
+        // can still pick out each one ("warp out", then the celebration).
         if (maze.isGatewayTile(monkey.tileCol, monkey.tileRow) && maze.gatewayUnlocked) {
+            soundEngine?.play(SoundEngine.Sfx.PORTAL)
+            soundEngine?.play(SoundEngine.Sfx.LEVEL_COMPLETE)
             phase = Phase.LEVEL_COMPLETE
             phaseTimer = 1.5f
             return
@@ -419,6 +433,7 @@ class GameState(
             if (p.mode == Piranha.Mode.EATEN) continue
             if (p.overlapsWith(monkey)) {
                 if (p.mode == Piranha.Mode.FRIGHTENED) {
+                    soundEngine?.play(SoundEngine.Sfx.PIRANHA_EATEN)
                     p.markEaten()
                     score += frightChainBonus
                     frightChainBonus *= 2
@@ -440,28 +455,33 @@ class GameState(
                 // 4, 8, 12 s) — they're confined inside the pen and trickle
                 // back out one at a time.
                 for (p in piranhas) p.resetToSpawn()
+                soundEngine?.play(SoundEngine.Sfx.LIGHTNING)
             }
             Powerup.BLACK_HOLE -> {
                 pickRandomFreeTile()?.let {
                     blackHole = it
                     blackHoleTimer = BLACK_HOLE_DURATION
+                    soundEngine?.play(SoundEngine.Sfx.BLACK_HOLE)
                 }
             }
             Powerup.SHARK -> {
                 pickRandomFreeTile()?.let { (c, r) ->
                     shark = Shark(maze, c, r)
                     sharkTimer = SHARK_DURATION
+                    soundEngine?.play(SoundEngine.Sfx.SHARK)
                 }
             }
             Powerup.SLOW_PIRANHAS -> {
                 slowPiranhaTimer = SLOW_DURATION
                 turtleTimer = TURTLE_VISIBLE_DURATION
                 applyEntitySpeeds()
+                soundEngine?.play(SoundEngine.Sfx.SLOW_PIRANHAS)
             }
             Powerup.EXTRA_LIFE -> {
                 lives++
                 listener?.onLivesChanged(lives)
                 heartTimer = HEART_VISIBLE_DURATION
+                soundEngine?.play(SoundEngine.Sfx.EXTRA_LIFE)
             }
         }
     }
@@ -513,6 +533,7 @@ class GameState(
     }
 
     private fun onLifeLost() {
+        soundEngine?.play(SoundEngine.Sfx.DEATH)
         lives--
         listener?.onLivesChanged(lives)
         phase = Phase.LIFE_LOST

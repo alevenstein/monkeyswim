@@ -34,6 +34,7 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
     private lateinit var continueChallengeButton: Button
     private lateinit var restartFromCompleteButton: Button
     private lateinit var helpButton: Button
+    private lateinit var soundButton: Button
     private lateinit var helpOverlay: FrameLayout
     private lateinit var helpCloseButton: Button
     private lateinit var splashOverlay: FrameLayout
@@ -52,6 +53,7 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
     private var helpPausedGame = false
 
     private lateinit var adMob: AdMobController
+    private val soundEngine = SoundEngine()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -70,6 +72,7 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
         continueChallengeButton = findViewById(R.id.continueChallengeButton)
         restartFromCompleteButton = findViewById(R.id.restartFromCompleteButton)
         helpButton = findViewById(R.id.helpButton)
+        soundButton = findViewById(R.id.soundButton)
         helpOverlay = findViewById(R.id.helpOverlay)
         helpCloseButton = findViewById(R.id.helpCloseButton)
         splashOverlay = findViewById(R.id.splashOverlay)
@@ -117,6 +120,10 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
             allLevelsCompleteOverlay.visibility = View.GONE
             gameView.gameState().reset()
         }
+        soundButton.setOnClickListener {
+            soundEngine.enabled = !soundEngine.enabled
+            updateSoundButton()
+        }
         helpButton.setOnClickListener {
             // Pause the game on help-open if it was actively playing — closing
             // help will only resume in that case, so a manually-paused game
@@ -158,6 +165,12 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
 
         adMob = AdMobController(this).also { it.init() }
 
+        // Pre-synthesise SFX buffers on the main thread before any gameplay
+        // starts. Build is fast enough not to delay onCreate noticeably.
+        soundEngine.init(this)
+        gameView.gameState().soundEngine = soundEngine
+        updateSoundButton()
+
         // Restore the previously persisted game (if any). A saved game skips the
         // splash entirely; a saved GAME_OVER restores into the same overlay so
         // the player can still choose watch-ad or restart.
@@ -177,6 +190,26 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
         val snapshot = gameView.gameState().snapshot()
         if (SaveGame.shouldPersist(snapshot)) {
             SaveGame.save(this, snapshot)
+        }
+    }
+
+    override fun onDestroy() {
+        soundEngine.release()
+        super.onDestroy()
+    }
+
+    /**
+     * Sync the sound button's text + tint to the current SoundEngine state.
+     * Same visual contract as Brick Basher's Canvas-drawn button: 🔊 in white
+     * when enabled, 🔇 in muted-gray (#546E7A) when disabled.
+     */
+    private fun updateSoundButton() {
+        if (soundEngine.enabled) {
+            soundButton.text = getString(R.string.sound_on)
+            soundButton.setTextColor(android.graphics.Color.WHITE)
+        } else {
+            soundButton.text = getString(R.string.sound_off)
+            soundButton.setTextColor(android.graphics.Color.parseColor("#546E7A"))
         }
     }
 

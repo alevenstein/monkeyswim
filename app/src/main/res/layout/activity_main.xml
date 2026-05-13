@@ -57,13 +57,26 @@
                 tools:text="Lives 3" />
 
             <Button
+                android:id="@+id/soundButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:padding="6dp"
+                android:layout_marginStart="8dp"
+                android:text="@string/sound_on"
+                android:textColor="@android:color/white"
+                android:backgroundTint="@color/button_bg"
+                android:textSize="16sp" />
+
+            <Button
                 android:id="@+id/helpButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:minWidth="0dp"
                 android:minHeight="0dp"
                 android:padding="6dp"
-                android:layout_marginStart="12dp"
+                android:layout_marginStart="8dp"
                 android:text="@string/help_button"
                 android:textColor="@color/button_text"
                 android:backgroundTint="@color/button_bg"

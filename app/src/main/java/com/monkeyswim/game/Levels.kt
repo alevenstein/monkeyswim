@@ -63,11 +63,11 @@ object Levels {
         "WWWWWWTTTWWWWWW",
     )
 
-    // Level 2 — Pen TOP-CENTER (rows 4-7), portal LEFT WALL, tunnels SPLIT
-    // (cols 1-3 + 11-13). Piranhas now spawn near the top and have to chase
+    // Level 2 — Pen TOP-CENTER (rows 4-7), portal LEFT WALL, tunnels at cols
+    // 4-6 (left-of-centre). Piranhas now spawn near the top and have to chase
     // the monkey downward; the exit is on the opposite wall from L1.
     private val LEVEL_2: List<String> = listOf(
-        "WTTTWWWWWWWTTTW",
+        "WWWWTTTWWWWWWWW",
         "W.............W",
         "W.WWW.W.W.WWW.W",
         "W.....W W.....W",
@@ -88,14 +88,15 @@ object Levels {
         "W......M......W",
         "W.WWW.WWW.WWW.W",
         "W.............W",
-        "WTTTWWWWWWWTTTW",
+        "WWWWTTTWWWWWWWW",
     )
 
-    // Level 3 — Pen BOTTOM-CENTER (rows 13-16), portal RIGHT WALL, tunnels
-    // WIDE-CENTER (cols 5-9). With the pen just two rows above the monkey
-    // spawn, early-game pressure is high — piranhas reach the player fast.
+    // Level 3 — Pen BOTTOM-CENTER (rows 13-16), portal RIGHT WALL, tunnels at
+    // cols 7-9 (just right of centre). With the pen just two rows above the
+    // monkey spawn, early-game pressure is high — piranhas reach the player
+    // fast.
     private val LEVEL_3: List<String> = listOf(
-        "WWWWWTTTTTWWWWW",
+        "WWWWWWWTTTWWWWW",
         "W.............W",
         "W.WWW.W.W.WWW.W",
         "W.W.........W.W",
@@ -112,11 +113,11 @@ object Levels {
         "W.WW.W===W.WW.W",
         "W.WW.W===W.WW.W",
         "W.WW.WWWWW.WW.W",
-        "W.WWW.WWW.WWW.W",
+        "W.WW.WWWWW.WW.W",
         "W......M......W",
         "W.WWW.WWW.WWW.W",
         "W.............W",
-        "WWWWWTTTTTWWWWW",
+        "WWWWWWWTTTWWWWW",
     )
 
     // Level 4 — Pen LEFT-CENTER (rows 8-11, cols 1-5), portal RIGHT WALL,
@@ -230,10 +231,15 @@ object Levels {
     )
 
     // Level 8 — Pen BOTTOM-LEFT (rows 13-16, cols 1-5), portal RIGHT WALL,
-    // tunnels VERY WIDE (cols 4-10). Pen and monkey share the lower half of
-    // the maze, so the player is herded toward the upper area early.
+    // tunnels at cols 8-10 (right side, same direction as the portal). Pen
+    // and monkey share the lower half of the maze, so the player is herded
+    // toward the upper area early. Rows 8, 11, and 17 are deliberately broken
+    // up so adjacent rows never both turn into wide horizontal corridors.
+    // Row 11 cols 2-3 are kept open so the piranha leaving the vestibule at
+    // (3,12) can swim left past the PP at (1,11) and escape upward via col 1
+    // — mirror of the same trick in L9.
     private val LEVEL_8: List<String> = listOf(
-        "WWWWTTTTTTTWWWW",
+        "WWWWWWWWTTTWWWW",
         "W.............W",
         "W.WWW.WWW.WWW.W",
         "WoW.........WoW",
@@ -241,31 +247,31 @@ object Levels {
         "W.W...W.W...W.W",
         "W.WWW.W.W.WWW.W",
         "W.....W.W.....W",
-        "W.WWW.....WWW.W",
+        "W.WWW.W.W.WWW.W",
         "W.............W",
         "W.WWW.W.W.WWW.W",
-        "WoW.........WoW",
+        "Wo..WWW.WWW.WoW",
         "W.W W.........W",
         "WWW-WW.WW.WW.WW",
         "WW===W.WW.WW.WW",
         "WW===W.WW.WW.WX",
         "WWWWWW.WW.WW.WX",
-        "W.............X",
+        "W.WWW.WWW.WWW.X",
         "W......M......W",
         "W.WWW.WWW.WWW.W",
         "W.............W",
-        "WWWWTTTTTTTWWWW",
+        "WWWWWWWWTTTWWWW",
     )
 
     // Level 9 — Pen BOTTOM-RIGHT (rows 13-16, cols 9-13), portal LEFT WALL,
-    // tunnels SPLIT (cols 1-3 + 11-13). Mirror of L8 with the portal on the
-    // opposite wall. Rows 8, 11, 17 are deliberately broken up so adjacent
+    // tunnels at cols 1-3 (far left, opposite of the pen). Mirror of L8 with
+    // the portal on the opposite wall. Rows 8, 11, 17 are deliberately broken up so adjacent
     // rows never both turn into wide horizontal corridors (no 2x2 path
     // blocks). Row 11 cols 11-12 are kept open so piranhas leaving the
     // vestibule at (11,12) can swim right past the PP at (13,11) and escape
     // upward — without the gap, every neighbor of (11,11) is a wall.
     private val LEVEL_9: List<String> = listOf(
-        "WTTTWWWWWWWTTTW",
+        "WTTTWWWWWWWWWWW",
         "W.............W",
         "W.WWW.WWW.WWW.W",
         "WoW.........WoW",
@@ -286,14 +292,14 @@ object Levels {
         "W......M......W",
         "W.WWW.WWW.WWW.W",
         "W.............W",
-        "WTTTWWWWWWWTTTW",
+        "WTTTWWWWWWWWWWW",
     )
 
-    // Level 10 — Densest combo: pen back to CENTER, but portals on BOTH walls
-    // (left + right, rows 10-12) and THREE tunnel groups (cols 2-4 + 6-8 +
-    // 11-13). Tighter corridor patterns top and bottom. Maximum chaos.
+    // Level 10 — Densest combo: pen back to CENTER, portal on LEFT WALL (the
+    // mirror of L1's right-wall default), tunnels at cols 11-13 (far right,
+    // opposite of the portal). Tighter corridor patterns top and bottom.
     private val LEVEL_10: List<String> = listOf(
-        "WWTTTWTTTWWTTTW",
+        "WWWWWWWWWWWTTTW",
         "W.............W",
         "W.W.W.W.W.W.W.W",
         "WoW.........WoW",
@@ -303,9 +309,9 @@ object Levels {
         "W.....W W.....W",
         "W.WW.WW-WW.WW.W",
         "W.WW.W===W.WW.W",
-        "X.WW.W===W.WW.X",
-        "X.WW.WWWWW.WW.X",
-        "X.............X",
+        "X.WW.W===W.WW.W",
+        "X.WW.WWWWW.WW.W",
+        "X.............W",
         "W.WWWWW.WWWWW.W",
         "W.W...W.W...W.W",
         "WoW.WWW.WWW.WoW",
@@ -314,7 +320,7 @@ object Levels {
         "W......M......W",
         "W.WWW.WWW.WWW.W",
         "W.............W",
-        "WWTTTWTTTWWTTTW",
+        "WWWWWWWWWWWTTTW",
     )
 
     private val LEVELS: List<List<String>> = listOf(
