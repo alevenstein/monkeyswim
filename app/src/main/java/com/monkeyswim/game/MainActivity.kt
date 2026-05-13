@@ -39,6 +39,7 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
     private lateinit var splashPrivacyLink: TextView
     private lateinit var debugBar: LinearLayout
     private lateinit var debugLevelSpinner: Spinner
+    private lateinit var debugFruitButton: Button
 
     /** Suppresses the spinner's onItemSelected callback when we're updating the
      *  selection programmatically (e.g. on level-up via natural progression). */
@@ -71,6 +72,7 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
         splashPrivacyLink = findViewById(R.id.splashPrivacyLink)
         debugBar = findViewById(R.id.debugBar)
         debugLevelSpinner = findViewById(R.id.debugLevelSpinner)
+        debugFruitButton = findViewById(R.id.debugFruitButton)
         setupDebugLevelSelector()
 
         splashPrivacyLink.paintFlags = splashPrivacyLink.paintFlags or Paint.UNDERLINE_TEXT_FLAG
@@ -243,6 +245,10 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
             }
 
             override fun onNothingSelected(parent: AdapterView<*>) {}
+        }
+
+        debugFruitButton.setOnClickListener {
+            gameView.gameState().debugActivatePowerPellet()
         }
     }
 

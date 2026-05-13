@@ -448,6 +448,13 @@ class GameState(
         listener?.onLevelChanged(level)
     }
 
+    /** Debug hook: trigger the power-pellet fright effect without eating one. */
+    @Synchronized
+    fun debugActivatePowerPellet() {
+        frightTimer = 6.5f
+        frightChainBonus = 200
+    }
+
     private fun createPiranhas(m: Maze, lvl: Int): List<Piranha> {
         val scale = Levels.piranhaSpeedScale(lvl)
         val personalities = listOf(
