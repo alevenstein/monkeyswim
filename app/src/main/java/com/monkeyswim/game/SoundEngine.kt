@@ -27,7 +27,7 @@ class SoundEngine {
 
     enum class Sfx {
         PELLET, FRUIT, LIGHTNING, BLACK_HOLE, SHARK, SLOW_PIRANHAS, EXTRA_LIFE,
-        DEATH, PIRANHA_EATEN, PORTAL, LEVEL_COMPLETE,
+        DEATH, PIRANHA_EATEN, PORTAL, LEVEL_COMPLETE, BAIT,
     }
 
     private val tracks = mutableMapOf<Sfx, AudioTrack>()
@@ -61,6 +61,7 @@ class SoundEngine {
         tracks[Sfx.PIRANHA_EATEN] = loadTrack(generatePiranhaEaten())
         tracks[Sfx.PORTAL] = loadTrack(generatePortal())
         tracks[Sfx.LEVEL_COMPLETE] = loadTrack(generateLevelComplete())
+        tracks[Sfx.BAIT] = loadTrack(generateBait())
     }
 
     /** Trigger (or re-trigger) an effect. No-op if muted or not yet inited. */
@@ -292,6 +293,28 @@ class SoundEngine {
             // Bell-shaped envelope: rise then fall over the full duration.
             val env = sin(p * PI.toFloat())
             buf[i] = ((tone + hpOut * 0.25f) * env * 0.5f).toClippedShort()
+        }
+        return buf
+    }
+
+    /**
+     * Wet "plop" — descending tone 800Hz → 300Hz with splash noise that fades
+     * over the duration. Fires when the player drops a bait into the water.
+     */
+    private fun generateBait(): ShortArray {
+        val ms = 180
+        val n = SAMPLE_RATE * ms / 1000
+        val buf = ShortArray(n)
+        val rng = Lcg(0xBA17F15L)
+        val total = ms / 1000f
+        for (i in 0 until n) {
+            val t = i.toFloat() / SAMPLE_RATE
+            val p = t / total
+            val freq = 800f - 500f * p
+            val tone = sin(t * freq * TAU) * 0.6f
+            val noise = (rng.next() * 2f - 1f) * 0.3f * (1f - p)
+            val env = (1f - exp(-t * 80f)) * exp(-p * 2.5f)
+            buf[i] = ((tone + noise) * env * 0.5f).toClippedShort()
         }
         return buf
     }

@@ -144,6 +144,23 @@ class Maze(
         return tiles[row][col]
     }
 
+    /** True while the tide cycle is in its "high" phase, exposing TIDE tiles
+     *  as walkable. Toggled by GameState (the tide cycle is a global timer,
+     *  not part of the Maze itself). */
+    var tideHigh: Boolean = true
+
+    /** Whether this level contains any DEEP tiles — used to decide whether to
+     *  show the breath bar in the HUD. Cached once at construction. */
+    val hasDeepTiles: Boolean = (0 until rows).any { r ->
+        (0 until cols).any { c -> tiles[r][c] == Tile.DEEP }
+    }
+
+    /** Whether this level contains any TIDE tiles — used to decide whether to
+     *  show the tide phase indicator in the HUD. Cached once at construction. */
+    val hasTideTiles: Boolean = (0 until rows).any { r ->
+        (0 until cols).any { c -> tiles[r][c] == Tile.TIDE }
+    }
+
     fun isMonkeyWalkable(col: Int, row: Int): Boolean {
         // Off-grid on a tunnel column is walkable — the wrap logic will pull
         // the entity to the opposite side. Without this, leading-edge tile
@@ -153,7 +170,12 @@ class Maze(
         if (col in tunnelCols && (row < 0 || row >= rows)) return true
         val t = tileAt(col, row)
         return when (t) {
-            Tile.PATH, Tile.PELLET, Tile.POWER_PELLET, Tile.TUNNEL, Tile.MONKEY_SPAWN -> true
+            Tile.PATH, Tile.PELLET, Tile.POWER_PELLET, Tile.TUNNEL, Tile.MONKEY_SPAWN,
+            Tile.CURRENT_UP, Tile.CURRENT_DOWN, Tile.CURRENT_LEFT, Tile.CURRENT_RIGHT -> true
+            // DEEP tiles are always walkable for the monkey; the breath meter
+            // (in GameState) is what punishes lingering, not the maze geometry.
+            Tile.DEEP -> true
+            Tile.TIDE -> tideHigh
             Tile.BOTTOM_GATEWAY -> gatewayUnlocked
             else -> false
         }
@@ -164,10 +186,20 @@ class Maze(
         val t = tileAt(col, row)
         return when (t) {
             Tile.PATH, Tile.PELLET, Tile.POWER_PELLET, Tile.TUNNEL,
-            Tile.PEN_DOOR, Tile.PEN_INTERIOR, Tile.MONKEY_SPAWN -> true
+            Tile.PEN_DOOR, Tile.PEN_INTERIOR, Tile.MONKEY_SPAWN,
+            Tile.CURRENT_UP, Tile.CURRENT_DOWN, Tile.CURRENT_LEFT, Tile.CURRENT_RIGHT -> true
+            // Piranhas can't enter DEEP — that's the monkey's escape route.
+            Tile.TIDE -> tideHigh
             else -> false
         }
     }
+
+    /** Direction the current at (col, row) pushes entities, or null if not a
+     *  current tile. */
+    fun currentDirAt(col: Int, row: Int): Direction? =
+        tileAt(col, row).currentDirection
+
+    fun isDeepTile(col: Int, row: Int): Boolean = tileAt(col, row) == Tile.DEEP
 
     fun isTunnelTile(col: Int, row: Int): Boolean = tileAt(col, row) == Tile.TUNNEL
 
@@ -389,9 +421,95 @@ class Maze(
                     Tile.PATH, Tile.PEN_INTERIOR, Tile.TUNNEL, Tile.MONKEY_SPAWN -> {
                         // intentionally no decoration
                     }
+                    Tile.CURRENT_UP, Tile.CURRENT_DOWN, Tile.CURRENT_LEFT, Tile.CURRENT_RIGHT -> {
+                        drawCurrentArrow(canvas, cx, cy, cellSize, tiles[r][c], animTime)
+                    }
+                    Tile.DEEP -> {
+                        // Darker water patch — sits below the wave bands so it
+                        // reads as "deeper here." Subtle gradient circle.
+                        canvas.drawCircle(cx, cy, cellSize * 0.45f, deepPaint)
+                    }
+                    Tile.TIDE -> {
+                        if (tideHigh) {
+                            // Walkable but visually distinguishable — pale tide
+                            // foam ring so the player knows it's a tide cell.
+                            canvas.drawCircle(cx, cy, cellSize * 0.18f, tideOpenPaint)
+                        } else {
+                            // Wall phase — exposed rock. Inset rounded square
+                            // similar to a regular wall, but a sandier colour.
+                            val inset = cellSize * 0.18f
+                            tmpRect.set(left + inset, top + inset,
+                                left + cellSize - inset, top + cellSize - inset)
+                            canvas.drawRoundRect(tmpRect, cellSize * 0.20f, cellSize * 0.20f, tideRockPaint)
+                        }
+                    }
                 }
             }
         }
     }
 
+    private fun drawCurrentArrow(
+        canvas: Canvas, cx: Float, cy: Float, cellSize: Float, tile: Tile, animTime: Float,
+    ) {
+        // Pulsing chevron arrow that "flows" in the current direction. Two
+        // staggered chevrons drift in the flow direction over time so the
+        // tile reads as a moving current rather than a static decoration.
+        val dir = tile.currentDirection ?: return
+        // Per-tile animation offset; 0..1 phase repeats every ~1s.
+        val phase = (animTime * 0.7f) - (animTime * 0.7f).toInt()
+        val s = cellSize * 0.35f
+        for (i in 0..1) {
+            val localPhase = (phase + i * 0.5f) % 1f
+            val drift = (localPhase - 0.5f) * cellSize * 0.5f
+            val alpha = (sin(localPhase * Math.PI.toFloat()) * 200f).toInt().coerceIn(0, 200)
+            currentArrowPaint.alpha = alpha
+            val ax = cx + dir.dx * drift
+            val ay = cy + dir.dy * drift
+            wavePath.reset()
+            when (dir) {
+                Direction.RIGHT -> {
+                    wavePath.moveTo(ax - s * 0.4f, ay - s * 0.5f)
+                    wavePath.lineTo(ax + s * 0.4f, ay)
+                    wavePath.lineTo(ax - s * 0.4f, ay + s * 0.5f)
+                }
+                Direction.LEFT -> {
+                    wavePath.moveTo(ax + s * 0.4f, ay - s * 0.5f)
+                    wavePath.lineTo(ax - s * 0.4f, ay)
+                    wavePath.lineTo(ax + s * 0.4f, ay + s * 0.5f)
+                }
+                Direction.UP -> {
+                    wavePath.moveTo(ax - s * 0.5f, ay + s * 0.4f)
+                    wavePath.lineTo(ax, ay - s * 0.4f)
+                    wavePath.lineTo(ax + s * 0.5f, ay + s * 0.4f)
+                }
+                Direction.DOWN -> {
+                    wavePath.moveTo(ax - s * 0.5f, ay - s * 0.4f)
+                    wavePath.lineTo(ax, ay + s * 0.4f)
+                    wavePath.lineTo(ax + s * 0.5f, ay - s * 0.4f)
+                }
+                Direction.NONE -> {}
+            }
+            canvas.drawPath(wavePath, currentArrowPaint)
+        }
+    }
+
+    private val currentArrowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#80E8FF")
+        style = Paint.Style.STROKE
+        strokeWidth = 3f
+        strokeCap = Paint.Cap.ROUND
+        strokeJoin = Paint.Join.ROUND
+    }
+    private val deepPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#022038")
+        style = Paint.Style.FILL
+    }
+    private val tideOpenPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#80E0F0FF")
+        style = Paint.Style.FILL
+    }
+    private val tideRockPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#7A6248")
+        style = Paint.Style.FILL
+    }
 }

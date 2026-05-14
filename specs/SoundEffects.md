@@ -67,6 +67,11 @@ When `enabled` is `false`, every `play()` call is a no-op.
 - **Fires at**: same frame as PORTAL (gateway-hit branch). The two timbres are different enough that the ear separates them: PORTAL = warp, LEVEL_COMPLETE = celebration.
 - **Recipe**: sine tones at C5, E5, G5, C6, E6, 100 ms each. 500 ms total.
 
+### BAIT — bait fish dropped in the water
+- **Character**: wet "plop" — descending splashy tone.
+- **Fires at**: `GameState.placeBait()`, when the player taps the 🐟 HUD button while charges > 0 and no bait is currently active.
+- **Recipe**: sine pitch-sweep 800 Hz → 300 Hz + decaying noise overlay, 180 ms.
+
 ## Synthesis primitives
 
 Reusable building blocks in `SoundEngine`:

@@ -1,5 +1,6 @@
 package com.monkeyswim.game
 
+import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Paint
@@ -33,8 +34,13 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
     private lateinit var allLevelsCompleteOverlay: FrameLayout
     private lateinit var continueChallengeButton: Button
     private lateinit var restartFromCompleteButton: Button
+    private lateinit var mechanicIntroOverlay: FrameLayout
+    private lateinit var mechanicIntroTitle: TextView
+    private lateinit var mechanicIntroBody: TextView
+    private lateinit var mechanicIntroDismiss: Button
     private lateinit var helpButton: Button
     private lateinit var soundButton: Button
+    private lateinit var baitButton: Button
     private lateinit var helpOverlay: FrameLayout
     private lateinit var helpCloseButton: Button
     private lateinit var splashOverlay: FrameLayout
@@ -48,6 +54,11 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
     /** Suppresses the spinner's onItemSelected callback when we're updating the
      *  selection programmatically (e.g. on level-up via natural progression). */
     private var suppressDebugLevelChange = false
+
+    /** Which mechanic intro is currently being shown — set when the overlay
+     *  is displayed, cleared when dismissed. Used by the Got-It handler to
+     *  know which "seen" flag to flip. */
+    private var displayedMechanicIntro: GameState.MechanicIntro? = null
 
     /** True if showing the help overlay paused the game (so closing should resume). */
     private var helpPausedGame = false
@@ -71,8 +82,13 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
         allLevelsCompleteOverlay = findViewById(R.id.allLevelsCompleteOverlay)
         continueChallengeButton = findViewById(R.id.continueChallengeButton)
         restartFromCompleteButton = findViewById(R.id.restartFromCompleteButton)
+        mechanicIntroOverlay = findViewById(R.id.mechanicIntroOverlay)
+        mechanicIntroTitle = findViewById(R.id.mechanicIntroTitle)
+        mechanicIntroBody = findViewById(R.id.mechanicIntroBody)
+        mechanicIntroDismiss = findViewById(R.id.mechanicIntroDismiss)
         helpButton = findViewById(R.id.helpButton)
         soundButton = findViewById(R.id.soundButton)
+        baitButton = findViewById(R.id.baitButton)
         helpOverlay = findViewById(R.id.helpOverlay)
         helpCloseButton = findViewById(R.id.helpCloseButton)
         splashOverlay = findViewById(R.id.splashOverlay)
@@ -120,9 +136,20 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
             allLevelsCompleteOverlay.visibility = View.GONE
             gameView.gameState().reset()
         }
+        mechanicIntroDismiss.setOnClickListener {
+            // Mark the currently-displayed mechanic as seen, hide the overlay,
+            // and let the game advance to READY for this level.
+            displayedMechanicIntro?.let { markMechanicIntroSeen(it) }
+            displayedMechanicIntro = null
+            mechanicIntroOverlay.visibility = View.GONE
+            gameView.gameState().acknowledgeMechanicIntro()
+        }
         soundButton.setOnClickListener {
             soundEngine.enabled = !soundEngine.enabled
             updateSoundButton()
+        }
+        baitButton.setOnClickListener {
+            gameView.gameState().placeBait()
         }
         helpButton.setOnClickListener {
             // Pause the game on help-open if it was actively playing — closing
@@ -307,6 +334,52 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
         runOnUiThread { allLevelsCompleteOverlay.visibility = View.VISIBLE }
     }
 
+    override fun onBaitChargesChanged(charges: Int) {
+        runOnUiThread {
+            if (charges > 0) {
+                baitButton.text = getString(R.string.bait_button, charges)
+                baitButton.visibility = View.VISIBLE
+            } else {
+                baitButton.visibility = View.GONE
+            }
+        }
+    }
+
+    override fun onMechanicIntro(mechanic: GameState.MechanicIntro) {
+        runOnUiThread {
+            if (hasSeenMechanicIntro(mechanic)) {
+                // Already shown in a previous session — skip the overlay and
+                // resume play immediately so the player isn't re-interrupted.
+                gameView.gameState().acknowledgeMechanicIntro()
+                return@runOnUiThread
+            }
+            displayedMechanicIntro = mechanic
+            val (titleRes, bodyRes) = when (mechanic) {
+                GameState.MechanicIntro.CURRENTS ->
+                    R.string.intro_currents_title to R.string.intro_currents_body
+                GameState.MechanicIntro.TIDE ->
+                    R.string.intro_tide_title to R.string.intro_tide_body
+                GameState.MechanicIntro.DIVE ->
+                    R.string.intro_dive_title to R.string.intro_dive_body
+            }
+            mechanicIntroTitle.setText(titleRes)
+            mechanicIntroBody.setText(bodyRes)
+            mechanicIntroOverlay.visibility = View.VISIBLE
+        }
+    }
+
+    private fun mechanicSeenKey(mechanic: GameState.MechanicIntro): String =
+        "seen_intro_" + mechanic.name.lowercase()
+
+    private fun hasSeenMechanicIntro(mechanic: GameState.MechanicIntro): Boolean =
+        getSharedPreferences(SETTINGS_FILE, Context.MODE_PRIVATE)
+            .getBoolean(mechanicSeenKey(mechanic), false)
+
+    private fun markMechanicIntroSeen(mechanic: GameState.MechanicIntro) {
+        getSharedPreferences(SETTINGS_FILE, Context.MODE_PRIVATE)
+            .edit().putBoolean(mechanicSeenKey(mechanic), true).apply()
+    }
+
     private fun showGameOver() {
         gameOverOverlay.visibility = View.VISIBLE
         watchAdButton.isEnabled = true
@@ -318,5 +391,8 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
 
     companion object {
         private const val PRIVACY_POLICY_URL = "https://lionstone.dev/privacy/"
+        // Same SharedPreferences file SoundEngine uses for its mute state, so
+        // the player's tutorial-seen flags and audio toggle share one bag.
+        private const val SETTINGS_FILE = "monkeyswim_settings"
     }
 }

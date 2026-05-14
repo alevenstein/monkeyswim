@@ -10,12 +10,31 @@ import android.graphics.Typeface
  * Methods are synchronized so the game thread and UI thread can call them safely.
  */
 class GameState(
-    initialLives: Int = 5,
+    initialLives: Int = 50,
     var listener: Listener? = null,
 ) {
-    enum class Phase { AWAITING_START, READY, PLAYING, LIFE_LOST, LEVEL_COMPLETE, ALL_LEVELS_COMPLETE, GAME_OVER, PAUSED }
+    enum class Phase { AWAITING_START, READY, PLAYING, LIFE_LOST, LEVEL_COMPLETE, ALL_LEVELS_COMPLETE, GAME_OVER, PAUSED, MECHANIC_INTRO }
 
-    enum class Powerup { LIGHTNING, BLACK_HOLE, SHARK, SLOW_PIRANHAS, EXTRA_LIFE }
+    enum class Powerup { LIGHTNING, BLACK_HOLE, SHARK, SLOW_PIRANHAS, EXTRA_LIFE, BAIT }
+
+    /** Mechanics that earn a "first-time" tutorial overlay. The level at which
+     *  each one is introduced is hard-coded here (see `introducedAtLevel`),
+     *  but the "have they seen it yet?" persistence is up to the listener
+     *  (MainActivity stores flags in SharedPreferences). */
+    enum class MechanicIntro {
+        CURRENTS, TIDE, DIVE;
+
+        companion object {
+            /** The first level at which each mechanic appears in the layouts.
+             *  When loadLevel sees `level == introducedAtLevel(M)`, it fires
+             *  `onMechanicIntro(M)` so the UI can pause + show an explainer. */
+            fun introducedAtLevel(m: MechanicIntro): Int = when (m) {
+                CURRENTS -> 10
+                TIDE -> 15
+                DIVE -> 17
+            }
+        }
+    }
 
     interface Listener {
         fun onScoreChanged(score: Int) {}
@@ -23,6 +42,14 @@ class GameState(
         fun onLevelChanged(level: Int) {}
         fun onGameOver() {}
         fun onAllLevelsComplete() {}
+        /** Fired when bait charges change (banana rolled BAIT, or a charge was spent). */
+        fun onBaitChargesChanged(charges: Int) {}
+        /** Fired when a level introduces a mechanic for the first time. The
+         *  listener decides whether to actually surface a tutorial overlay (it
+         *  has access to "already seen" flags); either way it MUST eventually
+         *  call `acknowledgeMechanicIntro()` so the game can leave the
+         *  MECHANIC_INTRO phase and proceed to READY. */
+        fun onMechanicIntro(mechanic: MechanicIntro) {}
     }
 
     var level: Int = 1
@@ -76,6 +103,24 @@ class GameState(
     private var turtleTimer: Float = 0f
     private var heartTimer: Float = 0f
 
+    // Bait: BAIT-powerup grants a charge; player taps the HUD bait button to
+    // drop one at the monkey's tile. Only one active bait at a time; piranhas
+    // in CHASE within ~8 tiles re-target the bait instead of the monkey.
+    var baitCharges: Int = 0
+        private set
+    private var bait: Pair<Int, Int>? = null
+    private var baitTimer: Float = 0f
+
+    // Tide + dive state. tideTimer advances 0..TIDE_PERIOD; maze.tideHigh is
+    // derived from where in the cycle we are. breath drains while the monkey
+    // sits on a DEEP tile and refills (faster than it drains) on regular path.
+    private var tideTimer: Float = 0f
+    private var breath: Float = BREATH_MAX
+
+    /** The mechanic whose tutorial overlay is currently being shown (or null
+     *  if no intro is pending). Cleared by acknowledgeMechanicIntro(). */
+    private var pendingMechanicIntro: MechanicIntro? = null
+
     /**
      * Procedural SFX engine. Optional — null is a no-op so unit tests and
      * pre-init startup paths don't need a real audio device. MainActivity sets
@@ -111,6 +156,7 @@ class GameState(
         lastSpeedScale = 1.0f
         lastPiranhaCount = 4
         levelIntroBanner = null
+        baitCharges = 0
         loadLevel(1)
         phase = Phase.READY
         phaseTimer = 2.0f
@@ -150,6 +196,7 @@ class GameState(
         mazeLayout = maze.snapshotLayout(),
         fruitMap = maze.powerPelletFruits.toMap(),
         challengeMode = challengeMode,
+        baitCharges = baitCharges,
     )
 
     /**
@@ -169,6 +216,7 @@ class GameState(
         lives = snapshot.lives
         difficultyMultiplier = snapshot.difficultyMultiplier
         challengeMode = snapshot.challengeMode
+        baitCharges = snapshot.baitCharges
         // Restoring mid-game shouldn't fire a delta banner — reset baselines to
         // the current level so loadLevel computes "no change."
         lastSpeedScale = piranhaSpeedScaleForLevel(level)
@@ -195,8 +243,11 @@ class GameState(
                 } else {
                     level++
                     loadLevel(level)
-                    phase = Phase.READY
-                    phaseTimer = 2.0f
+                    // Restoring just after a level-complete advances into the
+                    // next level — fire the mechanic intro if that next level
+                    // introduces one. (Mid-level restores skip the intro
+                    // because the player has already seen it this session.)
+                    enterLevelWithIntro()
                     emitAll()
                 }
             }
@@ -319,14 +370,14 @@ class GameState(
                     } else {
                         level++
                         loadLevel(level)
-                        phase = Phase.READY
-                        phaseTimer = 2.0f
+                        enterLevelWithIntro()
                         listener?.onLevelChanged(level)
                     }
                 }
             }
-            Phase.AWAITING_START, Phase.GAME_OVER, Phase.PAUSED, Phase.ALL_LEVELS_COMPLETE -> {
-                // No-op until the player chooses an action (resume, restart, continue).
+            Phase.AWAITING_START, Phase.GAME_OVER, Phase.PAUSED, Phase.ALL_LEVELS_COMPLETE,
+            Phase.MECHANIC_INTRO -> {
+                // No-op until the player chooses an action (resume, restart, continue, acknowledge).
             }
         }
     }
@@ -356,6 +407,28 @@ class GameState(
             slowPiranhaTimer -= dt
             if (slowPiranhaTimer <= 0f) applyEntitySpeeds()  // restore full speed
         }
+        if (baitTimer > 0f) {
+            baitTimer -= dt
+            if (baitTimer <= 0f) bait = null
+        }
+
+        // Tide cycle: advance phase + push to maze each frame so walkability
+        // queries see the current state.
+        tideTimer = (tideTimer + dt) % TIDE_PERIOD
+        maze.tideHigh = tideTimer < TIDE_HIGH_DURATION
+
+        // Breath: drain while on a DEEP tile, refill quickly on regular path.
+        // Hitting zero underwater = drown.
+        if (maze.isDeepTile(monkey.tileCol, monkey.tileRow)) {
+            breath -= dt
+            if (breath <= 0f) {
+                breath = 0f
+                onLifeLost()
+                return
+            }
+        } else {
+            breath = (breath + dt * BREATH_REFILL_RATE).coerceAtMost(BREATH_MAX)
+        }
 
         // Banana spawn / expiry — single timer flips between "spawn delay" and
         // "active duration" depending on whether a banana is on the map. Spawn
@@ -373,8 +446,26 @@ class GameState(
         }
 
         monkey.update(dt)
-        for (p in piranhas) p.update(dt, monkey, frightTimer)
+        val currentBait = bait
+        for (p in piranhas) {
+            p.currentBait = currentBait
+            p.update(dt, monkey, frightTimer)
+        }
         shark?.update(dt, piranhas)
+
+        // Piranha-bait collision: a non-eaten / non-pen piranha walking onto
+        // the bait tile consumes it. One bait, one piranha distracted.
+        val b = bait
+        if (b != null) {
+            for (p in piranhas) {
+                if (p.mode == Piranha.Mode.EATEN || p.mode == Piranha.Mode.LEAVING_PEN) continue
+                if (p.tileCol == b.first && p.tileRow == b.second) {
+                    bait = null
+                    baitTimer = 0f
+                    break
+                }
+            }
+        }
 
         // Pellet collection.
         maze.consumePelletAt(monkey.tileCol, monkey.tileRow) { kind ->
@@ -483,7 +574,31 @@ class GameState(
                 heartTimer = HEART_VISIBLE_DURATION
                 soundEngine?.play(SoundEngine.Sfx.EXTRA_LIFE)
             }
+            Powerup.BAIT -> {
+                // Hand the player a charge; they decide when to deploy it via
+                // the HUD bait button. No immediate sound — the placement is
+                // what gets the wet plop.
+                baitCharges++
+                listener?.onBaitChargesChanged(baitCharges)
+            }
         }
+    }
+
+    /**
+     * Drop a bait at the monkey's current tile. No-op unless a charge is
+     * available, no bait is currently active, and the game is in PLAYING. The
+     * bait lasts BAIT_DURATION seconds or until a piranha walks onto it.
+     */
+    @Synchronized
+    fun placeBait() {
+        if (phase != Phase.PLAYING) return
+        if (baitCharges <= 0) return
+        if (bait != null) return
+        bait = monkey.tileCol to monkey.tileRow
+        baitTimer = BAIT_DURATION
+        baitCharges--
+        listener?.onBaitChargesChanged(baitCharges)
+        soundEngine?.play(SoundEngine.Sfx.BAIT)
     }
 
     /**
@@ -502,6 +617,8 @@ class GameState(
         for (r in 0 until maze.rows) {
             for (c in 0 until maze.cols) {
                 val t = maze.tileAt(c, r)
+                // Skip DEEP (piranhas avoid it, spawn would be uncatchable) and
+                // TIDE (cell could become a wall mid-banana). Plain PATH/PELLET only.
                 if (t != Tile.PATH && t != Tile.PELLET) continue
                 if (c == monkey.tileCol && r == monkey.tileRow) continue
                 if (piranhas.any { it.tileCol == c && it.tileRow == r }) continue
@@ -518,7 +635,10 @@ class GameState(
         return if (candidates.isEmpty()) null else candidates.random()
     }
 
-    /** Reset powerup state — called on life loss, level transition, full reset. */
+    /** Reset powerup state — called on life loss, level transition, full reset.
+     *  Bait CHARGES persist across level transitions and life loss (rewards
+     *  shouldn't be confiscated for dying), but any bait currently on the
+     *  field is cleared because that level's state is gone. */
     private fun clearPowerups() {
         banana = null
         bananaTimer = nextBananaInitialDelay()
@@ -530,6 +650,8 @@ class GameState(
         slowPiranhaTimer = 0f
         turtleTimer = 0f
         heartTimer = 0f
+        bait = null
+        baitTimer = 0f
     }
 
     private fun onLifeLost() {
@@ -546,6 +668,7 @@ class GameState(
     private fun respawnEntities() {
         monkey.resetTo(maze.monkeySpawn.first, maze.monkeySpawn.second)
         for (p in piranhas) p.resetToSpawn()
+        breath = BREATH_MAX
     }
 
     private fun loadLevel(lvl: Int) {
@@ -555,6 +678,9 @@ class GameState(
         clearPowerups()
         applyEntitySpeeds()
         frightTimer = 0f
+        breath = BREATH_MAX
+        tideTimer = 0f
+        maze.tideHigh = true
 
         // Recompute the level-intro banner from the speed/count delta. Only
         // applies in challenge mode — first run-through has no per-level
@@ -599,9 +725,43 @@ class GameState(
         if (targetLevel < 1) return
         level = targetLevel
         loadLevel(targetLevel)
+        // Debug jumps fire the mechanic intro too — useful for testing the
+        // overlay without playing through the prior levels. The listener
+        // (MainActivity) will skip the overlay if the user has already seen
+        // it, so this is harmless in regular gameplay.
+        enterLevelWithIntro()
+        listener?.onLevelChanged(level)
+    }
+
+    /**
+     * After loading a level, either transition into the MECHANIC_INTRO phase
+     * (if this level introduces a never-before-shown mechanic) or go straight
+     * to READY. The listener decides whether to actually surface a tutorial
+     * overlay — `acknowledgeMechanicIntro()` MUST be called eventually to
+     * resume play.
+     */
+    private fun enterLevelWithIntro() {
+        val intro = MechanicIntro.values().firstOrNull {
+            MechanicIntro.introducedAtLevel(it) == level
+        }
+        if (intro != null) {
+            pendingMechanicIntro = intro
+            phase = Phase.MECHANIC_INTRO
+            listener?.onMechanicIntro(intro)
+        } else {
+            phase = Phase.READY
+            phaseTimer = 2.0f
+        }
+    }
+
+    /** Resume play after a mechanic intro overlay was dismissed (or skipped
+     *  because the user has already seen it). No-op outside MECHANIC_INTRO. */
+    @Synchronized
+    fun acknowledgeMechanicIntro() {
+        if (phase != Phase.MECHANIC_INTRO) return
+        pendingMechanicIntro = null
         phase = Phase.READY
         phaseTimer = 2.0f
-        listener?.onLevelChanged(level)
     }
 
     /** Debug hook: trigger the power-pellet fright effect without eating one. */
@@ -651,6 +811,7 @@ class GameState(
         listener?.onScoreChanged(score)
         listener?.onLivesChanged(lives)
         listener?.onLevelChanged(level)
+        listener?.onBaitChargesChanged(baitCharges)
     }
 
     // ---------- Drawing ----------
@@ -663,6 +824,27 @@ class GameState(
     private val bannerShadow = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.BLACK
         textAlign = Paint.Align.CENTER
+        typeface = Typeface.DEFAULT_BOLD
+    }
+    private val breathBgPaint = Paint().apply { color = Color.parseColor("#80101820") }
+    private val breathFillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#5BC0E0")
+        style = Paint.Style.FILL
+    }
+    private val breathBorderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#E0F2FA")
+        style = Paint.Style.STROKE
+        strokeWidth = 2f
+    }
+    private val tideHighPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#5BC0E0"); style = Paint.Style.FILL
+    }
+    private val tideLowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#A88858"); style = Paint.Style.FILL
+    }
+    private val tideTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.WHITE
+        textAlign = Paint.Align.LEFT
         typeface = Typeface.DEFAULT_BOLD
     }
 
@@ -693,6 +875,17 @@ class GameState(
             val cx = originX + (col + 0.5f) * cellSize
             val cy = originY + (row + 0.5f) * cellSize
             SpriteRenderer.drawBlackHole(canvas, cx, cy, cellSize, animTime)
+        }
+
+        // Bait fish — pulses gently. Flashes faster as it nears expiry so the
+        // player knows it's about to vanish.
+        bait?.let { (col, row) ->
+            val cx = originX + (col + 0.5f) * cellSize
+            val cy = originY + (row + 0.5f) * cellSize
+            val urgency = if (baitTimer < 1.5f) (1f - baitTimer / 1.5f) else 0f
+            val flashRate = 4f + 12f * urgency
+            val pulse = 0.35f + 0.05f * kotlin.math.sin(animTime * flashRate)
+            SpriteRenderer.drawBaitFish(canvas, cx, cy, cellSize * pulse, animTime)
         }
 
         if (phase != Phase.LIFE_LOST) {
@@ -747,6 +940,11 @@ class GameState(
             )
         }
 
+        // HUD bars (breath + tide) — small overlays at the top of the playable
+        // area, only shown when the level uses the corresponding mechanic.
+        drawBreathBar(canvas, originX, originY, cellSize)
+        drawTideIndicator(canvas, originX, originY, cellSize, animTime)
+
         // Banner text overlays.
         val cxScreen = viewWidth / 2f
         val cyScreen = hudHeightPx + playableHeight / 2f
@@ -772,6 +970,40 @@ class GameState(
         canvas.drawText(text, x, y, bannerPaint)
     }
 
+    /** Breath bar — shown only when this level uses DEEP tiles. Slim rectangle
+     *  at the top of the maze. Empties as the monkey dives; refills on path. */
+    private fun drawBreathBar(canvas: Canvas, originX: Float, originY: Float, cellSize: Float) {
+        if (!maze.hasDeepTiles) return
+        val w = cellSize * 6f
+        val h = cellSize * 0.35f
+        val x = originX + cellSize * 0.5f
+        val y = originY + cellSize * 0.25f
+        canvas.drawRect(x, y, x + w, y + h, breathBgPaint)
+        val frac = (breath / BREATH_MAX).coerceIn(0f, 1f)
+        canvas.drawRect(x, y, x + w * frac, y + h, breathFillPaint)
+        canvas.drawRect(x, y, x + w, y + h, breathBorderPaint)
+    }
+
+    /** Tide indicator — shown only when this level has TIDE tiles. A small
+     *  dot near the top-right of the maze plus a colour swap for high/low. */
+    private fun drawTideIndicator(
+        canvas: Canvas, originX: Float, originY: Float, cellSize: Float, animTime: Float,
+    ) {
+        if (!maze.hasTideTiles) return
+        val cx = originX + (maze.cols - 0.5f) * cellSize
+        val cy = originY + cellSize * 0.5f
+        val r = cellSize * 0.30f
+        val paint = if (maze.tideHigh) tideHighPaint else tideLowPaint
+        canvas.drawCircle(cx, cy, r, paint)
+        // Animated ring around it to draw the eye.
+        val ringPaint = Paint(paint).apply { style = Paint.Style.STROKE; strokeWidth = 2f }
+        val pulse = 0.85f + 0.15f * kotlin.math.sin(animTime * 4f)
+        canvas.drawCircle(cx, cy, r * pulse, ringPaint)
+        tideTextPaint.textSize = cellSize * 0.30f
+        val label = if (maze.tideHigh) "HIGH" else "LOW"
+        canvas.drawText(label, cx - r - cellSize * 1.3f, cy + cellSize * 0.10f, tideTextPaint)
+    }
+
     private fun nextBananaInitialDelay(): Float =
         BANANA_INITIAL_MIN + (BANANA_INITIAL_MAX - BANANA_INITIAL_MIN) * kotlin.random.Random.nextFloat()
 
@@ -793,5 +1025,14 @@ class GameState(
         private const val SLOW_DURATION = 10f
         private const val TURTLE_VISIBLE_DURATION = 1.5f
         private const val HEART_VISIBLE_DURATION = 1.5f
+        private const val BAIT_DURATION = 6f               // seconds an uneaten bait stays
+
+        // Tide cycle: 3 s exposed (walkable) then 3 s submerged-walls.
+        private const val TIDE_PERIOD = 6f
+        private const val TIDE_HIGH_DURATION = 3f
+
+        // Breath: 3 seconds underwater, refills at 2× drain rate on the surface.
+        private const val BREATH_MAX = 3f
+        private const val BREATH_REFILL_RATE = 2f
     }
 }

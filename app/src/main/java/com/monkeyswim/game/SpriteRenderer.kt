@@ -59,6 +59,17 @@ object SpriteRenderer {
     private val wakePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.argb(170, 230, 245, 255); style = Paint.Style.FILL
     }
+    // Bait fish — small silver/yellow lure
+    private val baitBody = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#FFD24A"); style = Paint.Style.FILL
+    }
+    private val baitBelly = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#FFF0B0"); style = Paint.Style.FILL
+    }
+    private val baitOutline = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#7A5A10"); style = Paint.Style.STROKE
+        strokeWidth = 2f
+    }
     // Shark
     private val sharkBody = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor("#5A6B7A"); style = Paint.Style.FILL
@@ -454,6 +465,33 @@ object SpriteRenderer {
         canvas.drawPath(tmpPath, heartFill)
         heartStroke.color = Color.argb(alpha, 255, 210, 230)
         canvas.drawPath(tmpPath, heartStroke)
+    }
+
+    /**
+     * Small yellow bait fish — drawn at ±s extent. Body oval + triangular
+     * tail + dorsal nub. Faces left/right based on a slow animation phase so
+     * it looks like it's wiggling in place.
+     */
+    fun drawBaitFish(canvas: Canvas, cx: Float, cy: Float, s: Float, animTime: Float) {
+        val wiggle = kotlin.math.sin(animTime * 6f) * 0.15f
+        // Body: oval slightly tilted by wiggle
+        tmpRect.set(cx - s * 0.6f, cy - s * 0.35f, cx + s * 0.4f, cy + s * 0.35f)
+        canvas.drawOval(tmpRect, baitBody)
+        // Belly highlight
+        tmpRect.set(cx - s * 0.35f, cy - s * 0.05f, cx + s * 0.25f, cy + s * 0.25f)
+        canvas.drawOval(tmpRect, baitBelly)
+        // Tail (right side, wiggling)
+        tmpPath.reset()
+        tmpPath.moveTo(cx + s * 0.4f, cy)
+        tmpPath.lineTo(cx + s * 0.75f, cy - s * (0.3f + wiggle))
+        tmpPath.lineTo(cx + s * 0.75f, cy + s * (0.3f - wiggle))
+        tmpPath.close()
+        canvas.drawPath(tmpPath, baitBody)
+        // Eye (dark dot on the left, "head" end)
+        canvas.drawCircle(cx - s * 0.4f, cy - s * 0.10f, s * 0.06f, eyeBlack)
+        // Outline
+        tmpRect.set(cx - s * 0.6f, cy - s * 0.35f, cx + s * 0.4f, cy + s * 0.35f)
+        canvas.drawOval(tmpRect, baitOutline)
     }
 
     fun drawBlackHole(canvas: Canvas, cx: Float, cy: Float, cellSize: Float, animTime: Float) {

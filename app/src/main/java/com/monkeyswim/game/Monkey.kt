@@ -44,13 +44,25 @@ class Monkey(
 
     fun update(deltaSec: Float) {
         animTime += deltaSec
-        val speed = baseSpeed * speedScale
+        val speed = baseSpeed * speedScale * currentMultiplier()
         var remaining = speed * deltaSec
         // Substep so we never skip past a tile center.
         while (remaining > 0f) {
             val step = remaining.coerceAtMost(0.45f)
             stepBy(step)
             remaining -= step
+        }
+    }
+
+    /** Current-tile speed modifier: 1.5× moving with the flow, 0.5× against,
+     *  1.0× perpendicular or off-current. */
+    private fun currentMultiplier(): Float {
+        val cd = maze.currentDirAt(tileCol, tileRow) ?: return 1f
+        return when {
+            direction == Direction.NONE -> 1f
+            direction == cd -> 1.5f
+            direction == cd.opposite() -> 0.5f
+            else -> 1f
         }
     }
 

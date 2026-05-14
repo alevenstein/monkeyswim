@@ -27,6 +27,7 @@ class GameView @JvmOverloads constructor(
             value?.onScoreChanged(state.score)
             value?.onLivesChanged(state.lives)
             value?.onLevelChanged(state.level)
+            value?.onBaitChargesChanged(state.baitCharges)
         }
 
     init {

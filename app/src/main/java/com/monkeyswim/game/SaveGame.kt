@@ -27,6 +27,7 @@ object SaveGame {
         val mazeLayout: List<String>,
         val fruitMap: Map<Pair<Int, Int>, FruitRenderer.FruitType>,
         val challengeMode: Boolean = false,
+        val baitCharges: Int = 0,
     )
 
     /**
@@ -55,6 +56,7 @@ object SaveGame {
             }
             put("fruits", fruits)
             put("challenge", snapshot.challengeMode)
+            put("baitCharges", snapshot.baitCharges)
         }
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit()
@@ -88,6 +90,8 @@ object SaveGame {
                 // Pre-challenge-mode saves omit this key; default to false so
                 // an in-progress first run-through restores normally.
                 challengeMode = json.optBoolean("challenge", false),
+                // Pre-bait saves don't have this key — default to 0.
+                baitCharges = json.optInt("baitCharges", 0),
             )
         } catch (_: Exception) {
             // Malformed payload (corrupted prefs, schema drift slipping past the

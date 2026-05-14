@@ -23,15 +23,32 @@ Three kinds of gateway:
 - **Wrap tunnels** — a single contiguous span of three `T` tiles on the top row, with a matching three-tile span on the bottom row in the same columns; the monkey (and any piranha) walking off one edge through those columns wraps to the other. Each level has **exactly one** such 3-cell tunnel — never split into multiple groups and never wider than 3 — because the player perceives a wider/split span as multiple distinct portals. The position of the 3-cell group varies per level for visual identity (e.g. L1 cols 6-8, L2 cols 4-6, L8 cols 8-10, L10 cols 11-13, etc.). The two ends must use the same column set since `Maze.tunnelWrap` teleports by column without verifying the destination is also a `T`.
 - **Level portal** — `X` tiles, on either the left or right wall (exactly one wall per level, three vertically-adjacent cells). Locks while pellets remain; unlocks (glowing animated cyan) once the last pellet is eaten. Walking into an unlocked portal transitions the player to the next level.
 
-Every level is 15 cols × 22 rows. Each layout ships as 22 strings of 15 chars; the monkey-spawn cell is marked `M` and piranha-spawn cells are derived from the `===` pen-interior bounding box (always the four corners). The monkey spawn stays at **(col 7, row 18)** across all levels so the player's starting orientation is constant — what varies per level is the pen position, the portal wall, and the tunnel columns:
+Every level is 15 cols × 22 rows. Each layout ships as 22 strings of 15 chars; the monkey-spawn cell is marked `M` and piranha-spawn cells are derived from the `===` pen-interior bounding box (always the four corners). The monkey spawn stays at **(col 7, row 18)** across all levels so the player's starting orientation is constant — what varies per level is the pen position, the portal wall, the tunnel columns, and which mechanics are in play:
 
 - **Level 1** — pen centre, portal right wall, tunnel cols 6-8 (baseline).
-- **Levels 2-9** — each level carries a unique combination of pen position (top/middle/bottom × left/centre/right), portal wall (left or right), and tunnel column triple, so the gameplay feel changes per level: piranhas emerge from a different direction and the exit is in a different place.
-- **Level 10** — densest corridor patterns. Pen centre, portal on the left wall (mirror of L1's right-wall default), tunnel cols 11-13 (far right, opposite the portal).
+- **Levels 2-9** — each level carries a unique combination of pen position (top/middle/bottom × left/centre/right), portal wall (left or right), and tunnel column triple. Classic gameplay (no new mechanics).
+- **Level 10** — **currents introduced**. Pen centre, portal on the left wall, tunnel cols 11-13. Row 12 is a leftward current that boosts the monkey toward the portal once pellets are cleared.
+- **Levels 11-14** — escalating use of currents. L11/L12 single-row currents toward the portal; L13 opposing currents (push-back row near the top + helpful row near the portal); L14 vertical current column.
+- **Level 15** — **tide cycle introduced**. ~6s timer toggles `~` cells between walkable and wall.
+- **Level 16** — tide expanded, larger walkable-when-high passage.
+- **Level 17** — **dive tiles introduced**. `D` tiles let the monkey swim underwater (piranhas can't follow) but a 3-second breath meter drains; out of breath underwater = drowning.
+- **Level 18** — dive + currents combined.
+- **Level 19** — tide + dive combined.
+- **Level 20** — everything: currents, tide, and dive together. Pen centre, portal left, tunnels cols 11-13.
 
-Levels beyond 10 cycle back to layout 1 but the difficulty knobs (speed, piranha count) keep applying — see "Challenge mode" below. Every level keeps four power-pellet positions, 1-tile-wide corridors as a guideline (a few small 2×2 walkable cells are allowed near portal-access cells or vestibules when strict avoidance would wall in piranhas or isolate pellets), all pellets reachable from spawn, and no dead-end pellets. Piranha AI is fully data-driven from the layout chars (`maze.penExitTile` and `maze.piranhaSpawnTiles`), so the per-level pen position needs no AI changes.
+Levels beyond 20 cycle back to layout 1 but the difficulty knobs (speed, piranha count) keep applying — see "Challenge mode" below. Every level keeps four power-pellet positions, 1-tile-wide corridors as a guideline (a few small 2×2 walkable cells are allowed near portal-access cells or vestibules when strict avoidance would wall in piranhas or isolate pellets), all pellets reachable from spawn, and no dead-end pellets. Piranha AI is fully data-driven from the layout chars (`maze.penExitTile` and `maze.piranhaSpawnTiles`), so the per-level pen position needs no AI changes.
 
-In debug builds (`BuildConfig.DEBUG`) a small bar appears under the HUD with two controls: a **"DEBUG · Level" Spinner** that jumps directly to any of the ten levels without having to clear the previous one, and a **"FRUIT" button** that triggers the power-pellet fright effect (piranhas frightened for 6.5s, chain bonus reset) without needing to find and eat one. Both are hidden in release builds.
+In debug builds (`BuildConfig.DEBUG`) a small bar appears under the HUD with two controls: a **"DEBUG · Level" Spinner** that jumps directly to any of the twenty levels without having to clear the previous one, and a **"FRUIT" button** that triggers the power-pellet fright effect (piranhas frightened for 6.5s, chain bonus reset) without needing to find and eat one. Both are hidden in release builds.
+
+### New mechanics (L10+)
+
+**Currents** — `^v<>` tiles flow up/down/left/right. Walkable like path but carry no pellet. An entity moving **with** the flow is **+50% faster**; **against** is **-50% slower**; perpendicular movement is unaffected. EATEN piranhas (returning home as eyes) are immune so their BFS path isn't disturbed. Rendered as a pulsing chevron arrow that drifts in the flow direction.
+
+**Dive tiles** — `D` tiles are deep water. The monkey can swim into them freely; **piranhas treat them as walls**. While the monkey is on a D tile, a 3-second **breath meter** drains; on regular path it refills at 2× drain rate. Running out of breath while still on a D tile drowns the monkey (costs a life). The breath bar appears in the top-left of the maze only on levels that contain D tiles.
+
+**Tide** — `~` tiles flip between walkable and wall on a global ~6-second cycle (3s high, 3s low). The current tide phase is shown by a small coloured dot in the top-right of the maze (cyan = HIGH/walkable, sandy = LOW/wall) — only on levels that contain `~` tiles. Tide cells carry no pellet, so an unreachable-during-LOW phase never traps a pellet the player can't get.
+
+**Mechanic-intro overlays** — the first time the player enters a level that introduces one of the three mechanics (L10 = currents, L15 = tide, L17 = dive), a full-screen overlay appears with a title + short explanation + "Got it!" button before the level starts. The game pauses in a new `Phase.MECHANIC_INTRO` until the player dismisses the overlay (which calls `acknowledgeMechanicIntro()`). "Seen" flags are persisted to `SharedPreferences` (`monkeyswim_settings` / `seen_intro_currents` etc.) so each explanation only ever interrupts the player once. The mapping (mechanic → introducing level) lives in `MechanicIntro.introducedAtLevel`, and the listener fires `onMechanicIntro(mechanic)` so `MainActivity` can route to the right strings + decide whether to skip an already-seen overlay.
 
 ### Power pellets — fruit
 
@@ -53,7 +70,7 @@ Piranha behaviours:
 
 ### Powerups
 
-See **`specs/Powerups.md`** for the full powerup spec. Bananas appear periodically on a random walkable tile; collecting one triggers a random powerup (lightning / black hole / shark / slow piranhas + turtle visual). All powerup effects clear when the player loses a life or transitions to a new level.
+See **`specs/Powerups.md`** for the full powerup spec. Bananas appear periodically on a random walkable tile; collecting one triggers a random powerup from the catalogue (lightning, black hole, shark, slow piranhas + turtle visual, extra life + heart visual, or bait — the only "stored" effect that hands the player a deployable charge instead of firing immediately). All instant powerup effects clear when the player loses a life or transitions to a new level; **bait charges persist** (they're a reward, not a state).
 
 ### Lives + game over
 
@@ -66,7 +83,7 @@ AdMob is currently wired to Google's official **test** App ID and rewarded-ad un
 
 ### Challenge mode
 
-The first run-through (levels 1-10) is intentionally flat: piranha speed stays at **1.0x** every level and the piranha count stays at **4**. After clearing level 10 the game enters a new `ALL_LEVELS_COMPLETE` phase and an overlay appears with two choices:
+The first run-through (levels 1-20) is intentionally flat: piranha speed stays at **1.0x** every level and the piranha count stays at **4**. After clearing the final level the game enters a new `ALL_LEVELS_COMPLETE` phase and an overlay appears with two choices:
 
 - **Restart** — full reset; level 1, score 0, lives 5, challenge mode off.
 - **Continue (Harder)** — sets `challengeMode = true`, drops the player back at level 1, **preserves current score and lives**.
@@ -92,7 +109,7 @@ Saved games persist the challenge-mode flag (`challenge` JSON field in the snaps
 
 All SFX are procedurally synthesised in `SoundEngine.kt` (no audio assets). Each effect is generated once at app start into a 16-bit PCM `ShortArray` and uploaded into its own `AudioTrack` in `MODE_STATIC`; `play()` rewinds and re-triggers. Different effects can play simultaneously because each has its own track. See **`specs/SoundEffects.md`** for the per-effect design log (character, fire-point, synthesis recipe).
 
-Effects in the current catalogue: PELLET, FRUIT, LIGHTNING, BLACK_HOLE, SHARK, SLOW_PIRANHAS, EXTRA_LIFE, DEATH, PIRANHA_EATEN, PORTAL, LEVEL_COMPLETE. Triggered from `GameState.updatePlaying` (pellet hook, piranha-eaten branch, gateway-hit branch), `activatePowerup` (powerup hooks), and `onLifeLost`.
+Effects in the current catalogue: PELLET, FRUIT, LIGHTNING, BLACK_HOLE, SHARK, SLOW_PIRANHAS, EXTRA_LIFE, DEATH, PIRANHA_EATEN, PORTAL, LEVEL_COMPLETE, BAIT. Triggered from `GameState.updatePlaying` (pellet hook, piranha-eaten branch, gateway-hit branch), `activatePowerup` (powerup hooks), `onLifeLost`, and `placeBait`.
 
 `SoundEngine` is owned by `MainActivity` and handed to `GameState` via the `soundEngine` field — null-safe so headless tests don't need an audio device. The HUD top bar has a **🔊 / 🔇** button (rightmost, alongside the `?` Help button); tapping it toggles `SoundEngine.enabled`, which is persisted to `SharedPreferences` (`monkeyswim_settings` / `soundEnabled`, default `true`). When disabled, every `play()` is a no-op. Visual contract matches Brick Basher's Canvas-drawn sound button — white when on, muted gray `#546E7A` when off.
 

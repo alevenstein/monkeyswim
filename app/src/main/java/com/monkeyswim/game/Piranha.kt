@@ -90,6 +90,11 @@ class Piranha(
     val tileCol: Int get() = x.toInt()
     val tileRow: Int get() = y.toInt()
 
+    /** Per-frame bait position (or null). GameState sets this before update().
+     *  When non-null AND the piranha is in CHASE AND the bait is within
+     *  BAIT_RANGE_SQ tiles², targetTile picks the bait instead of the monkey. */
+    var currentBait: Pair<Int, Int>? = null
+
     fun update(deltaSec: Float, monkey: Monkey, frightTimer: Float) {
         animTime += deltaSec
 
@@ -121,11 +126,15 @@ class Piranha(
             }
         }
 
-        val speed = when (mode) {
+        val baseSpeed = when (mode) {
             Mode.FRIGHTENED -> frightSpeed
             Mode.EATEN -> eatenSpeed
             Mode.LEAVING_PEN, Mode.CHASE -> baseChaseSpeed * speedScale
         }
+        // Currents modify chase/frightened movement the same way they affect
+        // the monkey (+50% with, -50% against). EATEN piranhas are immune so
+        // their BFS return-home path isn't disturbed.
+        val speed = if (mode == Mode.EATEN) baseSpeed else baseSpeed * currentMultiplier()
         var remaining = speed * deltaSec
         while (remaining > 0f) {
             val step = remaining.coerceAtMost(0.45f)
@@ -171,6 +180,16 @@ class Piranha(
         if (mode == Mode.FRIGHTENED) {
             // Random target far away — bias to opposite of monkey.
             return (maze.cols - monkey.tileCol) to (maze.rows - monkey.tileRow)
+        }
+        // CHASE mode: if a bait is near, re-target it. The piranha doesn't
+        // home perfectly (greedy junctions still apply), but it'll generally
+        // detour. Once bait is consumed (GameState clears it on contact) the
+        // piranha falls back to the personality-driven monkey target.
+        val cb = currentBait
+        if (cb != null) {
+            val dx = cb.first - tileCol
+            val dy = cb.second - tileRow
+            if (dx * dx + dy * dy <= BAIT_RANGE_SQ) return cb
         }
         val md = monkey.direction
         return when (personality) {
@@ -244,5 +263,21 @@ class Piranha(
         } else {
             SpriteRenderer.drawPiranha(canvas, cx, cy, cellSize, direction, frame, frightened, blink)
         }
+    }
+
+    /** Current-tile speed modifier — matches Monkey's. */
+    private fun currentMultiplier(): Float {
+        val cd = maze.currentDirAt(tileCol, tileRow) ?: return 1f
+        return when {
+            direction == Direction.NONE -> 1f
+            direction == cd -> 1.5f
+            direction == cd.opposite() -> 0.5f
+            else -> 1f
+        }
+    }
+
+    companion object {
+        // Bait-detection range, in squared tile distance (so 64 ≈ 8 tiles).
+        private const val BAIT_RANGE_SQ = 64
     }
 }

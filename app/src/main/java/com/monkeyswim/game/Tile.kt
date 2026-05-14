@@ -9,10 +9,31 @@ enum class Tile {
     PEN_INTERIOR,
     BOTTOM_GATEWAY,
     TUNNEL,
-    MONKEY_SPAWN;  // walkable like PATH; carries no pellet; marks where the monkey spawns
+    MONKEY_SPAWN,  // walkable like PATH; carries no pellet; marks where the monkey spawns
+    // Currents — walkable like PATH (no pellet). Entities moving with a
+    // current get +50% speed; against it -50%; perpendicular unaffected.
+    CURRENT_UP,
+    CURRENT_DOWN,
+    CURRENT_LEFT,
+    CURRENT_RIGHT,
+    // Deep / dive tiles — monkey can enter only while breath remains; piranhas
+    // treat as wall. No pellet.
+    DEEP,
+    // Tide tiles — toggle between walkable and wall on a global ~6s cycle.
+    // No pellet (avoid unreachable-pellet trap during the wall phase).
+    TIDE;
 
     val carriesPellet: Boolean
         get() = this == PELLET || this == POWER_PELLET
+
+    val currentDirection: Direction?
+        get() = when (this) {
+            CURRENT_UP -> Direction.UP
+            CURRENT_DOWN -> Direction.DOWN
+            CURRENT_LEFT -> Direction.LEFT
+            CURRENT_RIGHT -> Direction.RIGHT
+            else -> null
+        }
 
     val char: Char
         get() = when (this) {
@@ -25,6 +46,12 @@ enum class Tile {
             BOTTOM_GATEWAY -> 'X'
             TUNNEL -> 'T'
             MONKEY_SPAWN -> 'M'
+            CURRENT_UP -> '^'
+            CURRENT_DOWN -> 'v'
+            CURRENT_LEFT -> '<'
+            CURRENT_RIGHT -> '>'
+            DEEP -> 'D'
+            TIDE -> '~'
         }
 
     companion object {
@@ -38,6 +65,12 @@ enum class Tile {
             'X' -> BOTTOM_GATEWAY
             'T' -> TUNNEL
             'M' -> MONKEY_SPAWN
+            '^' -> CURRENT_UP
+            'v' -> CURRENT_DOWN
+            '<' -> CURRENT_LEFT
+            '>' -> CURRENT_RIGHT
+            'D' -> DEEP
+            '~' -> TIDE
             else -> error("Unknown tile char: '$c'")
         }
     }

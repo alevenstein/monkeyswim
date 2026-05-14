@@ -57,6 +57,22 @@
                 tools:text="Lives 3" />
 
             <Button
+                android:id="@+id/baitButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:padding="6dp"
+                android:layout_marginStart="8dp"
+                android:text="@string/bait_button"
+                android:textColor="@color/button_text"
+                android:backgroundTint="@color/button_bg"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                tools:text="🐟 1" />
+
+            <Button
                 android:id="@+id/soundButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -243,6 +259,62 @@
                 android:textColor="@color/button_text"
                 android:backgroundTint="@color/button_bg"
                 android:textSize="18sp" />
+        </LinearLayout>
+    </FrameLayout>
+
+    <!-- Mechanic intro overlay — shown the first time the player encounters
+         currents (L10), the tide cycle (L15), or dive tiles (L17). Title and
+         body are set programmatically. Dismissed by "Got it!" which marks
+         the mechanic as seen and resumes the game. -->
+    <FrameLayout
+        android:id="@+id/mechanicIntroOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/splash_bg"
+        android:visibility="gone"
+        android:clickable="true"
+        android:focusable="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:paddingHorizontal="32dp"
+            android:paddingVertical="32dp">
+
+            <TextView
+                android:id="@+id/mechanicIntroTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/power_pellet"
+                android:textSize="40sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="20dp"
+                tools:text="Currents!" />
+
+            <TextView
+                android:id="@+id/mechanicIntroBody"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/hud_text"
+                android:textSize="16sp"
+                android:gravity="center"
+                android:lineSpacingExtra="3dp"
+                android:layout_marginBottom="32dp"
+                tools:text="Description of the mechanic appears here." />
+
+            <Button
+                android:id="@+id/mechanicIntroDismiss"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minWidth="200dp"
+                android:text="@string/intro_got_it"
+                android:textColor="@color/button_text"
+                android:backgroundTint="@color/button_bg"
+                android:textSize="18sp"
+                android:textStyle="bold" />
         </LinearLayout>
     </FrameLayout>
 
@@ -485,6 +557,16 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/help_heart"
+                    android:textColor="@color/hud_text"
+                    android:textSize="14sp"
+                    android:gravity="start"
+                    android:lineSpacingExtra="2dp"
+                    android:layout_marginBottom="6dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/help_bait"
                     android:textColor="@color/hud_text"
                     android:textSize="14sp"
                     android:gravity="start"
