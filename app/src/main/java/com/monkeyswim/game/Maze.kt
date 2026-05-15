@@ -165,7 +165,8 @@ class Maze(
         val t = tileAt(col, row)
         return when (t) {
             Tile.PATH, Tile.PELLET, Tile.POWER_PELLET, Tile.TUNNEL, Tile.MONKEY_SPAWN,
-            Tile.CURRENT_UP, Tile.CURRENT_DOWN, Tile.CURRENT_LEFT, Tile.CURRENT_RIGHT -> true
+            Tile.CURRENT_UP, Tile.CURRENT_DOWN, Tile.CURRENT_LEFT, Tile.CURRENT_RIGHT,
+            Tile.LILY_PAD -> true
             Tile.TIDE -> tideHigh
             Tile.BOTTOM_GATEWAY -> gatewayUnlocked
             else -> false
@@ -178,7 +179,8 @@ class Maze(
         return when (t) {
             Tile.PATH, Tile.PELLET, Tile.POWER_PELLET, Tile.TUNNEL,
             Tile.PEN_DOOR, Tile.PEN_INTERIOR, Tile.MONKEY_SPAWN,
-            Tile.CURRENT_UP, Tile.CURRENT_DOWN, Tile.CURRENT_LEFT, Tile.CURRENT_RIGHT -> true
+            Tile.CURRENT_UP, Tile.CURRENT_DOWN, Tile.CURRENT_LEFT, Tile.CURRENT_RIGHT,
+            Tile.LILY_PAD -> true
             Tile.TIDE -> tideHigh
             else -> false
         }
@@ -188,6 +190,10 @@ class Maze(
      *  current tile. */
     fun currentDirAt(col: Int, row: Int): Direction? =
         tileAt(col, row).currentDirection
+
+    /** True if the tile at (col, row) is a slippery lily pad — entities on
+     *  these can't change direction. */
+    fun isLilyPad(col: Int, row: Int): Boolean = tileAt(col, row) == Tile.LILY_PAD
 
     fun isTunnelTile(col: Int, row: Int): Boolean = tileAt(col, row) == Tile.TUNNEL
 
@@ -426,6 +432,31 @@ class Maze(
                             canvas.drawRoundRect(tmpRect, cellSize * 0.20f, cellSize * 0.20f, tideRockPaint)
                         }
                     }
+                    Tile.LILY_PAD -> {
+                        // Lily pad — green disc with a slight inner highlight
+                        // and a wedge notch (the leaf "slit"). The notch
+                        // rotates with animTime so adjacent pads don't all
+                        // notch in the same direction.
+                        canvas.drawCircle(cx, cy, cellSize * 0.42f, lilyPadDark)
+                        canvas.drawCircle(cx, cy, cellSize * 0.36f, lilyPadLight)
+                        val phase = ((c * 31 + r * 17) % 8) * (Math.PI.toFloat() / 4f)
+                        val notchAngle = phase
+                        val nx = cx + kotlin.math.cos(notchAngle) * cellSize * 0.32f
+                        val ny = cy + kotlin.math.sin(notchAngle) * cellSize * 0.32f
+                        wavePath.reset()
+                        wavePath.moveTo(cx, cy)
+                        wavePath.lineTo(
+                            cx + kotlin.math.cos(notchAngle - 0.25f) * cellSize * 0.42f,
+                            cy + kotlin.math.sin(notchAngle - 0.25f) * cellSize * 0.42f,
+                        )
+                        wavePath.lineTo(nx, ny)
+                        wavePath.lineTo(
+                            cx + kotlin.math.cos(notchAngle + 0.25f) * cellSize * 0.42f,
+                            cy + kotlin.math.sin(notchAngle + 0.25f) * cellSize * 0.42f,
+                        )
+                        wavePath.close()
+                        canvas.drawPath(wavePath, lilyPadDark)
+                    }
                 }
             }
         }
@@ -489,6 +520,14 @@ class Maze(
     }
     private val tideRockPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor("#7A6248")
+        style = Paint.Style.FILL
+    }
+    private val lilyPadDark = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#2A6B3A")
+        style = Paint.Style.FILL
+    }
+    private val lilyPadLight = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#4FA463")
         style = Paint.Style.FILL
     }
 }

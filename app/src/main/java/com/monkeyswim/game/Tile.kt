@@ -18,7 +18,11 @@ enum class Tile {
     CURRENT_RIGHT,
     // Tide tiles — toggle between walkable and wall on a global ~6s cycle.
     // No pellet (avoid unreachable-pellet trap during the wall phase).
-    TIDE;
+    TIDE,
+    // Lily pads — walkable like PATH, no pellet. Slippery: an entity that
+    // enters keeps moving in its entry direction (no turning, no reverse)
+    // until it slides off the lily-pad tile. EATEN piranhas are exempt.
+    LILY_PAD;
 
     val carriesPellet: Boolean
         get() = this == PELLET || this == POWER_PELLET
@@ -48,6 +52,7 @@ enum class Tile {
             CURRENT_LEFT -> '<'
             CURRENT_RIGHT -> '>'
             TIDE -> '~'
+            LILY_PAD -> 'L'
         }
 
     companion object {
@@ -66,6 +71,7 @@ enum class Tile {
             '<' -> CURRENT_LEFT
             '>' -> CURRENT_RIGHT
             '~' -> TIDE
+            'L' -> LILY_PAD
             else -> error("Unknown tile char: '$c'")
         }
     }

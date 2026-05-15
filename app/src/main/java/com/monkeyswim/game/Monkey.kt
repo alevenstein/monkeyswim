@@ -82,8 +82,17 @@ class Monkey(
     }
 
     private fun stepBy(distance: Float) {
-        // Try to apply queued direction at tile centers if it's now valid.
-        if (queuedDirection != Direction.NONE && queuedDirection != direction) {
+        // Lily-pad lock: while the monkey is actively sliding on a lily pad
+        // (direction != NONE), queued turns don't commit — slippery. BUT if
+        // the monkey has wall-stopped on a lily pad and is now stationary,
+        // we DO let the swipe commit; otherwise the player would be stranded
+        // (the lily pad blocks turning, but they have to start moving from
+        // somewhere). Queued input is preserved either way so a perpendicular
+        // swipe takes effect at the first valid junction after slide-off.
+        val onLilyPad = maze.isLilyPad(tileCol, tileRow)
+        val canCommitQueued = !onLilyPad || direction == Direction.NONE
+
+        if (canCommitQueued && queuedDirection != Direction.NONE && queuedDirection != direction) {
             if (canTurnTo(queuedDirection)) {
                 snapToLane(queuedDirection)
                 direction = queuedDirection
@@ -173,8 +182,12 @@ class Monkey(
             queuedDirection = Direction.NONE
             return
         }
-        // Allow immediate reverse without snap.
-        if (dir == direction.opposite() && direction != Direction.NONE) {
+        // Allow immediate reverse without snap — unless we're on a lily pad,
+        // in which case the slippery rule overrides and the swipe just
+        // queues for after slide-off.
+        if (dir == direction.opposite() && direction != Direction.NONE &&
+            !maze.isLilyPad(tileCol, tileRow)
+        ) {
             direction = dir
             queuedDirection = Direction.NONE
             return

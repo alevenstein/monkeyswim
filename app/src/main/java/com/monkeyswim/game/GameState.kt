@@ -22,7 +22,7 @@ class GameState(
      *  but the "have they seen it yet?" persistence is up to the listener
      *  (MainActivity stores flags in SharedPreferences). */
     enum class MechanicIntro {
-        CURRENTS, TIDE;
+        CURRENTS, TIDE, LILY_PADS;
 
         companion object {
             /** The first level at which each mechanic appears in the layouts.
@@ -30,6 +30,7 @@ class GameState(
              *  `onMechanicIntro(M)` so the UI can pause + show an explainer. */
             fun introducedAtLevel(m: MechanicIntro): Int = when (m) {
                 CURRENTS -> 5
+                LILY_PADS -> 12
                 TIDE -> 15
             }
         }

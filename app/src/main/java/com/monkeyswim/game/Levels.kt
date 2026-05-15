@@ -27,6 +27,8 @@ package com.monkeyswim.game
  *          modifier ±50% applied to entities moving with / against the flow)
  *   ~ = tide cell (walkable during the high-tide phase of the global
  *       ~6s cycle, wall during the low phase; no pellet)
+ *   L = lily pad (slippery — entity entering keeps its direction until it
+ *       slides off; no pellet)
  *
  * Level 1 is the hand-laid baseline (pen + portal + tunnels all centered).
  * Levels 2-4 carry their own pen position, portal wall, and tunnel column
@@ -358,11 +360,14 @@ object Levels {
         "WWWWWWWWWWTTTWW",
     )
 
-    // Level 12 — Pen TOP-RIGHT (rows 4-7, cols 9-13), portal LEFT WALL,
-    // tunnels LEFT-ONLY (cols 2-4). Mirror of L8. Classic gameplay.
+    // Level 12 — LILY PADS introduced. Pen TOP-RIGHT, portal LEFT WALL,
+    // tunnels LEFT-ONLY (cols 2-4). Row 1 has a 7-cell lily-pad chain at
+    // cols 4-10: stepping onto one locks the entity's direction until it
+    // slides off the chain. The pellets at cols 1-3 and 11-13 of row 1
+    // remain so the player still has reachable food in the top corridor.
     private val LEVEL_12: List<String> = listOf(
         "WWTTTWWWWWWWWWW",
-        "W.............W",
+        "W...LLLLLLL...W",
         "W.WWW.WWW.W W.W",
         "W.........W W.W",
         "WW.WW.WW.WW-WWW",

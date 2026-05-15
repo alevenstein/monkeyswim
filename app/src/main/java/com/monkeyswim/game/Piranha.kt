@@ -144,9 +144,12 @@ class Piranha(
     }
 
     private fun stepBy(distance: Float, monkey: Monkey) {
-        // At a tile center, decide next direction.
+        // At a tile center, decide next direction — but not while sliding on
+        // a lily pad. EATEN piranhas are exempt from the lock (their BFS
+        // return path is what keeps them on track to spawn).
         val nearCenter = abs(x - (tileCol + 0.5f)) < 0.05f && abs(y - (tileRow + 0.5f)) < 0.05f
-        if (nearCenter) {
+        val onLilyPad = mode != Mode.EATEN && maze.isLilyPad(tileCol, tileRow)
+        if (nearCenter && !onLilyPad) {
             val newDir = pickDirection(monkey)
             if (newDir != Direction.NONE) direction = newDir
         }
