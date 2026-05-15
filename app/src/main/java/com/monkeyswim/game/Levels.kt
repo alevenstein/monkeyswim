@@ -422,19 +422,24 @@ object Levels {
     )
 
     // Level 14 — Currents (L5 skeleton, pen right-centre). Vertical current
-    // column at col 1 flowing DOWN, pushing the monkey toward the bottom of
-    // the maze (away from the top safe area) — and a row 12 left-current to
-    // the portal once pellets are cleared. Extra power pellet at row 16 col 1
-    // compensates for the one replaced by the current column at (1, 3).
+    // column at col 1 flowing DOWN through rows 1-7, pushing the monkey
+    // toward the bottom of the maze; row 12 left-current ferries the monkey
+    // to the portal once pellets are cleared. The top-half PPs that would
+    // normally sit at (1, 3) are displaced inward to (3, 3) since col 1 is
+    // now a current; bottom-half PPs stay at the corners (1, 15) and (13, 15)
+    // since the current doesn't reach that low. Row 1 is the full corridor
+    // and row 2 has the alternating-wall pattern (same ordering as L5) — the
+    // earlier version swapped them, which produced a 2×9 walkable block
+    // between rows 2 and 3.
     private val LEVEL_14: List<String> = listOf(
         "WWTTTWWWWWWWWWW",
-        "WvWWW.WWW.WWW.W",
         "Wv............W",
-        "WvW.........WoW",
+        "WvWWW.WWW.WWW.W",
+        "WvWoW.......WoW",
         "WvW.WWW.WWW.W.W",
         "WvW...W.W...W.W",
         "WvWWW.WWW.W.W.W",
-        "W.........W W.W",
+        "Wv........W W.W",
         "WW.WW.WW.WW-WWW",
         "WW.WW.WW.W===WW",
         "XW.WW.WW.W===WW",
@@ -443,7 +448,7 @@ object Levels {
         "W.WWW.WWW.WWW.W",
         "W.............W",
         "WoW.WWW.WWW.WoW",
-        "WoW.........W.W",
+        "W.W.........W.W",
         "W.W.WWW.WWW.W.W",
         "W......M......W",
         "W.WWW.WWW.WWW.W",
@@ -579,7 +584,7 @@ object Levels {
         "W.WWW.D.D.WWW.W",
         "W.....D.D.....W",
         "W.WWW.W.W.WWW.X",
-        "WoW.WWWWWWW.WoX",
+        "WoWWWWW WWWWWoX",
         "W.....W W.....X",
         "W.WW.WW-WW.WW.W",
         "W.WW.W===W.WW.W",
