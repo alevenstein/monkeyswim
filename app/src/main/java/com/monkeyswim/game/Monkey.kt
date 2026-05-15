@@ -23,6 +23,13 @@ class Monkey(
     var queuedDirection: Direction = Direction.NONE
     private val initialDirection = Direction.NONE
 
+    /** Most recent direction the player explicitly swiped — independent of
+     *  whether it committed via the queued-direction system. Used by the
+     *  current-tile speed logic to tell "actively swimming WITH the current"
+     *  (player swiped in cd → +50%) from "passively drifting" (override
+     *  forced direction to cd → 0.5x). Reset on respawn. */
+    private var lastRequestedDirection: Direction = Direction.NONE
+
     /** Tiles per second. Pac-Man moves about 11 tiles/sec at full speed. */
     private val baseSpeed = 6.75f
     var speedScale: Float = 1f
@@ -36,6 +43,7 @@ class Monkey(
         y = row + 0.5f
         direction = initialDirection
         queuedDirection = Direction.NONE
+        lastRequestedDirection = Direction.NONE
         animTime = 0f
     }
 
@@ -54,15 +62,22 @@ class Monkey(
         }
     }
 
-    /** Current-tile speed modifier: 1.5× moving with the flow, 0.5× against,
-     *  1.0× perpendicular or off-current. */
+    /** Current-tile speed modifier. Three cases, all keyed off the tile's
+     *  current direction `cd`:
+     *   • Actively swimming WITH the flow (last player swipe was `cd`) → 1.5×.
+     *   • Actively swimming AGAINST the flow (direction == `cd.opposite()`,
+     *     which only happens via a deliberate swipe) → 0.5×.
+     *   • Anything else — perpendicular swipe forced-overridden to `cd`, or
+     *     drifting with the flow without an active matching swipe — is
+     *     "passive drift" at 0.5×. The player has to manually swipe in the
+     *     current's direction to get the speed boost.
+     *  Off-current tiles return 1× regardless. */
     private fun currentMultiplier(): Float {
         val cd = maze.currentDirAt(tileCol, tileRow) ?: return 1f
         return when {
-            direction == Direction.NONE -> 1f
-            direction == cd -> 1.5f
+            direction == cd && lastRequestedDirection == cd -> 1.5f
             direction == cd.opposite() -> 0.5f
-            else -> 1f
+            else -> 0.5f
         }
     }
 
@@ -73,6 +88,25 @@ class Monkey(
                 snapToLane(queuedDirection)
                 direction = queuedDirection
                 queuedDirection = Direction.NONE
+            }
+        }
+
+        // Current push: while on a current tile, the flow pushes the monkey
+        // in its direction — BUT only when there's no real choice. If the
+        // monkey's perpendicular direction leads to a walkable side corridor
+        // the player gets to exit the current there. If it leads to a wall
+        // (or the monkey has no direction at all), the current takes over.
+        // Moving with or against the flow always overrides the push (handled
+        // by the != cd && != cd.opposite() check).
+        val cd = maze.currentDirAt(tileCol, tileRow)
+        if (cd != null && direction != cd && direction != cd.opposite()) {
+            val targetCol = tileCol + direction.dx
+            val targetRow = tileRow + direction.dy
+            val perpendicularBlocked = direction == Direction.NONE ||
+                !maze.isMonkeyWalkable(targetCol, targetRow)
+            if (perpendicularBlocked) {
+                direction = cd
+                snapToLane(cd)
             }
         }
 
@@ -130,6 +164,11 @@ class Monkey(
 
     fun requestDirection(dir: Direction) {
         if (dir == Direction.NONE) return
+        // Record the player's intent regardless of whether the turn actually
+        // commits — currentMultiplier() reads this to decide whether the
+        // player is actively swimming WITH a current (1.5×) or being passively
+        // drifted by it (0.5×).
+        lastRequestedDirection = dir
         if (dir == direction) {
             queuedDirection = Direction.NONE
             return

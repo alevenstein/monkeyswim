@@ -42,7 +42,17 @@ In debug builds (`BuildConfig.DEBUG`) a small bar appears under the HUD with two
 
 ### New mechanics (L10+)
 
-**Currents** — `^v<>` tiles flow up/down/left/right. Walkable like path but carry no pellet. An entity moving **with** the flow is **+50% faster**; **against** is **-50% slower**; perpendicular movement is unaffected. EATEN piranhas (returning home as eyes) are immune so their BFS path isn't disturbed. Rendered as a pulsing chevron arrow that drifts in the flow direction.
+**Currents** — `^v<>` tiles flow up/down/left/right. Walkable like path but carry no pellet. **The flow pushes** any entity on a current tile that's either stopped or facing a perpendicular *wall* — i.e. there's no other way for them to go, so the current decides. If the perpendicular direction leads to a walkable side corridor, the entity moves perpendicular and exits the current naturally; the player can swipe out through any available side path. Moving with the flow or directly against it is always allowed. EATEN piranhas (returning home as eyes) are exempt so their BFS path isn't disturbed. Rendered as a pulsing chevron arrow that drifts in the flow direction.
+
+Monkey speed on current tiles depends on whether the player is **actively** in the flow:
+
+| Case | Monkey speed |
+|---|---|
+| Last swipe was the current direction (active "with") | **+50%** |
+| Last swipe was opposite the current direction (active "against") | **0.5×** |
+| Passive drift — perpendicular / no swipe / forced-into-cd by override | **0.5×** |
+
+The active-vs-passive distinction is tracked via `Monkey.lastRequestedDirection`. The boost is opt-in: the player has to manually swipe in the current's direction to get the +50% — just floating along on a current is intentionally slow (0.5×). Piranhas don't have the active-vs-passive distinction; they get +50% when their AI picks the with-current direction and -50% against, exactly as before.
 
 **Dive tiles** — `D` tiles are deep water. The monkey can swim into them freely; **piranhas treat them as walls**. While the monkey is on a D tile, a 3-second **breath meter** drains; on regular path it refills at 2× drain rate. Running out of breath while still on a D tile drowns the monkey (costs a life). The breath bar appears in the top-left of the maze only on levels that contain D tiles.
 

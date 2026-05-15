@@ -38,7 +38,7 @@
     <string name="bait_button">🐟 %1$d</string>
     <string name="intro_got_it">Got it!</string>
     <string name="intro_currents_title">Currents!</string>
-    <string name="intro_currents_body">Some lanes have a current flowing through them. Swimming with the flow is faster; against it is slower. Watch the arrows on the tiles and pick your lane.</string>
+    <string name="intro_currents_body">Some lanes have a current flowing through them. If you stop in one, the current carries you along. Swipe with the current to actively swim (+50%% speed), or against it for upstream (half speed). Just drifting passively is half speed — swipe to commit! You can leave a current any time a side corridor opens up.</string>
     <string name="intro_tide_title">The Tide!</string>
     <string name="intro_tide_body">Sandy patches are exposed by the tide. They\'re walkable when the tide is in (cyan) and become walls when it\'s out (sandy). Watch the dot in the top-right for the current phase.</string>
     <string name="intro_dive_title">Dive!</string>

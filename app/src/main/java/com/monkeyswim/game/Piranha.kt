@@ -151,6 +151,24 @@ class Piranha(
             if (newDir != Direction.NONE) direction = newDir
         }
 
+        // Current push: same rule as the monkey — flow pushes the piranha in
+        // its direction only when the perpendicular path is blocked (or the
+        // piranha has no direction). A perpendicular AI pick into a walkable
+        // side path is honoured. EATEN piranhas are exempt: their BFS flow
+        // field back to spawn shouldn't be disrupted by surface currents.
+        if (mode != Mode.EATEN) {
+            val cd = maze.currentDirAt(tileCol, tileRow)
+            if (cd != null && direction != cd && direction != cd.opposite()) {
+                val targetCol = tileCol + direction.dx
+                val targetRow = tileRow + direction.dy
+                val perpendicularBlocked = direction == Direction.NONE ||
+                    !maze.isPiranhaWalkable(targetCol, targetRow)
+                if (perpendicularBlocked) {
+                    direction = cd
+                }
+            }
+        }
+
         if (direction == Direction.NONE) return
 
         var nx = x + direction.dx * distance
