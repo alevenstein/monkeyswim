@@ -149,12 +149,6 @@ class Maze(
      *  not part of the Maze itself). */
     var tideHigh: Boolean = true
 
-    /** Whether this level contains any DEEP tiles — used to decide whether to
-     *  show the breath bar in the HUD. Cached once at construction. */
-    val hasDeepTiles: Boolean = (0 until rows).any { r ->
-        (0 until cols).any { c -> tiles[r][c] == Tile.DEEP }
-    }
-
     /** Whether this level contains any TIDE tiles — used to decide whether to
      *  show the tide phase indicator in the HUD. Cached once at construction. */
     val hasTideTiles: Boolean = (0 until rows).any { r ->
@@ -172,9 +166,6 @@ class Maze(
         return when (t) {
             Tile.PATH, Tile.PELLET, Tile.POWER_PELLET, Tile.TUNNEL, Tile.MONKEY_SPAWN,
             Tile.CURRENT_UP, Tile.CURRENT_DOWN, Tile.CURRENT_LEFT, Tile.CURRENT_RIGHT -> true
-            // DEEP tiles are always walkable for the monkey; the breath meter
-            // (in GameState) is what punishes lingering, not the maze geometry.
-            Tile.DEEP -> true
             Tile.TIDE -> tideHigh
             Tile.BOTTOM_GATEWAY -> gatewayUnlocked
             else -> false
@@ -188,7 +179,6 @@ class Maze(
             Tile.PATH, Tile.PELLET, Tile.POWER_PELLET, Tile.TUNNEL,
             Tile.PEN_DOOR, Tile.PEN_INTERIOR, Tile.MONKEY_SPAWN,
             Tile.CURRENT_UP, Tile.CURRENT_DOWN, Tile.CURRENT_LEFT, Tile.CURRENT_RIGHT -> true
-            // Piranhas can't enter DEEP — that's the monkey's escape route.
             Tile.TIDE -> tideHigh
             else -> false
         }
@@ -198,8 +188,6 @@ class Maze(
      *  current tile. */
     fun currentDirAt(col: Int, row: Int): Direction? =
         tileAt(col, row).currentDirection
-
-    fun isDeepTile(col: Int, row: Int): Boolean = tileAt(col, row) == Tile.DEEP
 
     fun isTunnelTile(col: Int, row: Int): Boolean = tileAt(col, row) == Tile.TUNNEL
 
@@ -424,11 +412,6 @@ class Maze(
                     Tile.CURRENT_UP, Tile.CURRENT_DOWN, Tile.CURRENT_LEFT, Tile.CURRENT_RIGHT -> {
                         drawCurrentArrow(canvas, cx, cy, cellSize, tiles[r][c], animTime)
                     }
-                    Tile.DEEP -> {
-                        // Darker water patch — sits below the wave bands so it
-                        // reads as "deeper here." Subtle gradient circle.
-                        canvas.drawCircle(cx, cy, cellSize * 0.45f, deepPaint)
-                    }
                     Tile.TIDE -> {
                         if (tideHigh) {
                             // Walkable but visually distinguishable — pale tide
@@ -499,10 +482,6 @@ class Maze(
         strokeWidth = 3f
         strokeCap = Paint.Cap.ROUND
         strokeJoin = Paint.Join.ROUND
-    }
-    private val deepPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#022038")
-        style = Paint.Style.FILL
     }
     private val tideOpenPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor("#80E0F0FF")

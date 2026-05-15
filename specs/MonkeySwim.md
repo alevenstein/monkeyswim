@@ -26,21 +26,19 @@ Three kinds of gateway:
 Every level is 15 cols × 22 rows. Each layout ships as 22 strings of 15 chars; the monkey-spawn cell is marked `M` and piranha-spawn cells are derived from the `===` pen-interior bounding box (always the four corners). The monkey spawn stays at **(col 7, row 18)** across all levels so the player's starting orientation is constant — what varies per level is the pen position, the portal wall, the tunnel columns, and which mechanics are in play:
 
 - **Level 1** — pen centre, portal right wall, tunnel cols 6-8 (baseline).
-- **Levels 2-9** — each level carries a unique combination of pen position (top/middle/bottom × left/centre/right), portal wall (left or right), and tunnel column triple. Classic gameplay (no new mechanics).
-- **Level 10** — **currents introduced**. Pen centre, portal on the left wall, tunnel cols 11-13. Row 12 is a leftward current that boosts the monkey toward the portal once pellets are cleared.
-- **Levels 11-14** — escalating use of currents. L11/L12 single-row currents toward the portal; L13 opposing currents (push-back row near the top + helpful row near the portal); L14 vertical current column.
+- **Levels 2-4** — each level carries a unique combination of pen position, portal wall, and tunnel column triple. Classic gameplay (no new mechanics).
+- **Level 5** — **currents introduced**. Pen centre, portal on the left wall, tunnel cols 11-13. Row 12 is a leftward current that boosts the monkey toward the portal once pellets are cleared.
+- **Levels 6-14** — classic and currents levels alternated. L6 / L8 / L10 / L12 / L14 are classic (different pen positions / portal walls); L7 / L9 / L11 / L13 are currents in various shapes (single-row, opposing rows, vertical column). The interleave keeps the new mechanic fresh without dropping the player out of classic exploration entirely.
 - **Level 15** — **tide cycle introduced**. ~6s timer toggles `~` cells between walkable and wall.
 - **Level 16** — tide expanded, larger walkable-when-high passage.
-- **Level 17** — **dive tiles introduced**. `D` tiles let the monkey swim underwater (piranhas can't follow) but a 3-second breath meter drains; out of breath underwater = drowning.
-- **Level 18** — dive + currents combined.
-- **Level 19** — tide + dive combined.
-- **Level 20** — everything: currents, tide, and dive together. Pen centre, portal left, tunnels cols 11-13.
+- **Levels 17-19** — alternating tide and currents in different combinations. L17 twin currents, L18 tide focus, L19 strong currents.
+- **Level 20** — boss: tide bar at the top + vertical down-current + horizontal current to the portal. Pen centre, portal left, tunnels cols 11-13.
 
 Levels beyond 20 cycle back to layout 1 but the difficulty knobs (speed, piranha count) keep applying — see "Challenge mode" below. Every level keeps four power-pellet positions, 1-tile-wide corridors as a guideline (a few small 2×2 walkable cells are allowed near portal-access cells or vestibules when strict avoidance would wall in piranhas or isolate pellets), all pellets reachable from spawn, and no dead-end pellets. Piranha AI is fully data-driven from the layout chars (`maze.penExitTile` and `maze.piranhaSpawnTiles`), so the per-level pen position needs no AI changes.
 
 In debug builds (`BuildConfig.DEBUG`) a small bar appears under the HUD with two controls: a **"DEBUG · Level" Spinner** that jumps directly to any of the twenty levels without having to clear the previous one, and a **"FRUIT" button** that triggers the power-pellet fright effect (piranhas frightened for 6.5s, chain bonus reset) without needing to find and eat one. Both are hidden in release builds.
 
-### New mechanics (L10+)
+### New mechanics (L5+)
 
 **Currents** — `^v<>` tiles flow up/down/left/right. Walkable like path but carry no pellet. **The flow pushes** any entity on a current tile that's either stopped or facing a perpendicular *wall* — i.e. there's no other way for them to go, so the current decides. If the perpendicular direction leads to a walkable side corridor, the entity moves perpendicular and exits the current naturally; the player can swipe out through any available side path. Moving with the flow or directly against it is always allowed. EATEN piranhas (returning home as eyes) are exempt so their BFS path isn't disturbed. Rendered as a pulsing chevron arrow that drifts in the flow direction.
 
@@ -54,11 +52,11 @@ Monkey speed on current tiles depends on whether the player is **actively** in t
 
 The active-vs-passive distinction is tracked via `Monkey.lastRequestedDirection`. The boost is opt-in: the player has to manually swipe in the current's direction to get the +50% — just floating along on a current is intentionally slow (0.5×). Piranhas don't have the active-vs-passive distinction; they get +50% when their AI picks the with-current direction and -50% against, exactly as before.
 
-**Dive tiles** — `D` tiles are deep water. The monkey can swim into them freely; **piranhas treat them as walls**. While the monkey is on a D tile, a 3-second **breath meter** drains; on regular path it refills at 2× drain rate. Running out of breath while still on a D tile drowns the monkey (costs a life). The breath bar appears in the top-left of the maze only on levels that contain D tiles.
-
 **Tide** — `~` tiles flip between walkable and wall on a global ~6-second cycle (3s high, 3s low). The current tide phase is shown by a small coloured dot in the top-right of the maze (cyan = HIGH/walkable, sandy = LOW/wall) — only on levels that contain `~` tiles. Tide cells carry no pellet, so an unreachable-during-LOW phase never traps a pellet the player can't get.
 
-**Mechanic-intro overlays** — the first time the player enters a level that introduces one of the three mechanics (L10 = currents, L15 = tide, L17 = dive), a full-screen overlay appears with a title + short explanation + "Got it!" button before the level starts. The game pauses in a new `Phase.MECHANIC_INTRO` until the player dismisses the overlay (which calls `acknowledgeMechanicIntro()`). "Seen" flags are persisted to `SharedPreferences` (`monkeyswim_settings` / `seen_intro_currents` etc.) so each explanation only ever interrupts the player once. The mapping (mechanic → introducing level) lives in `MechanicIntro.introducedAtLevel`, and the listener fires `onMechanicIntro(mechanic)` so `MainActivity` can route to the right strings + decide whether to skip an already-seen overlay.
+**Mechanic-intro overlays** — the first time the player enters a level that introduces one of the mechanics (L5 = currents, L15 = tide), a full-screen overlay appears with a title + short explanation + "Got it!" button before the level starts. The game pauses in a new `Phase.MECHANIC_INTRO` until the player dismisses the overlay (which calls `acknowledgeMechanicIntro()`). "Seen" flags are persisted to `SharedPreferences` (`monkeyswim_settings` / `seen_intro_currents` etc.) so each explanation only ever interrupts the player once. The mapping (mechanic → introducing level) lives in `MechanicIntro.introducedAtLevel`, and the listener fires `onMechanicIntro(mechanic)` so `MainActivity` can route to the right strings + decide whether to skip an already-seen overlay.
+
+> **Removed:** dive tiles (`D`) and the breath meter were a previous mechanic but have been removed entirely. The Tile enum no longer has a DEEP value, GameState no longer tracks breath, and no level layout uses the `D` char.
 
 ### Power pellets — fruit
 

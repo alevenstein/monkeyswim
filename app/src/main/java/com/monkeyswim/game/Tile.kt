@@ -16,9 +16,6 @@ enum class Tile {
     CURRENT_DOWN,
     CURRENT_LEFT,
     CURRENT_RIGHT,
-    // Deep / dive tiles — monkey can enter only while breath remains; piranhas
-    // treat as wall. No pellet.
-    DEEP,
     // Tide tiles — toggle between walkable and wall on a global ~6s cycle.
     // No pellet (avoid unreachable-pellet trap during the wall phase).
     TIDE;
@@ -50,7 +47,6 @@ enum class Tile {
             CURRENT_DOWN -> 'v'
             CURRENT_LEFT -> '<'
             CURRENT_RIGHT -> '>'
-            DEEP -> 'D'
             TIDE -> '~'
         }
 
@@ -69,7 +65,6 @@ enum class Tile {
             'v' -> CURRENT_DOWN
             '<' -> CURRENT_LEFT
             '>' -> CURRENT_RIGHT
-            'D' -> DEEP
             '~' -> TIDE
             else -> error("Unknown tile char: '$c'")
         }

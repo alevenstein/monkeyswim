@@ -22,16 +22,15 @@ class GameState(
      *  but the "have they seen it yet?" persistence is up to the listener
      *  (MainActivity stores flags in SharedPreferences). */
     enum class MechanicIntro {
-        CURRENTS, TIDE, DIVE;
+        CURRENTS, TIDE;
 
         companion object {
             /** The first level at which each mechanic appears in the layouts.
              *  When loadLevel sees `level == introducedAtLevel(M)`, it fires
              *  `onMechanicIntro(M)` so the UI can pause + show an explainer. */
             fun introducedAtLevel(m: MechanicIntro): Int = when (m) {
-                CURRENTS -> 10
+                CURRENTS -> 5
                 TIDE -> 15
-                DIVE -> 17
             }
         }
     }
@@ -111,11 +110,9 @@ class GameState(
     private var bait: Pair<Int, Int>? = null
     private var baitTimer: Float = 0f
 
-    // Tide + dive state. tideTimer advances 0..TIDE_PERIOD; maze.tideHigh is
-    // derived from where in the cycle we are. breath drains while the monkey
-    // sits on a DEEP tile and refills (faster than it drains) on regular path.
+    // Tide state. tideTimer advances 0..TIDE_PERIOD; maze.tideHigh is derived
+    // from where in the cycle we are.
     private var tideTimer: Float = 0f
-    private var breath: Float = BREATH_MAX
 
     /** The mechanic whose tutorial overlay is currently being shown (or null
      *  if no intro is pending). Cleared by acknowledgeMechanicIntro(). */
@@ -417,19 +414,6 @@ class GameState(
         tideTimer = (tideTimer + dt) % TIDE_PERIOD
         maze.tideHigh = tideTimer < TIDE_HIGH_DURATION
 
-        // Breath: drain while on a DEEP tile, refill quickly on regular path.
-        // Hitting zero underwater = drown.
-        if (maze.isDeepTile(monkey.tileCol, monkey.tileRow)) {
-            breath -= dt
-            if (breath <= 0f) {
-                breath = 0f
-                onLifeLost()
-                return
-            }
-        } else {
-            breath = (breath + dt * BREATH_REFILL_RATE).coerceAtMost(BREATH_MAX)
-        }
-
         // Banana spawn / expiry — single timer flips between "spawn delay" and
         // "active duration" depending on whether a banana is on the map. Spawn
         // delays are randomized within a range so the appearance cadence isn't
@@ -617,8 +601,9 @@ class GameState(
         for (r in 0 until maze.rows) {
             for (c in 0 until maze.cols) {
                 val t = maze.tileAt(c, r)
-                // Skip DEEP (piranhas avoid it, spawn would be uncatchable) and
-                // TIDE (cell could become a wall mid-banana). Plain PATH/PELLET only.
+                // Skip TIDE (cell could become a wall mid-banana). Plain
+                // PATH/PELLET only — currents, walls, pen, etc. are excluded
+                // implicitly.
                 if (t != Tile.PATH && t != Tile.PELLET) continue
                 if (c == monkey.tileCol && r == monkey.tileRow) continue
                 if (piranhas.any { it.tileCol == c && it.tileRow == r }) continue
@@ -668,7 +653,6 @@ class GameState(
     private fun respawnEntities() {
         monkey.resetTo(maze.monkeySpawn.first, maze.monkeySpawn.second)
         for (p in piranhas) p.resetToSpawn()
-        breath = BREATH_MAX
     }
 
     private fun loadLevel(lvl: Int) {
@@ -678,7 +662,6 @@ class GameState(
         clearPowerups()
         applyEntitySpeeds()
         frightTimer = 0f
-        breath = BREATH_MAX
         tideTimer = 0f
         maze.tideHigh = true
 
@@ -826,16 +809,6 @@ class GameState(
         textAlign = Paint.Align.CENTER
         typeface = Typeface.DEFAULT_BOLD
     }
-    private val breathBgPaint = Paint().apply { color = Color.parseColor("#80101820") }
-    private val breathFillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#5BC0E0")
-        style = Paint.Style.FILL
-    }
-    private val breathBorderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#E0F2FA")
-        style = Paint.Style.STROKE
-        strokeWidth = 2f
-    }
     private val tideHighPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor("#5BC0E0"); style = Paint.Style.FILL
     }
@@ -940,9 +913,8 @@ class GameState(
             )
         }
 
-        // HUD bars (breath + tide) — small overlays at the top of the playable
-        // area, only shown when the level uses the corresponding mechanic.
-        drawBreathBar(canvas, originX, originY, cellSize)
+        // Tide indicator — small dot at the top-right of the playable area,
+        // only shown when the level uses TIDE tiles.
         drawTideIndicator(canvas, originX, originY, cellSize, animTime)
 
         // Banner text overlays.
@@ -968,20 +940,6 @@ class GameState(
         bannerShadow.textSize = size
         canvas.drawText(text, x + 4f, y + 4f, bannerShadow)
         canvas.drawText(text, x, y, bannerPaint)
-    }
-
-    /** Breath bar — shown only when this level uses DEEP tiles. Slim rectangle
-     *  at the top of the maze. Empties as the monkey dives; refills on path. */
-    private fun drawBreathBar(canvas: Canvas, originX: Float, originY: Float, cellSize: Float) {
-        if (!maze.hasDeepTiles) return
-        val w = cellSize * 6f
-        val h = cellSize * 0.35f
-        val x = originX + cellSize * 0.5f
-        val y = originY + cellSize * 0.25f
-        canvas.drawRect(x, y, x + w, y + h, breathBgPaint)
-        val frac = (breath / BREATH_MAX).coerceIn(0f, 1f)
-        canvas.drawRect(x, y, x + w * frac, y + h, breathFillPaint)
-        canvas.drawRect(x, y, x + w, y + h, breathBorderPaint)
     }
 
     /** Tide indicator — shown only when this level has TIDE tiles. A small
@@ -1030,9 +988,5 @@ class GameState(
         // Tide cycle: 3 s exposed (walkable) then 3 s submerged-walls.
         private const val TIDE_PERIOD = 6f
         private const val TIDE_HIGH_DURATION = 3f
-
-        // Breath: 3 seconds underwater, refills at 2× drain rate on the surface.
-        private const val BREATH_MAX = 3f
-        private const val BREATH_REFILL_RATE = 2f
     }
 }

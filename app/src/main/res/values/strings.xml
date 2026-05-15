@@ -41,8 +41,6 @@
     <string name="intro_currents_body">Some lanes have a current flowing through them. If you stop in one, the current carries you along. Swipe with the current to actively swim (+50%% speed), or against it for upstream (half speed). Just drifting passively is half speed — swipe to commit! You can leave a current any time a side corridor opens up.</string>
     <string name="intro_tide_title">The Tide!</string>
     <string name="intro_tide_body">Sandy patches are exposed by the tide. They\'re walkable when the tide is in (cyan) and become walls when it\'s out (sandy). Watch the dot in the top-right for the current phase.</string>
-    <string name="intro_dive_title">Dive!</string>
-    <string name="intro_dive_body">Deep tiles let you swim where piranhas can\'t follow — but your breath drains fast. Watch the breath bar in the top-left. If it runs out underwater, you\'ll drown.</string>
     <string name="all_levels_complete_title">River Cleared!</string>
     <string name="all_levels_complete_subtitle">You\'ve completed every level.</string>
     <string name="continue_challenge">Continue (Harder)</string>

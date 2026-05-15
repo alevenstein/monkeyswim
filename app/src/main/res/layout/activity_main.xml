@@ -263,9 +263,9 @@
     </FrameLayout>
 
     <!-- Mechanic intro overlay — shown the first time the player encounters
-         currents (L10), the tide cycle (L15), or dive tiles (L17). Title and
-         body are set programmatically. Dismissed by "Got it!" which marks
-         the mechanic as seen and resumes the game. -->
+         currents (L5) or the tide cycle (L15). Title and body are set
+         programmatically. Dismissed by "Got it!" which marks the mechanic
+         as seen and resumes the game. -->
     <FrameLayout
         android:id="@+id/mechanicIntroOverlay"
         android:layout_width="match_parent"
