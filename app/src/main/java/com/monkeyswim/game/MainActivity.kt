@@ -361,6 +361,8 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
                     R.string.intro_tide_title to R.string.intro_tide_body
                 GameState.MechanicIntro.LILY_PADS ->
                     R.string.intro_lilypads_title to R.string.intro_lilypads_body
+                GameState.MechanicIntro.CROCODILE ->
+                    R.string.intro_crocodile_title to R.string.intro_crocodile_body
             }
             mechanicIntroTitle.setText(titleRes)
             mechanicIntroBody.setText(bodyRes)

@@ -43,6 +43,8 @@
     <string name="intro_tide_body">Sandy patches are exposed by the tide. They\'re walkable when the tide is in (cyan) and become walls when it\'s out (sandy). Watch the dot in the top-right for the current phase.</string>
     <string name="intro_lilypads_title">Slippery!</string>
     <string name="intro_lilypads_body">Green lily pads are slippery — step onto one and you keep moving in the same direction (and so do the piranhas!). You can\'t turn or reverse until you slide off.</string>
+    <string name="intro_crocodile_title">Crocodile!</string>
+    <string name="intro_crocodile_body">A crocodile patrols one lane of the maze, back and forth. It\'s slow but always dangerous — power pellets don\'t scare it. Time your crossing.</string>
     <string name="all_levels_complete_title">River Cleared!</string>
     <string name="all_levels_complete_subtitle">You\'ve completed every level.</string>
     <string name="continue_challenge">Continue (Harder)</string>

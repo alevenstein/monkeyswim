@@ -9,6 +9,7 @@ package com.monkeyswim.game
  *     teleports by column without verifying the destination is also a T)
  *   • exactly one wall of 'X' level-portal cells
  *   • four 'o' power pellets
+ *   • optional mechanic tiles (see below); at most one 'K' (crocodile spawn)
  *   • only 1-tile-wide corridors (a soft guideline — small exceptions are
  *     permitted near vestibules / portal-access cells when strict adherence
  *     would wall in the piranhas)
@@ -29,21 +30,30 @@ package com.monkeyswim.game
  *       ~6s cycle, wall during the low phase; no pellet)
  *   L = lily pad (slippery — entity entering keeps its direction until it
  *       slides off; no pellet)
+ *   K = crocodile spawn (no pellet; GameState spawns a slow patrolling
+ *       crocodile entity at this tile)
  *
- * Level 1 is the hand-laid baseline (pen + portal + tunnels all centered).
- * Levels 2-4 carry their own pen position, portal wall, and tunnel column
- * triple — classic gameplay introducing the player to the layout variety.
- * Level 5 is the **currents intro** (pulled forward from L10 so the new
- * mechanic shows up early). Levels 6-10 are more classic layouts (the
- * original L5-L9). Levels 11-14 expand the currents mechanic. Level 15
- * introduces the **tide cycle**. Levels 16-20 layer currents and tide in
- * combinations, with L20 being the boss. (Dive tiles were a previous
- * mechanic but have been removed; the level catalogue no longer references
- * them.) The monkey spawn stays at (col 7, row 18) across every level so
- * the player always starts in the same orientation. Piranha AI + pen-exit
- * logic are fully driven from the layout chars, so moving the pen or
- * adding mechanics needs no AI changes. Difficulty also ramps via piranha
- * speed (Levels.piranhaSpeedScale).
+ * 30-level progression:
+ *   • L1-L4 classic gameplay (pen positions / portal walls / tunnel cols vary).
+ *   • L5 introduces **CURRENTS**.
+ *   • L6-L7 review currents (classic + currents).
+ *   • L8 introduces **CROCODILE**.
+ *   • L9-L11 mix croc with classic / currents.
+ *   • L12 introduces **TIDE**.
+ *   • L13-L15 mix tide with classic / currents / croc.
+ *   • L16 introduces **LILY PADS**.
+ *   • L17-L20 mix lily pads with each prior mechanic in turn.
+ *   • L21-L24 three-mechanic combinations (each leaving one mechanic out).
+ *   • L25 first level with ALL FOUR mechanics together (light density).
+ *   • L26-L29 all four mechanics with escalating density.
+ *   • L30 BOSS — densest layout of everything.
+ *
+ * Monkey spawn stays at (col 7, row 18) across every level so the player's
+ * starting orientation is constant. Piranha AI + pen-exit logic are fully
+ * driven from the layout chars (`maze.penExitTile`, `maze.piranhaSpawnTiles`),
+ * so adding mechanics or moving the pen needs no AI changes. Difficulty also
+ * ramps via piranha speed (Levels.piranhaSpeedScale) — though challenge mode
+ * is what actually applies the ramp during the first run-through.
  */
 object Levels {
 
@@ -75,8 +85,7 @@ object Levels {
     )
 
     // Level 2 — Pen TOP-CENTER (rows 4-7), portal LEFT WALL, tunnels at cols
-    // 4-6 (left-of-centre). Piranhas now spawn near the top and have to chase
-    // the monkey downward; the exit is on the opposite wall from L1.
+    // 4-6. Classic gameplay.
     private val LEVEL_2: List<String> = listOf(
         "WWWWTTTWWWWWWWW",
         "W.............W",
@@ -103,9 +112,7 @@ object Levels {
     )
 
     // Level 3 — Pen BOTTOM-CENTER (rows 13-16), portal RIGHT WALL, tunnels at
-    // cols 7-9 (just right of centre). With the pen just two rows above the
-    // monkey spawn, early-game pressure is high — piranhas reach the player
-    // fast.
+    // cols 7-9. Classic gameplay.
     private val LEVEL_3: List<String> = listOf(
         "WWWWWWWTTTWWWWW",
         "W.............W",
@@ -117,7 +124,7 @@ object Levels {
         "W.....W.W.....W",
         "W.WWW.W.W.WWW.W",
         "W.............W",
-        "W.WWW.W W.WWW.X",
+        "W.WWW.W.W.WWW.X",
         "WoW.WWW WWW.WoX",
         "W.....W W.....X",
         "W.WW.WW-WW.WW.W",
@@ -132,8 +139,7 @@ object Levels {
     )
 
     // Level 4 — Pen LEFT-CENTER (rows 8-11, cols 1-5), portal RIGHT WALL,
-    // tunnels RIGHT-ONLY (cols 10-12). Pen abuts the left bank, so piranhas
-    // emerge facing right and the chase plays out horizontally.
+    // tunnels at cols 10-12. Classic gameplay.
     private val LEVEL_4: List<String> = listOf(
         "WWWWWWWWWWTTTWW",
         "W.............W",
@@ -159,11 +165,9 @@ object Levels {
         "WWWWWWWWWWTTTWW",
     )
 
-    // Level 5 — CURRENTS introduced: pen centre, portal LEFT WALL, tunnels at
-    // cols 11-13 (far right, opposite the portal). Row 12 is a leftward
-    // current that boosts the monkey toward the portal once pellets are
-    // cleared — the first taste of the new mechanic, kept gentle (a single
-    // one-way lane along the natural pre-portal corridor).
+    // Level 5 — CURRENTS introduced. Pen centre, portal LEFT WALL, tunnels at
+    // cols 11-13. Row 12 is a leftward current toward the portal — gentle
+    // introduction to the mechanic.
     private val LEVEL_5: List<String> = listOf(
         "WWWWWWWWWWWTTTW",
         "W.............W",
@@ -189,67 +193,9 @@ object Levels {
         "WWWWWWWWWWWTTTW",
     )
 
-    // Level 6 — Pen BOTTOM-RIGHT (rows 13-16, cols 9-13), portal LEFT WALL,
-    // tunnels at cols 1-3 (far left, opposite of the pen). Row 11 cols 11-12
-    // kept open so piranhas leaving the vestibule at (11,12) can swim right
-    // past the PP at (13,11) and escape upward. Classic gameplay.
+    // Level 6 — Pen TOP-LEFT, portal RIGHT WALL, tunnels at cols 10-12.
+    // Classic review level after the currents intro.
     private val LEVEL_6: List<String> = listOf(
-        "WTTTWWWWWWWWWWW",
-        "W.............W",
-        "W.WWW.WWW.WWW.W",
-        "WoW.........WoW",
-        "W.W.WWW.WWW.W.W",
-        "W.W...W.W...W.W",
-        "W.WWW.WWW.WWW.W",
-        "W.....W.W.....W",
-        "W.WWW.W.W.WWW.W",
-        "W.............W",
-        "W.WWW.W.W.WWW.W",
-        "WoW.WWW.WWW..oW",
-        "W.........W W.W",
-        "WW.WW.WW.WW-WWW",
-        "WW.WW.WW.W===WW",
-        "XW.WW.WW.W===WW",
-        "XW.WW.WW.WWWWWW",
-        "X..WW.WW.WWWW.W",
-        "W......M......W",
-        "W.WWW.WWW.WWW.W",
-        "W.............W",
-        "WTTTWWWWWWWWWWW",
-    )
-
-    // Level 7 — Currents (L1 skeleton, pen centre). Row 12 (portal access
-    // corridor) is a right-flowing current that boosts the monkey toward the
-    // right-wall portal once pellets are cleared.
-    private val LEVEL_7: List<String> = listOf(
-        "WWWWWWTTTWWWWWW",
-        "W.............W",
-        "W.WWW.WWW.WWW.W",
-        "WoW.........WoW",
-        "W.W.WWW.WWW.W.W",
-        "W.....W.W.....W",
-        "W.WWW.....WWW.W",
-        "W.....W W.....W",
-        "W.WW.WW-WW.WW.W",
-        "W.WW.W===W.WW.W",
-        "W.WW.W===W.WW.X",
-        "W.WW.WWWWW.WW.X",
-        "W.>>>>>>>>>>>.X",
-        "W.WWWW.W.WWWW.W",
-        "W.............W",
-        "W.WWW.WWW.WWW.W",
-        "WoW.........WoW",
-        "W.W.WWW.WWW.W.W",
-        "W......M......W",
-        "W.WWW.WWW.WWW.W",
-        "W.............W",
-        "WWWWWWTTTWWWWWW",
-    )
-
-    // Level 8 — Pen TOP-LEFT (rows 4-7, cols 1-5), portal RIGHT WALL, tunnels
-    // RIGHT-ONLY (cols 10-12). Pen and portal are on opposite corners; long
-    // diagonal chase to the exit. Classic gameplay.
-    private val LEVEL_8: List<String> = listOf(
         "WWWWWWWWWWTTTWW",
         "W.............W",
         "W.W W.WWW.WWW.W",
@@ -274,17 +220,17 @@ object Levels {
         "WWWWWWWWWWTTTWW",
     )
 
-    // Level 9 — Currents (L2 skeleton, pen top-centre). Row 12 left-flowing
-    // current toward the left-wall portal.
-    private val LEVEL_9: List<String> = listOf(
-        "WWWWTTTWWWWWWWW",
+    // Level 7 — Pen TOP-RIGHT, portal LEFT WALL, tunnels at cols 2-4. A
+    // leftward current on row 12 toward the portal — second currents level.
+    private val LEVEL_7: List<String> = listOf(
+        "WWTTTWWWWWWWWWW",
         "W.............W",
-        "W.WWW.W.W.WWW.W",
-        "W.....W W.....W",
-        "W.WW.WW-WW.WW.W",
-        "W.WW.W===W.WW.W",
-        "W.WW.W===W.WW.W",
-        "W.WW.WWWWW.WW.W",
+        "W.WWW.WWW.W W.W",
+        "W.........W W.W",
+        "WW.WW.WW.WW-WWW",
+        "WW.WW.WW.W===WW",
+        "WW.WW.WW.W===WW",
+        "WW.WW.WW.WWWWWW",
         "W.............W",
         "W.WWW.W.W.WWW.W",
         "XoW.........WoW",
@@ -298,15 +244,12 @@ object Levels {
         "W......M......W",
         "W.WWW.WWW.WWW.W",
         "W.............W",
-        "WWWWTTTWWWWWWWW",
+        "WWTTTWWWWWWWWWW",
     )
 
-    // Level 10 — Pen BOTTOM-LEFT (rows 13-16, cols 1-5), portal RIGHT WALL,
-    // tunnels at cols 8-10. Pen and monkey share the lower half of the maze.
-    // Row 11 cols 2-3 are kept open so the piranha leaving the vestibule at
-    // (3,12) can swim left past the PP at (1,11) and escape upward via col 1.
-    // Classic gameplay.
-    private val LEVEL_10: List<String> = listOf(
+    // Level 8 — CROCODILE introduced. Pen BOTTOM-LEFT, portal RIGHT WALL,
+    // tunnels at cols 8-10. Crocodile patrols row 9 horizontally.
+    private val LEVEL_8: List<String> = listOf(
         "WWWWWWWWTTTWWWW",
         "W.............W",
         "W.WWW.WWW.WWW.W",
@@ -316,7 +259,7 @@ object Levels {
         "W.WWW.W.W.WWW.W",
         "W.....W.W.....W",
         "W.WWW.W.W.WWW.W",
-        "W.............W",
+        "W......K......W",
         "W.WWW.W.W.WWW.W",
         "Wo..WWW.WWW.WoW",
         "W.W W.........W",
@@ -324,20 +267,127 @@ object Levels {
         "WW===W.WW.WW.WW",
         "WW===W.WW.WW.WX",
         "WWWWWW.WW.WW.WX",
-        "W.WWW.WWW.WWW.X",
+        "W.WWWW.WW.WW. X",
         "W......M......W",
         "W.WWW.WWW.WWW.W",
         "W.............W",
         "WWWWWWWWTTTWWWW",
     )
 
-    // Level 11 — Currents (L4 skeleton, pen left-centre). Two opposing
-    // horizontal currents: row 1 flows right (away from portal at right wall,
-    // pushing the monkey BACK toward the pen), row 12 flows right (toward
-    // portal). The player must choose which lane to use.
+    // Level 9 — Pen BOTTOM-RIGHT, portal LEFT WALL, tunnels at cols 1-3.
+    // Classic + crocodile on row 9.
+    private val LEVEL_9: List<String> = listOf(
+        "WTTTWWWWWWWWWWW",
+        "W.............W",
+        "W.WWW.WWW.WWW.W",
+        "WoW.........WoW",
+        "W.W.WWW.WWW.W.W",
+        "W.W...W.W...W.W",
+        "W.WWW.WWW.WWW.W",
+        "W.....W.W.....W",
+        "W.WWW.W.W.WWW.W",
+        "W......K......W",
+        "W.WWW.W.W.WWW.W",
+        "WoW.WWW.WWW..oW",
+        "W.........W W.W",
+        "WW.WW.WW.WW-WWW",
+        "WW.WW.WW.W===WW",
+        "XW.WW.WW.W===WW",
+        "XW.WW.WW.WWWWWW",
+        "X..WW.WW.WWWW.W",
+        "W......M......W",
+        "W.WWW.WWW.WWW.W",
+        "W.............W",
+        "WTTTWWWWWWWWWWW",
+    )
+
+    // Level 10 — Pen centre, portal RIGHT WALL, tunnels at cols 6-8. Currents
+    // on row 12 toward portal + crocodile patrolling row 14.
+    private val LEVEL_10: List<String> = listOf(
+        "WWWWWWTTTWWWWWW",
+        "W.............W",
+        "W.WWW.WWW.WWW.W",
+        "WoW.........WoW",
+        "W.W.WWW.WWW.W.W",
+        "W.....W.W.....W",
+        "W.WWW.....WWW.W",
+        "W.....W W.....W",
+        "W.WW.WW-WW.WW.W",
+        "W.WW.W===W.WW.W",
+        "W.WW.W===W.WW.X",
+        "W.WW.WWWWW.WW.X",
+        "W.>>>>>>>>>>>.X",
+        "W.WWWW.W.WWWW.W",
+        "W......K......W",
+        "W.WWW.WWW.WWW.W",
+        "WoW.........WoW",
+        "W.W.WWW.WWW.W.W",
+        "W......M......W",
+        "W.WWW.WWW.WWW.W",
+        "W.............W",
+        "WWWWWWTTTWWWWWW",
+    )
+
+    // Level 11 — Pen TOP-CENTER, portal LEFT WALL, tunnels at cols 4-6.
+    // Classic respite before the tide intro.
     private val LEVEL_11: List<String> = listOf(
+        "WWWWTTTWWWWWWWW",
+        "W.............W",
+        "W.WWW.W.W.WWW.W",
+        "W.....W W.....W",
+        "W.WW.WW-WW.WW.W",
+        "W.WW.W===W.WW.W",
+        "W.WW.W===W.WW.W",
+        "W.WW.WWWWW.WW.W",
+        "W.............W",
+        "W.WWW.W.W.WWW.W",
+        "XoW.........WoW",
+        "X.W.WWWWWWW.W.W",
+        "X.............W",
+        "W.WWW.WWW.WWW.W",
+        "W.............W",
+        "WoW.WWW.WWW.WoW",
+        "W.W.........W.W",
+        "W.W.WWW.WWW.W.W",
+        "W......M......W",
+        "W.WWW.WWW.WWW.W",
+        "W.............W",
+        "WWWWTTTWWWWWWWW",
+    )
+
+    // Level 12 — TIDE introduced. Pen BOTTOM-CENTER, portal RIGHT WALL,
+    // tunnels at cols 7-9. Tide row 9 flips between walkable and wall on the
+    // ~6s cycle, opening and closing a passage between upper and lower halves.
+    private val LEVEL_12: List<String> = listOf(
+        "WWWWWWWTTTWWWWW",
+        "W.............W",
+        "W.WWW.W.W.WWW.W",
+        "W.W.........W.W",
+        "W.W.WWW.WWW.W.W",
+        "WoW.........WoW",
+        "W.WWW.W.W.WWW.W",
+        "W.....W.W.....W",
+        "W.WWW.W.W.WWW.W",
+        "W.~~~~~~~~~~~.W",
+        "W.WWW.W W.WWW.X",
+        "WoW.WWW WWW.WoX",
+        "W.....W W.....X",
+        "W.WW.WW-WW.WW.W",
+        "W.WW.W===W.WW.W",
+        "W.WW.W===W.WW.W",
+        "W.WW.WWWWW.WW.W",
+        "W.WW.WWWWW.WW.W",
+        "W......M......W",
+        "W.WWW.WWW.WWW.W",
+        "W.............W",
+        "WWWWWWWTTTWWWWW",
+    )
+
+    // Level 13 — Pen LEFT-CENTER, portal RIGHT WALL, tunnels at cols 10-12.
+    // Classic + tide on row 14.
+    private val LEVEL_13: List<String> = listOf(
         "WWWWWWWWWWTTTWW",
-        "W>>>>>>>>>>>>>W",
+        "W.............W",
         "W.WWW.WWW.WWW.W",
         "WoW.........WoW",
         "W.W.WWW.WWW.W.W",
@@ -348,9 +398,9 @@ object Levels {
         "WW===W.WW.WW.WW",
         "WW===W.WW.WW.WX",
         "WWWWWW.WW.WW.WX",
-        "W.>>>>>>>>>>>.X",
+        "W.............X",
         "W.WWW.WWW.WWW.W",
-        "W.............W",
+        "W.~~~~~~~~~~~.W",
         "WoW.WWW.WWW.WoW",
         "W.W.........W.W",
         "W.W.WWW.WWW.W.W",
@@ -360,12 +410,64 @@ object Levels {
         "WWWWWWWWWWTTTWW",
     )
 
-    // Level 12 — LILY PADS introduced. Pen TOP-RIGHT, portal LEFT WALL,
-    // tunnels LEFT-ONLY (cols 2-4). Row 1 has a 7-cell lily-pad chain at
-    // cols 4-10: stepping onto one locks the entity's direction until it
-    // slides off the chain. The pellets at cols 1-3 and 11-13 of row 1
-    // remain so the player still has reachable food in the top corridor.
-    private val LEVEL_12: List<String> = listOf(
+    // Level 14 — Pen RIGHT-CENTER, portal LEFT WALL, tunnels at cols 2-4.
+    // Currents row 12 + tide row 14.
+    private val LEVEL_14: List<String> = listOf(
+        "WWTTTWWWWWWWWWW",
+        "W.............W",
+        "W.WWW.WWW.WWW.W",
+        "WoW.........WoW",
+        "W.W.WWW.WWW.W.W",
+        "W.W...W.W...W.W",
+        "W.WWW.WWW.W.W.W",
+        "W.........W W.W",
+        "WW.WW.WW.WW-WWW",
+        "WW.WW.WW.W===WW",
+        "XW.WW.WW.W===WW",
+        "XW.WW.WW.WWWWWW",
+        "X.<<<<<<<<<<<.W",
+        "W.WWW.WWW.WWW.W",
+        "W.~~~~~~~~~~~.W",
+        "WoW.WWW.WWW.WoW",
+        "W.W.........W.W",
+        "W.W.WWW.WWW.W.W",
+        "W......M......W",
+        "W.WWW.WWW.WWW.W",
+        "W.............W",
+        "WWTTTWWWWWWWWWW",
+    )
+
+    // Level 15 — Pen TOP-LEFT, portal RIGHT WALL, tunnels at cols 10-12.
+    // Crocodile on row 8 + tide on row 14.
+    private val LEVEL_15: List<String> = listOf(
+        "WWWWWWWWWWTTTWW",
+        "W.............W",
+        "W.W W.WWW.WWW.W",
+        "W.W W.........W",
+        "WWW-WW.WW.WW.WW",
+        "WW===W.WW.WW.WW",
+        "WW===W.WW.WW.WW",
+        "WWWWWW.WW.WW.WW",
+        "W......K......W",
+        "W.WWW.W.W.WWW.W",
+        "WoW.........WoX",
+        "W.W.WWWWWWW.W.X",
+        "W.............X",
+        "W.WWW.WWW.WWW.W",
+        "W.~~~~~~~~~~~.W",
+        "WoW.WWW.WWW.WoW",
+        "W.W.........W.W",
+        "W.W.WWW.WWW.W.W",
+        "W......M......W",
+        "W.WWW.WWW.WWW.W",
+        "W.............W",
+        "WWWWWWWWWWTTTWW",
+    )
+
+    // Level 16 — LILY PADS introduced. Pen TOP-RIGHT, portal LEFT WALL,
+    // tunnels at cols 2-4. A 7-cell lily-pad chain on row 1 — step on and
+    // slide until you exit.
+    private val LEVEL_16: List<String> = listOf(
         "WWTTTWWWWWWWWWW",
         "W...LLLLLLL...W",
         "W.WWW.WWW.W W.W",
@@ -390,26 +492,189 @@ object Levels {
         "WWTTTWWWWWWWWWW",
     )
 
-    // Level 13 — Currents with a vertical down-current at col 1 (rows 1-7)
-    // plus a horizontal left-current on row 12 toward the portal. Pen
-    // right-centre. Top-half PPs displaced inward to (3, 3) since col 1 is
-    // the current column; bottom-half PPs stay at (1, 15) and (13, 15).
-    private val LEVEL_13: List<String> = listOf(
+    // Level 17 — Pen BOTTOM-LEFT, portal RIGHT WALL, tunnels at cols 8-10.
+    // Classic + lily pads on row 9.
+    private val LEVEL_17: List<String> = listOf(
+        "WWWWWWWWTTTWWWW",
+        "W.............W",
+        "W.WWW.WWW.WWW.W",
+        "WoW.........WoW",
+        "W.W.WWW.WWW.W.W",
+        "W.W...W.W...W.W",
+        "W.WWW.W.W.WWW.W",
+        "W.....W.W.....W",
+        "W.WWW.W.W.WWW.W",
+        "W...LLLLLLL...W",
+        "W.WWW.W.W.WWW.W",
+        "Wo..WWW.WWW.WoW",
+        "W.W W.........W",
+        "WWW-WW.WW.WW.WW",
+        "WW===W.WW.WW.WW",
+        "WW===W.WW.WW.WX",
+        "WWWWWW.WW.WW.WX",
+        "W.WWWW.WW.WW. X",
+        "W......M......W",
+        "W.WWW.WWW.WWW.W",
+        "W.............W",
+        "WWWWWWWWTTTWWWW",
+    )
+
+    // Level 18 — Pen BOTTOM-RIGHT, portal LEFT WALL, tunnels at cols 1-3.
+    // Lily pads row 1 + currents row 9 (left flow).
+    private val LEVEL_18: List<String> = listOf(
+        "WTTTWWWWWWWWWWW",
+        "W...LLLLLLL...W",
+        "W.WWW.WWW.WWW.W",
+        "WoW.........WoW",
+        "W.W.WWW.WWW.W.W",
+        "W.W...W.W...W.W",
+        "W.WWW.WWW.WWW.W",
+        "W.....W.W.....W",
+        "W.WWW.W.W.WWW.W",
+        "W.<<<<<<<<<<<.W",
+        "W.WWW.W.W.WWW.W",
+        "WoW.WWW.WWW..oW",
+        "W.........W W.W",
+        "WW.WW.WW.WW-WWW",
+        "WW.WW.WW.W===WW",
+        "XW.WW.WW.W===WW",
+        "XW.WW.WW.WWWWWW",
+        "X .WW.WW.WWWW.W",
+        "W......M......W",
+        "W.WWW.WWW.WWW.W",
+        "W.............W",
+        "WTTTWWWWWWWWWWW",
+    )
+
+    // Level 19 — Pen centre, portal RIGHT WALL, tunnels at cols 6-8. Lily
+    // pads row 1 + crocodile on row 14.
+    private val LEVEL_19: List<String> = listOf(
+        "WWWWWWTTTWWWWWW",
+        "W...LLLLLLL...W",
+        "W.WWW.WWW.WWW.W",
+        "WoW.........WoW",
+        "W.W.WWW.WWW.W.W",
+        "W.....W.W.....W",
+        "W.WWW.....WWW.W",
+        "W.....W W.....W",
+        "W.WW.WW-WW.WW.W",
+        "W.WW.W===W.WW.W",
+        "W.WW.W===W.WW.X",
+        "W.WW.WWWWW.WW.X",
+        "W.............X",
+        "W.WWWW.W.WWWW.W",
+        "W......K......W",
+        "W.WWW.WWW.WWW.W",
+        "WoW.........WoW",
+        "W.W.WWW.WWW.W.W",
+        "W......M......W",
+        "W.WWW.WWW.WWW.W",
+        "W.............W",
+        "WWWWWWTTTWWWWWW",
+    )
+
+    // Level 20 — Pen TOP-CENTER, portal LEFT WALL, tunnels at cols 4-6.
+    // Lily pads row 1 + tide row 14.
+    private val LEVEL_20: List<String> = listOf(
+        "WWWWTTTWWWWWWWW",
+        "W...LLLLLLL...W",
+        "W.WWW.W.W.WWW.W",
+        "W.....W W.....W",
+        "W.WW.WW-WW.WW.W",
+        "W.WW.W===W.WW.W",
+        "W.WW.W===W.WW.W",
+        "W.WW.WWWWW.WW.W",
+        "W.............W",
+        "W.WWW.W.W.WWW.W",
+        "XoW.........WoW",
+        "X.W.WWWWWWW.W.W",
+        "X.............W",
+        "W.WWW.WWW.WWW.W",
+        "W.~~~~~~~~~~~.W",
+        "WoW.WWW.WWW.WoW",
+        "W.W.........W.W",
+        "W.W.WWW.WWW.W.W",
+        "W......M......W",
+        "W.WWW.WWW.WWW.W",
+        "W.............W",
+        "WWWWTTTWWWWWWWW",
+    )
+
+    // Level 21 — Pen BOTTOM-CENTER, portal RIGHT WALL, tunnels at cols 7-9.
+    // Three mechanics: crocodile row 1 + currents row 9 (right toward portal)
+    // + tide row 20.
+    private val LEVEL_21: List<String> = listOf(
+        "WWWWWWWTTTWWWWW",
+        "W......K......W",
+        "W.WWW.W.W.WWW.W",
+        "W.W.........W.W",
+        "W.W.WWW.WWW.W.W",
+        "WoW.........WoW",
+        "W.WWW.W.W.WWW.W",
+        "W.....W.W.....W",
+        "W.WWW.W.W.WWW.W",
+        "W.>>>>>>>>>>>.W",
+        "W.WWW.W W.WWW.X",
+        "WoW.WWW WWW.WoX",
+        "W.....W W.....X",
+        "W.WW.WW-WW.WW.W",
+        "W.WW.W===W.WW.W",
+        "W.WW.W===W.WW.W",
+        "W.WW.WWWWW.WW.W",
+        "W.WW.WWWWW.WW.W",
+        "W......M......W",
+        "W.WWW.WWW.WWW.W",
+        "W.~~~~~~~~~~~.W",
+        "WWWWWWWTTTWWWWW",
+    )
+
+    // Level 22 — Pen LEFT-CENTER, portal RIGHT WALL, tunnels at cols 10-12.
+    // Three mechanics: lily pads row 1 + currents row 12 (right to portal) +
+    // crocodile row 14.
+    private val LEVEL_22: List<String> = listOf(
+        "WWWWWWWWWWTTTWW",
+        "W...LLLLLLL...W",
+        "W.WWW.WWW.WWW.W",
+        "WoW.........WoW",
+        "W.W.WWW.WWW.W.W",
+        "W.W...W.W...W.W",
+        "W.W.W.WWW.WWW.W",
+        "W.W W.........W",
+        "WWW-WW.WW.WW.WW",
+        "WW===W.WW.WW.WW",
+        "WW===W.WW.WW.WX",
+        "WWWWWW.WW.WW.WX",
+        "W.>>>>>>>>>>>.X",
+        "W.WWW.WWW.WWW.W",
+        "W......K......W",
+        "WoW.WWW.WWW.WoW",
+        "W.W.........W.W",
+        "W.W.WWW.WWW.W.W",
+        "W......M......W",
+        "W.WWW.WWW.WWW.W",
+        "W.............W",
+        "WWWWWWWWWWTTTWW",
+    )
+
+    // Level 23 — Pen RIGHT-CENTER, portal LEFT WALL, tunnels at cols 2-4.
+    // Three mechanics: lily pads row 1 + currents row 12 (left to portal) +
+    // tide row 14.
+    private val LEVEL_23: List<String> = listOf(
         "WWTTTWWWWWWWWWW",
-        "Wv............W",
-        "WvWWW.WWW.WWW.W",
-        "WvWoW.......WoW",
-        "WvW.WWW.WWW.W.W",
-        "WvW...W.W...W.W",
-        "WvWWW.WWW.W.W.W",
-        "Wv........W W.W",
+        "W...LLLLLLL...W",
+        "W.WWW.WWW.WWW.W",
+        "WoW.........WoW",
+        "W.W.WWW.WWW.W.W",
+        "W.W...W.W...W.W",
+        "W.WWW.WWW.W W.W",
+        "W.........W W.W",
         "WW.WW.WW.WW-WWW",
         "WW.WW.WW.W===WW",
         "XW.WW.WW.W===WW",
         "XW.WW.WW.WWWWWW",
         "X.<<<<<<<<<<<.W",
         "W.WWW.WWW.WWW.W",
-        "W.............W",
+        "W.~~~~~~~~~~~.W",
         "WoW.WWW.WWW.WoW",
         "W.W.........W.W",
         "W.W.WWW.WWW.W.W",
@@ -419,54 +684,24 @@ object Levels {
         "WWTTTWWWWWWWWWW",
     )
 
-    // Level 14 — Pen RIGHT-CENTER (rows 8-11, cols 9-13), portal LEFT WALL,
-    // tunnels LEFT-ONLY (cols 2-4). Mirror of L4. Last classic level before
-    // the tide intro at L15.
-    private val LEVEL_14: List<String> = listOf(
-        "WWTTTWWWWWWWWWW",
-        "W.............W",
-        "W.WWW.WWW.WWW.W",
-        "WoW.........WoW",
-        "W.W.WWW.WWW.W.W",
-        "W.W...W.W...W.W",
-        "W.WWW.WWW.W.W.W",
-        "W.........W W.W",
-        "WW.WW.WW.WW-WWW",
-        "WW.WW.WW.W===WW",
-        "XW.WW.WW.W===WW",
-        "XW.WW.WW.WWWWWW",
-        "X.............W",
-        "W.WWW.WWW.WWW.W",
-        "W.............W",
-        "WoW.WWW.WWW.WoW",
-        "W.W.........W.W",
-        "W.W.WWW.WWW.W.W",
-        "W......M......W",
-        "W.WWW.WWW.WWW.W",
-        "W.............W",
-        "WWTTTWWWWWWWWWW",
-    )
-
-    // Level 15 — TIDE introduced (L6 skeleton, pen top-left). A small ring of
-    // tide tiles around the pen exit creates a periodic chokepoint — when
-    // the tide drops, piranhas can be temporarily walled in. Currents in
-    // row 12 toward portal continue the previous mechanic.
-    private val LEVEL_15: List<String> = listOf(
+    // Level 24 — Pen TOP-LEFT, portal RIGHT WALL, tunnels at cols 10-12.
+    // Three mechanics: lily pads row 1 + crocodile row 8 + tide row 14.
+    private val LEVEL_24: List<String> = listOf(
         "WWWWWWWWWWTTTWW",
-        "W.............W",
+        "W...LLLLLLL...W",
         "W.W W.WWW.WWW.W",
         "W.W W.........W",
         "WWW-WW.WW.WW.WW",
         "WW===W.WW.WW.WW",
         "WW===W.WW.WW.WW",
         "WWWWWW.WW.WW.WW",
-        "W.~~~~~~~~~~~.W",
+        "W......K......W",
         "W.WWW.W.W.WWW.W",
         "WoW.........WoX",
         "W.W.WWWWWWW.W.X",
-        "W.>>>>>>>>>>>.X",
+        "W.............X",
         "W.WWW.WWW.WWW.W",
-        "W.............W",
+        "W.~~~~~~~~~~~.W",
         "WoW.WWW.WWW.WoW",
         "W.W.........W.W",
         "W.W.WWW.WWW.W.W",
@@ -476,25 +711,25 @@ object Levels {
         "WWWWWWWWWWTTTWW",
     )
 
-    // Level 16 — TIDE expanded (L7 skeleton, pen top-right). Tide passage on
-    // row 8 creates a periodic walkable shortcut between the upper and lower
-    // halves of the maze.
-    private val LEVEL_16: List<String> = listOf(
+    // Level 25 — FIRST 4-MECHANIC LEVEL. Pen TOP-RIGHT, portal LEFT WALL,
+    // tunnels at cols 2-4. Lily row 1 + crocodile row 8 + currents row 12
+    // (left to portal) + tide row 14 — light density of each.
+    private val LEVEL_25: List<String> = listOf(
         "WWTTTWWWWWWWWWW",
-        "W.............W",
+        "W...LLLLLLL...W",
         "W.WWW.WWW.W W.W",
         "W.........W W.W",
         "WW.WW.WW.WW-WWW",
         "WW.WW.WW.W===WW",
         "WW.WW.WW.W===WW",
         "WW.WW.WW.WWWWWW",
-        "W.~~~~~~~~~~~.W",
+        "W......K......W",
         "W.WWW.W.W.WWW.W",
         "XoW.........WoW",
         "X.W.WWWWWWW.W.W",
         "X.<<<<<<<<<<<.W",
         "W.WWW.WWW.WWW.W",
-        "W.............W",
+        "W.~~~~~~~~~~~.W",
         "WoW.WWW.WWW.WoW",
         "W.W.........W.W",
         "W.W.WWW.WWW.W.W",
@@ -504,76 +739,20 @@ object Levels {
         "WWTTTWWWWWWWWWW",
     )
 
-    // Level 17 — Twin currents (pen bottom-right). A vertical down-current at
-    // col 6 plus the row 12 left-current toward the portal. Both halves of
-    // the vertical corridor are currents.
-    private val LEVEL_17: List<String> = listOf(
-        "WTTTWWWWWWWWWWW",
-        "W.............W",
-        "W.WWW.WWW.WWW.W",
-        "WoW.........WoW",
-        "W.W.WWW.WWW.W.W",
-        "W.W.W.v.W.W.W.W",
-        "W.WWW.v.W.WWW.W",
-        "W.....v.W.....W",
-        "W.WWW.v.W.WWW.W",
-        "W.....v.......W",
-        "W.WWW.v.W.WWW.W",
-        "WoW...v.....WoW",
-        "W.........W W.W",
-        "WW.WW.WW.WW-WWW",
-        "WW.WW.WW.W===WW",
-        "XW.WW.WW.W===WW",
-        "XW.WW.WW.WWWWWW",
-        "X.<<<<<<<<<<<.W",
-        "W......M......W",
-        "W.WWW.WWW.WWW.W",
-        "W.............W",
-        "WTTTWWWWWWWWWWW",
-    )
-
-    // Level 18 — Tide focus (pen bottom-centre). Tide cells form a ring
-    // around the monkey spawn (row 17) and a second band higher up (row 5)
-    // so the maze layout breathes in two places.
-    private val LEVEL_18: List<String> = listOf(
-        "WWWWWWWTTTWWWWW",
-        "W.............W",
-        "W.WWW.W.W.WWW.W",
-        "W.W.........W.W",
-        "W.W.WWW.WWW.W.W",
-        "WoW~~~~~~~~~WoW",
-        "W.WWW.W.W.WWW.W",
-        "W.....W.W.....W",
-        "W.WWW.W.W.WWW.W",
-        "W.............W",
-        "W.WWW.W.W.WWW.X",
-        "WoWWWWW WWWWWoX",
-        "W.....W W.....X",
-        "W.WW.WW-WW.WW.W",
-        "W.WW.W===W.WW.W",
-        "W.WW.W===W.WW.W",
-        "W.WW.WWWWW.WW.W",
-        "W.~~~~~~~~~~~.W",
-        "W......M......W",
-        "W.WWW.WWW.WWW.W",
-        "W.............W",
-        "WWWWWWWTTTWWWWW",
-    )
-
-    // Level 19 — Strong currents (pen bottom-left). The top row 1 is a long
-    // left-flowing current — a one-way fast lane back to the portal side of
-    // the maze.
-    private val LEVEL_19: List<String> = listOf(
+    // Level 26 — Pen BOTTOM-LEFT, portal RIGHT WALL, tunnels at cols 8-10.
+    // All four mechanics with heavier density: tide row 1 + lily pads inserted
+    // into row 7's open corridor + currents row 9 + crocodile row 20.
+    private val LEVEL_26: List<String> = listOf(
         "WWWWWWWWTTTWWWW",
-        "W.<<<<<<<<<<<.W",
+        "W.~~~~~~~~~~~.W",
         "W.WWW.WWW.WWW.W",
         "WoW.........WoW",
         "W.W.WWW.WWW.W.W",
         "W.W...W.W...W.W",
         "W.WWW.W.W.WWW.W",
-        "W.....W.W.....W",
+        "W.LLL.W.W.LLL.W",
         "W.WWW.W.W.WWW.W",
-        "W.............W",
+        "W.>>>>>>>>>>>.W",
         "W.WWW.W.W.WWW.W",
         "Wo..WWW.WWW.WoW",
         "W.W W.........W",
@@ -584,22 +763,106 @@ object Levels {
         "W.WWW.WWW.WWW.X",
         "W......M......W",
         "W.WWW.WWW.WWW.W",
-        "W.............W",
+        "W......K......W",
         "WWWWWWWWTTTWWWW",
     )
 
-    // Level 20 — Boss: pen centre, portal LEFT WALL, tunnels at cols 11-13.
-    // Tide bar across row 1, vertical down-current at col 8 (replaces the
-    // old dive column), and a left-flowing current on row 12. Currents +
-    // tide combined — the final challenge.
-    private val LEVEL_20: List<String> = listOf(
+    // Level 27 — Pen BOTTOM-RIGHT, portal LEFT WALL, tunnels at cols 1-3.
+    // All four mechanics: tide row 1 + lily pads in row 7 corridor +
+    // currents row 9 (left to portal side) + crocodile row 20.
+    private val LEVEL_27: List<String> = listOf(
+        "WTTTWWWWWWWWWWW",
+        "W.~~~~~~~~~~~.W",
+        "W.WWW.WWW.WWW.W",
+        "WoW.........WoW",
+        "W.W.WWW.WWW.W.W",
+        "W.W...W.W...W.W",
+        "W.WWW.WWW.WWW.W",
+        "W.LLL.W.W.LLL.W",
+        "W.WWW.W.W.WWW.W",
+        "W.<<<<<<<<<<<.W",
+        "W.WWW.W.W.WWW.W",
+        "WoW.WWW.WWW  oW",
+        "W.........W W.W",
+        "WW.WW.WW.WW-WWW",
+        "WW.WW.WW.W===WW",
+        "XW.WW.WW.W===WW",
+        "XW.WW.WW.WWWWWW",
+        "X .WW.WW.WWWW.W",
+        "W......M......W",
+        "W.WWW.WWW.WWW.W",
+        "W......K......W",
+        "WTTTWWWWWWWWWWW",
+    )
+
+    // Level 28 — Pen centre, portal RIGHT WALL, tunnels at cols 6-8. All four
+    // mechanics: tide row 1 + currents row 12 (right to portal) + lily pads
+    // row 14 + crocodile row 20.
+    private val LEVEL_28: List<String> = listOf(
+        "WWWWWWTTTWWWWWW",
+        "W.~~~~~~~~~~~.W",
+        "W.WWW.WWW.WWW.W",
+        "WoW.........WoW",
+        "W.W.WWW.WWW.W.W",
+        "W.....W.W.....W",
+        "W.WWW.....WWW.W",
+        "W.....W W.....W",
+        "W.WW.WW-WW.WW.W",
+        "W.WW.W===W.WW.W",
+        "W.WW.W===W.WW.X",
+        "W.WW.WWWWW.WW.X",
+        "W.>>>>>>>>>>>.X",
+        "W.WWWW.W.WWWW.W",
+        "W...LLLLLLL...W",
+        "W.WWW.WWW.WWW.W",
+        "WoW.........WoW",
+        "W.W.WWW.WWW.W.W",
+        "W......M......W",
+        "W.WWW.WWW.WWW.W",
+        "W......K......W",
+        "WWWWWWTTTWWWWWW",
+    )
+
+    // Level 29 — Pen TOP-CENTER, portal LEFT WALL, tunnels at cols 4-6. All
+    // four mechanics, denser: lily pads row 1 + currents row 12 (left to
+    // portal) + tide row 14 + crocodile row 20.
+    private val LEVEL_29: List<String> = listOf(
+        "WWWWTTTWWWWWWWW",
+        "W...LLLLLLL...W",
+        "W.WWW.W.W.WWW.W",
+        "W.....W W.....W",
+        "W.WW.WW-WW.WW.W",
+        "W.WW.W===W.WW.W",
+        "W.WW.W===W.WW.W",
+        "W.WW.WWWWW.WW.W",
+        "W.............W",
+        "W.WWW.W.W.WWW.W",
+        "XoW.........WoW",
+        "X.W.WWWWWWW.W.W",
+        "X.<<<<<<<<<<<.W",
+        "W.WWW.WWW.WWW.W",
+        "W.~~~~~~~~~~~.W",
+        "WoW.WWW.WWW.WoW",
+        "W.W.........W.W",
+        "W.W.WWW.WWW.W.W",
+        "W......M......W",
+        "W.WWW.WWW.WWW.W",
+        "W......K......W",
+        "WWWWTTTWWWWWWWW",
+    )
+
+    // Level 30 — BOSS. Pen centre, portal LEFT WALL, tunnels at cols 11-13
+    // (mirror of L5 baseline). Densest layout: tide row 1 + lily pads inserted
+    // into row 5's open corridor + currents row 12 + tide row 14 + crocodile
+    // row 20. Two tide rows + lily-pad branches make the final challenge.
+    private val LEVEL_30: List<String> = listOf(
         "WWWWWWWWWWWTTTW",
         "W.~~~~~~~~~~~.W",
         "W.W.W.W.W.W.W.W",
-        "WoW.....v...WoW",
-        "W.W.WWW.v.W.W.W",
-        "W.W...W.v...W.W",
-        "W.WWWWW.v.WWW.W",
+        "WoW.........WoW",
+        "W.W.WWW.WWW.W.W",
+        "WLLLLLWLWLLLLLW",
+        "W.WWWWW.WWWWW.W",
         "W.....W W.....W",
         "W.WW.WW-WW.WW.W",
         "W.WW.W===W.WW.W",
@@ -607,13 +870,13 @@ object Levels {
         "X.WW.WWWWW.WW.W",
         "X.<<<<<<<<<<<.W",
         "W.WWWWW.WWWWW.W",
-        "W.W...W.W...W.W",
+        "W.~~~~~~~~~~~.W",
         "WoW.WWW.WWW.WoW",
         "W.W.........W.W",
         "W.W.W.W.W.W.W.W",
         "W......M......W",
         "W.WWW.WWW.WWW.W",
-        "W.............W",
+        "W......K......W",
         "WWWWWWWWWWWTTTW",
     )
 
@@ -622,6 +885,8 @@ object Levels {
         LEVEL_6, LEVEL_7, LEVEL_8, LEVEL_9, LEVEL_10,
         LEVEL_11, LEVEL_12, LEVEL_13, LEVEL_14, LEVEL_15,
         LEVEL_16, LEVEL_17, LEVEL_18, LEVEL_19, LEVEL_20,
+        LEVEL_21, LEVEL_22, LEVEL_23, LEVEL_24, LEVEL_25,
+        LEVEL_26, LEVEL_27, LEVEL_28, LEVEL_29, LEVEL_30,
     )
 
     val LEVEL_COUNT: Int get() = LEVELS.size

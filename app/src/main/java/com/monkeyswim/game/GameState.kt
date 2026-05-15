@@ -22,7 +22,7 @@ class GameState(
      *  but the "have they seen it yet?" persistence is up to the listener
      *  (MainActivity stores flags in SharedPreferences). */
     enum class MechanicIntro {
-        CURRENTS, TIDE, LILY_PADS;
+        CURRENTS, TIDE, LILY_PADS, CROCODILE;
 
         companion object {
             /** The first level at which each mechanic appears in the layouts.
@@ -30,8 +30,9 @@ class GameState(
              *  `onMechanicIntro(M)` so the UI can pause + show an explainer. */
             fun introducedAtLevel(m: MechanicIntro): Int = when (m) {
                 CURRENTS -> 5
-                LILY_PADS -> 12
-                TIDE -> 15
+                CROCODILE -> 8
+                TIDE -> 12
+                LILY_PADS -> 16
             }
         }
     }
@@ -140,6 +141,10 @@ class GameState(
     private var maze: Maze = Maze(Levels.layoutForLevel(1))
     private var monkey: Monkey = Monkey(maze, maze.monkeySpawn.first, maze.monkeySpawn.second)
     private var piranhas: List<Piranha> = createPiranhas(maze, level)
+    /** Optional crocodile entity — present only on levels that include a 'K'
+     *  tile in their layout. Drawn and updated like piranhas but uses simpler
+     *  bounce-off-walls patrol AI and isn't affected by fright mode. */
+    private var crocodile: Crocodile? = maze.crocodileSpawn?.let { (c, r) -> Crocodile(maze, c, r) }
 
     init {
         emitAll()
@@ -437,6 +442,7 @@ class GameState(
             p.update(dt, monkey, frightTimer)
         }
         shark?.update(dt, piranhas)
+        crocodile?.update(dt)
 
         // Piranha-bait collision: a non-eaten / non-pen piranha walking onto
         // the bait tile consumes it. One bait, one piranha distracted.
@@ -518,6 +524,14 @@ class GameState(
                     onLifeLost()
                     return
                 }
+            }
+        }
+
+        // Crocodile collision — always kills, fright mode doesn't apply.
+        crocodile?.let { c ->
+            if (c.overlapsWith(monkey)) {
+                onLifeLost()
+                return
             }
         }
     }
@@ -654,12 +668,14 @@ class GameState(
     private fun respawnEntities() {
         monkey.resetTo(maze.monkeySpawn.first, maze.monkeySpawn.second)
         for (p in piranhas) p.resetToSpawn()
+        crocodile?.resetToSpawn()
     }
 
     private fun loadLevel(lvl: Int) {
         maze = Maze(Levels.layoutForLevel(lvl))
         monkey = Monkey(maze, maze.monkeySpawn.first, maze.monkeySpawn.second)
         piranhas = createPiranhas(maze, lvl)
+        crocodile = maze.crocodileSpawn?.let { (c, r) -> Crocodile(maze, c, r) }
         clearPowerups()
         applyEntitySpeeds()
         frightTimer = 0f
@@ -882,6 +898,11 @@ class GameState(
         // Shark draws on top of piranhas (it's the predator chasing them).
         if (phase != Phase.LIFE_LOST && phase != Phase.LEVEL_COMPLETE) {
             shark?.draw(canvas, cellSize, originX, originY)
+        }
+
+        // Crocodile draws after piranhas so its larger sprite reads on top.
+        if (phase != Phase.LIFE_LOST && phase != Phase.LEVEL_COMPLETE) {
+            crocodile?.draw(canvas, cellSize, originX, originY)
         }
 
         // Brief turtle visual when the slow-piranhas powerup activates —

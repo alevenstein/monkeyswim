@@ -80,6 +80,19 @@ object SpriteRenderer {
     private val sharkFin = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor("#3F4C58"); style = Paint.Style.FILL
     }
+    // Crocodile
+    private val crocBody = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#3F6E3B"); style = Paint.Style.FILL
+    }
+    private val crocBelly = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#A9C285"); style = Paint.Style.FILL
+    }
+    private val crocBack = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#2D5A2A"); style = Paint.Style.FILL
+    }
+    private val crocTooth = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.WHITE; style = Paint.Style.FILL
+    }
     // Turtle (matches the side-profile turtle in Brick Basher's white powerup)
     private val turtleLegFill = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.rgb(102, 187, 106); style = Paint.Style.FILL
@@ -302,6 +315,77 @@ object SpriteRenderer {
         Direction.DOWN -> 90f
         Direction.LEFT -> 180f
         Direction.UP -> 270f
+    }
+
+    /**
+     * Crocodile — long, low-slung body with a chunky tail and a toothy snout
+     * pointing in its facing direction. Slightly bigger than the monkey/
+     * piranha to communicate "this is a different threat." Frame toggles a
+     * subtle tail wag.
+     */
+    fun drawCrocodile(
+        canvas: Canvas,
+        cx: Float, cy: Float,
+        cellSize: Float,
+        direction: Direction,
+        frame: Int,
+    ) {
+        canvas.save()
+        canvas.translate(cx, cy)
+        // Rotate so the sprite always faces the direction of motion. Sprite
+        // is drawn pointing RIGHT by default.
+        val angleDeg = when (direction) {
+            Direction.RIGHT -> 0f
+            Direction.DOWN -> 90f
+            Direction.LEFT -> 180f
+            Direction.UP -> 270f
+            Direction.NONE -> 0f
+        }
+        canvas.rotate(angleDeg)
+
+        val s = cellSize * 0.6f
+        // Main body — long flat oval extending forward.
+        tmpRect.set(-s * 1.4f, -s * 0.5f, s * 1.2f, s * 0.5f)
+        canvas.drawOval(tmpRect, crocBody)
+        // Belly highlight (lighter underside).
+        tmpRect.set(-s * 1.3f, -s * 0.15f, s * 1.0f, s * 0.45f)
+        canvas.drawOval(tmpRect, crocBelly)
+        // Tail — a triangular extension behind the body.
+        val wag = if (frame == 0) s * 0.05f else -s * 0.05f
+        tmpPath.reset()
+        tmpPath.moveTo(-s * 1.3f, -s * 0.3f)
+        tmpPath.lineTo(-s * 1.9f, wag)
+        tmpPath.lineTo(-s * 1.3f, s * 0.3f)
+        tmpPath.close()
+        canvas.drawPath(tmpPath, crocBody)
+        // Back ridges — three little nubs along the spine.
+        for (i in 0..2) {
+            val rx = -s * 0.8f + i * s * 0.6f
+            canvas.drawCircle(rx, -s * 0.5f, s * 0.12f, crocBack)
+        }
+        // Snout — a wedge at the front with teeth.
+        tmpPath.reset()
+        tmpPath.moveTo(s * 1.0f, -s * 0.35f)
+        tmpPath.lineTo(s * 1.7f, -s * 0.05f)
+        tmpPath.lineTo(s * 1.7f, s * 0.05f)
+        tmpPath.lineTo(s * 1.0f, s * 0.35f)
+        tmpPath.close()
+        canvas.drawPath(tmpPath, crocBody)
+        // Tooth row — three little triangles along the upper jaw.
+        for (i in 0..2) {
+            val tx = s * 1.15f + i * s * 0.15f
+            tmpPath.reset()
+            tmpPath.moveTo(tx, -s * 0.05f)
+            tmpPath.lineTo(tx + s * 0.06f, -s * 0.05f)
+            tmpPath.lineTo(tx + s * 0.03f, s * 0.05f)
+            tmpPath.close()
+            canvas.drawPath(tmpPath, crocTooth)
+        }
+        // Eye — small dark dot on top of the head.
+        canvas.drawCircle(s * 0.8f, -s * 0.30f, s * 0.10f, eyeWhite)
+        canvas.drawCircle(s * 0.82f, -s * 0.30f, s * 0.05f, eyeBlack)
+
+        canvas.restore()
     }
 
     fun drawShark(

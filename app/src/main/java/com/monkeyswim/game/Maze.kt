@@ -59,6 +59,11 @@ class Maze(
     val monkeySpawn: Pair<Int, Int>
     val piranhaSpawnTiles: List<Pair<Int, Int>>
 
+    /** Optional crocodile spawn cell — null if this level doesn't have a 'K'.
+     *  GameState spawns a Crocodile entity here at level start; the croc
+     *  patrols along the axis defined by its walkable neighbours. */
+    val crocodileSpawn: Pair<Int, Int>?
+
     // Each power pellet picks a random fruit at maze construction so that the
     // sprite stays stable for the whole level — players see the same fruit
     // every frame until they eat it.
@@ -72,6 +77,7 @@ class Maze(
         val tunnelColsSet = mutableSetOf<Int>()
         val tunnelRowsSet = mutableSetOf<Int>()
         var monkeySpawnFound: Pair<Int, Int>? = null
+        var crocodileSpawnFound: Pair<Int, Int>? = null
         val piranhaSpawns = mutableListOf<Pair<Int, Int>>()
         for (r in 0 until rows) {
             for (c in 0 until cols) {
@@ -95,10 +101,17 @@ class Maze(
                         }
                         monkeySpawnFound = c to r
                     }
+                    Tile.CROCODILE_SPAWN -> {
+                        require(crocodileSpawnFound == null) {
+                            "Layout has more than one 'K' (crocodile-spawn) tile"
+                        }
+                        crocodileSpawnFound = c to r
+                    }
                     else -> {}
                 }
             }
         }
+        crocodileSpawn = crocodileSpawnFound
         totalPellets = pellets
         pelletsRemaining = pellets
         gatewayTiles = gw
@@ -166,7 +179,7 @@ class Maze(
         return when (t) {
             Tile.PATH, Tile.PELLET, Tile.POWER_PELLET, Tile.TUNNEL, Tile.MONKEY_SPAWN,
             Tile.CURRENT_UP, Tile.CURRENT_DOWN, Tile.CURRENT_LEFT, Tile.CURRENT_RIGHT,
-            Tile.LILY_PAD -> true
+            Tile.LILY_PAD, Tile.CROCODILE_SPAWN -> true
             Tile.TIDE -> tideHigh
             Tile.BOTTOM_GATEWAY -> gatewayUnlocked
             else -> false
@@ -180,7 +193,7 @@ class Maze(
             Tile.PATH, Tile.PELLET, Tile.POWER_PELLET, Tile.TUNNEL,
             Tile.PEN_DOOR, Tile.PEN_INTERIOR, Tile.MONKEY_SPAWN,
             Tile.CURRENT_UP, Tile.CURRENT_DOWN, Tile.CURRENT_LEFT, Tile.CURRENT_RIGHT,
-            Tile.LILY_PAD -> true
+            Tile.LILY_PAD, Tile.CROCODILE_SPAWN -> true
             Tile.TIDE -> tideHigh
             else -> false
         }
@@ -412,8 +425,10 @@ class Maze(
                             canvas.drawRect(left, top, left + cellSize, top + cellSize, gatewayLockedPaint)
                         }
                     }
-                    Tile.PATH, Tile.PEN_INTERIOR, Tile.TUNNEL, Tile.MONKEY_SPAWN -> {
-                        // intentionally no decoration
+                    Tile.PATH, Tile.PEN_INTERIOR, Tile.TUNNEL, Tile.MONKEY_SPAWN,
+                    Tile.CROCODILE_SPAWN -> {
+                        // intentionally no decoration — the crocodile spawn is
+                        // just a marker; the entity itself is drawn separately.
                     }
                     Tile.CURRENT_UP, Tile.CURRENT_DOWN, Tile.CURRENT_LEFT, Tile.CURRENT_RIGHT -> {
                         drawCurrentArrow(canvas, cx, cy, cellSize, tiles[r][c], animTime)

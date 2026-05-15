@@ -22,7 +22,11 @@ enum class Tile {
     // Lily pads — walkable like PATH, no pellet. Slippery: an entity that
     // enters keeps moving in its entry direction (no turning, no reverse)
     // until it slides off the lily-pad tile. EATEN piranhas are exempt.
-    LILY_PAD;
+    LILY_PAD,
+    // Crocodile spawn marker — walkable like PATH (no pellet); GameState
+    // spawns a Crocodile entity at this cell at level start. The crocodile
+    // patrols along the axis defined by its walkable neighbours.
+    CROCODILE_SPAWN;
 
     val carriesPellet: Boolean
         get() = this == PELLET || this == POWER_PELLET
@@ -53,6 +57,7 @@ enum class Tile {
             CURRENT_RIGHT -> '>'
             TIDE -> '~'
             LILY_PAD -> 'L'
+            CROCODILE_SPAWN -> 'K'
         }
 
     companion object {
@@ -72,6 +77,7 @@ enum class Tile {
             '>' -> CURRENT_RIGHT
             '~' -> TIDE
             'L' -> LILY_PAD
+            'K' -> CROCODILE_SPAWN
             else -> error("Unknown tile char: '$c'")
         }
     }

@@ -28,15 +28,21 @@ Every level is 15 cols × 22 rows. Each layout ships as 22 strings of 15 chars; 
 - **Level 1** — pen centre, portal right wall, tunnel cols 6-8 (baseline).
 - **Levels 2-4** — each level carries a unique combination of pen position, portal wall, and tunnel column triple. Classic gameplay (no new mechanics).
 - **Level 5** — **currents introduced**. Pen centre, portal on the left wall, tunnel cols 11-13. Row 12 is a leftward current that boosts the monkey toward the portal once pellets are cleared.
-- **Levels 6-14** — classic and currents levels alternated, with one **lily-pads intro** mixed in. L6 / L8 / L10 / L14 are classic (different pen positions / portal walls); L7 / L9 / L11 / L13 are currents in various shapes (single-row, opposing rows, vertical column); **L12** is the lily-pads intro (a 7-cell lily-pad chain across row 1). The interleave keeps mechanics fresh without dropping the player out of classic exploration entirely.
-- **Level 15** — **tide cycle introduced**. ~6s timer toggles `~` cells between walkable and wall.
-- **Level 16** — tide expanded, larger walkable-when-high passage.
-- **Levels 17-19** — alternating tide and currents in different combinations. L17 twin currents, L18 tide focus, L19 strong currents.
-- **Level 20** — boss: tide bar at the top + vertical down-current + horizontal current to the portal. Pen centre, portal left, tunnels cols 11-13.
+- **Levels 6-7** — review currents in new pen / tunnel arrangements. L6 is classic (top-left pen, right portal); L7 reuses a left-side current.
+- **Level 8** — **crocodile introduced**. Slow horizontal patroller on the mid-maze corridor (row 9). Bottom-left pen, right portal.
+- **Levels 9-11** — mix the crocodile in: L9 classic + croc, L10 currents + croc, L11 classic respite before the next intro.
+- **Level 12** — **tide cycle introduced**. ~6s timer toggles `~` cells between walkable and wall on row 9 — the only N-S passage when the tide is in.
+- **Levels 13-15** — tide combined with classic / currents / crocodile. L15 has both crocodile and tide.
+- **Level 16** — **lily pads introduced**. A 7-cell slippery chain across row 1.
+- **Levels 17-20** — lily pads paired with each prior mechanic in turn (L17 classic, L18 currents, L19 crocodile, L20 tide).
+- **Levels 21-24** — three-mechanic combinations (each omits one mechanic): L21 croc+currents+tide, L22 lily+currents+croc, L23 lily+currents+tide, L24 lily+croc+tide.
+- **Level 25** — first level with **all four mechanics** simultaneously (light density of each).
+- **Levels 26-29** — all four mechanics with escalating density (extra lily-pad branches, more current cells, longer tide rows).
+- **Level 30** — boss. Densest layout: two tide rows, lily-pad branches, leftward current, crocodile patrol, all on the L5-style centre-pen / left-portal / tunnel-cols-11-13 skeleton.
 
-Levels beyond 20 cycle back to layout 1 but the difficulty knobs (speed, piranha count) keep applying — see "Challenge mode" below. Every level keeps four power-pellet positions, 1-tile-wide corridors as a guideline (a few small 2×2 walkable cells are allowed near portal-access cells or vestibules when strict avoidance would wall in piranhas or isolate pellets), all pellets reachable from spawn, and no dead-end pellets. Piranha AI is fully data-driven from the layout chars (`maze.penExitTile` and `maze.piranhaSpawnTiles`), so the per-level pen position needs no AI changes.
+Levels beyond 30 cycle back to layout 1 but the difficulty knobs (speed, piranha count) keep applying — see "Challenge mode" below. Every level keeps four power-pellet positions, 1-tile-wide corridors as a guideline (a few small 2×2 walkable cells are allowed near portal-access cells or vestibules when strict avoidance would wall in piranhas or isolate pellets), all pellets reachable from spawn, and no dead-end pellets. Piranha AI is fully data-driven from the layout chars (`maze.penExitTile` and `maze.piranhaSpawnTiles`), so the per-level pen position needs no AI changes.
 
-In debug builds (`BuildConfig.DEBUG`) a small bar appears under the HUD with two controls: a **"DEBUG · Level" Spinner** that jumps directly to any of the twenty levels without having to clear the previous one, and a **"FRUIT" button** that triggers the power-pellet fright effect (piranhas frightened for 6.5s, chain bonus reset) without needing to find and eat one. Both are hidden in release builds.
+In debug builds (`BuildConfig.DEBUG`) a small bar appears under the HUD with two controls: a **"DEBUG · Level" Spinner** that jumps directly to any of the thirty levels without having to clear the previous one, and a **"FRUIT" button** that triggers the power-pellet fright effect (piranhas frightened for 6.5s, chain bonus reset) without needing to find and eat one. Both are hidden in release builds.
 
 ### New mechanics (L5+)
 
@@ -56,7 +62,9 @@ The active-vs-passive distinction is tracked via `Monkey.lastRequestedDirection`
 
 **Lily pads** — `L` tiles are slippery: an entity that steps onto one keeps moving in its entry direction until it slides off, with no turning, no queued-direction commit, and no instant-reverse. Applies to both monkey and piranhas; EATEN piranhas are exempt (their BFS-flow return path mustn't be locked). No pellet on lily pads. Rendered as green discs with a small leaf "notch" rotated per-tile so adjacent pads don't look identical.
 
-**Mechanic-intro overlays** — the first time the player enters a level that introduces one of the mechanics (L5 = currents, L12 = lily pads, L15 = tide), a full-screen overlay appears with a title + short explanation + "Got it!" button before the level starts. The game pauses in a new `Phase.MECHANIC_INTRO` until the player dismisses the overlay (which calls `acknowledgeMechanicIntro()`). "Seen" flags are persisted to `SharedPreferences` (`monkeyswim_settings` / `seen_intro_currents` etc.) so each explanation only ever interrupts the player once. The mapping (mechanic → introducing level) lives in `MechanicIntro.introducedAtLevel`, and the listener fires `onMechanicIntro(mechanic)` so `MainActivity` can route to the right strings + decide whether to skip an already-seen overlay.
+**Crocodile** — `K` tile is a spawn marker (one per level, optional). At level start GameState creates a `Crocodile` entity at that cell; it picks a patrol axis from its walkable neighbours (prefers horizontal) and marches back and forth, bouncing off walls. Slow (~half piranha speed), no AI homing on the monkey, **not affected by fright mode** — a constant timing threat rather than a chaser. Collision with the monkey = life lost. The croc draws on top of piranhas (slightly larger sprite) so it reads as a different threat.
+
+**Mechanic-intro overlays** — the first time the player enters a level that introduces one of the mechanics (L5 = currents, L8 = crocodile, L12 = tide, L16 = lily pads), a full-screen overlay appears with a title + short explanation + "Got it!" button before the level starts. The game pauses in a new `Phase.MECHANIC_INTRO` until the player dismisses the overlay (which calls `acknowledgeMechanicIntro()`). "Seen" flags are persisted to `SharedPreferences` (`monkeyswim_settings` / `seen_intro_currents` etc.) so each explanation only ever interrupts the player once. The mapping (mechanic → introducing level) lives in `MechanicIntro.introducedAtLevel`, and the listener fires `onMechanicIntro(mechanic)` so `MainActivity` can route to the right strings + decide whether to skip an already-seen overlay.
 
 > **Removed:** dive tiles (`D`) and the breath meter were a previous mechanic but have been removed entirely. The Tile enum no longer has a DEEP value, GameState no longer tracks breath, and no level layout uses the `D` char.
 
@@ -68,7 +76,7 @@ Each power-pellet position renders as a randomly-chosen fruit, picked once at le
 
 Each level has a 3×2 pen; **position varies per level** (top/middle/bottom × left/centre/right). The pen door always sits at the top of the pen (`Maze.penExitTile` is hard-coded as `doorRow - 1`), rendered as a horizontal pink bar that bridges across the door's actual entryway (extends slightly into the flanking walls' insetted edges so it visually "anchors" to them). The cell directly above the door is the **vestibule** — non-wall (often a space) and the target piranhas home to in `LEAVING_PEN` mode.
 
-During the **first run-through (levels 1-10)** exactly four piranhas spawn at the four corners of the pen-interior bounding box. They're released through the gate on a staggered schedule from level start — first immediately, then at 4 s, 8 s, and 12 s. In **challenge mode** the count rises by one every five levels (see "Challenge mode" below); extras cycle through the same four spawn corners with their own staggered release (`i * 4f` seconds), so an L10 challenge level has six piranhas trickling out across the first 20 seconds.
+During the **first run-through (levels 1-30)** exactly four piranhas spawn at the four corners of the pen-interior bounding box. They're released through the gate on a staggered schedule from level start — first immediately, then at 4 s, 8 s, and 12 s. In **challenge mode** the count rises by one every five levels (see "Challenge mode" below); extras cycle through the same four spawn corners with their own staggered release (`i * 4f` seconds), so an L10 challenge level has six piranhas trickling out across the first 20 seconds.
 
 After a piranha is killed (eaten frightened, hit by a powerup, etc.) it returns to its spawn corner via a pre-computed BFS shortest-path "flow field" — always optimal, never gets lost.
 
