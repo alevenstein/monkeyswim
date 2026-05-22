@@ -113,6 +113,7 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
             val state = gameView.gameState()
             state.difficultyMultiplier = multiplier
             splashOverlay.visibility = View.GONE
+            clearMechanicIntroSeenFlags()
             state.startGame()
         }
 
@@ -126,14 +127,17 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
 
         restartButton.setOnClickListener {
             hideGameOver()
+            clearMechanicIntroSeenFlags()
             gameView.gameState().reset()
         }
         continueChallengeButton.setOnClickListener {
             allLevelsCompleteOverlay.visibility = View.GONE
+            clearMechanicIntroSeenFlags()
             gameView.gameState().acceptChallenge()
         }
         restartFromCompleteButton.setOnClickListener {
             allLevelsCompleteOverlay.visibility = View.GONE
+            clearMechanicIntroSeenFlags()
             gameView.gameState().reset()
         }
         mechanicIntroDismiss.setOnClickListener {
@@ -380,6 +384,16 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
     private fun markMechanicIntroSeen(mechanic: GameState.MechanicIntro) {
         getSharedPreferences(SETTINGS_FILE, Context.MODE_PRIVATE)
             .edit().putBoolean(mechanicSeenKey(mechanic), true).apply()
+    }
+
+    /** Wipe the "already seen this intro" flags so the next playthrough
+     *  re-surfaces each mechanic overlay the first time its level is loaded. */
+    private fun clearMechanicIntroSeenFlags() {
+        val editor = getSharedPreferences(SETTINGS_FILE, Context.MODE_PRIVATE).edit()
+        for (mechanic in GameState.MechanicIntro.values()) {
+            editor.remove(mechanicSeenKey(mechanic))
+        }
+        editor.apply()
     }
 
     private fun showGameOver() {
