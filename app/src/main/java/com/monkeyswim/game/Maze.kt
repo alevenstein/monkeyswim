@@ -5,10 +5,13 @@ import android.graphics.Color
 import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.RadialGradient
+import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.Shader
 import kotlin.math.cos
 import kotlin.math.sin
+import kotlin.math.sqrt
 import kotlin.random.Random
 
 /**
@@ -37,6 +40,11 @@ class Maze(
 
     // Cached gateway tile coords for level-transition detection.
     val gatewayTiles: List<Pair<Int, Int>>
+
+    // Bounding box (inclusive) of the BOTTOM_GATEWAY tiles, in tile coords.
+    // Used by the unified gate renderer to draw all portal cells as one slab+
+    // vortex rather than per-cell. Null only if a level has no gateway.
+    val gatewayBounds: Rect?
 
     // Tunnel exit rows at the tunnel columns (used when an entity walks off the
     // top or bottom of the maze). The wrap is vertical and per-column: stepping
@@ -115,6 +123,10 @@ class Maze(
         totalPellets = pellets
         pelletsRemaining = pellets
         gatewayTiles = gw
+        gatewayBounds = if (gw.isNotEmpty()) Rect(
+            gw.minOf { it.first }, gw.minOf { it.second },
+            gw.maxOf { it.first }, gw.maxOf { it.second },
+        ) else null
         tunnelCols = tunnelColsSet
         tunnelTopRow = tunnelRowsSet.minOrNull() ?: -1
         tunnelBottomRow = tunnelRowsSet.maxOrNull() ?: -1
@@ -294,13 +306,60 @@ class Maze(
         color = Color.parseColor("#FFC0CB")
         style = Paint.Style.FILL
     }
-    private val gatewayLockedPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#222222")
+    // --- Gateway paints (used by drawGateway / drawDoorSlab / drawPortalVortex) ---
+    private val gateFramePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#3A2310") // matches wallPaint so the frame reads as carved bank
         style = Paint.Style.FILL
     }
-    private val gatewayUnlockedPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#22FFAA")
+    private val gateSlabPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#5C432A") // weathered bronze plank
         style = Paint.Style.FILL
+    }
+    private val gateSlabHighlight = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#7A5C3C")
+        style = Paint.Style.FILL
+    }
+    private val gateSlabShadow = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#3A2510")
+        style = Paint.Style.FILL
+    }
+    private val gateSlabSeam = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#2E1C0A")
+        style = Paint.Style.STROKE
+        strokeWidth = 1.5f
+    }
+    private val gateRivetPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#D8B070")
+        style = Paint.Style.FILL
+    }
+    private val portalGlowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+    }
+    private val portalSpillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+    }
+    private val portalSpokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.argb(170, 220, 255, 240)
+        style = Paint.Style.FILL
+    }
+    private val portalRingPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#A0EAFFF0")
+        style = Paint.Style.STROKE
+    }
+    private val portalSparklePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.WHITE
+        style = Paint.Style.FILL
+    }
+    private val portalSparkles: Array<FloatArray> = run {
+        val rng = Random(0xBADD00DL)
+        // Each entry: [unit-x in -1..1, unit-y in -1..1, phase offset]
+        Array(14) {
+            floatArrayOf(
+                rng.nextFloat() * 2f - 1f,
+                rng.nextFloat() * 2f - 1f,
+                rng.nextFloat() * (Math.PI * 2).toFloat(),
+            )
+        }
     }
 
     private val tmpRect = RectF()
@@ -414,16 +473,9 @@ class Maze(
                         }
                     }
                     Tile.BOTTOM_GATEWAY -> {
-                        if (gatewayUnlocked) {
-                            // Animated glowing exit
-                            val glow = 0.8f + 0.2f * sin(animTime * 5f)
-                            val p = Paint(gatewayUnlockedPaint).apply {
-                                alpha = (glow * 255).toInt()
-                            }
-                            canvas.drawRect(left, top, left + cellSize, top + cellSize, p)
-                        } else {
-                            canvas.drawRect(left, top, left + cellSize, top + cellSize, gatewayLockedPaint)
-                        }
+                        // Drawn as one unified gate after the tile loop so the
+                        // door slabs + portal vortex span the entire portal
+                        // strip instead of rendering per-cell. See drawGateway.
                     }
                     Tile.PATH, Tile.PEN_INTERIOR, Tile.TUNNEL, Tile.MONKEY_SPAWN,
                     Tile.CROCODILE_SPAWN -> {
@@ -475,6 +527,217 @@ class Maze(
                 }
             }
         }
+
+        // Unified gateway render: stone frame, sliding door slabs, and the
+        // swirling portal vortex that fades in as the door opens. Captures the
+        // unlock time on first observation so the slide animation plays
+        // exactly once per level.
+        drawGateway(canvas, cellSize, originX, originY, animTime)
+    }
+
+    // animTime at which `gatewayUnlocked` first became true this level. Used
+    // to drive the door-opening slide. NaN until the gate unlocks. Resets
+    // naturally per level because GameState constructs a fresh Maze.
+    private var unlockAnimStart: Float = Float.NaN
+
+    private fun drawGateway(
+        canvas: Canvas, cellSize: Float, originX: Float, originY: Float, animTime: Float,
+    ) {
+        val b = gatewayBounds ?: return
+        if (gatewayUnlocked && unlockAnimStart.isNaN()) unlockAnimStart = animTime
+
+        val left = originX + b.left * cellSize
+        val top = originY + b.top * cellSize
+        val right = originX + (b.right + 1) * cellSize
+        val bottom = originY + (b.bottom + 1) * cellSize
+        val cx = (left + right) / 2f
+        val cy = (top + bottom) / 2f
+
+        // Eased open progress 0..1. ease-out so the doors snap apart quickly
+        // then settle.
+        val raw = if (unlockAnimStart.isNaN()) 0f
+            else ((animTime - unlockAnimStart) / GATE_OPEN_DURATION).coerceIn(0f, 1f)
+        val open = 1f - (1f - raw) * (1f - raw)
+
+        // Glow that spills inward from the portal into the maze interior.
+        // Draw FIRST so door slabs cover it when locked. Direction depends on
+        // which wall the portal sits on.
+        if (open > 0f) {
+            drawPortalGlowSpill(canvas, b, cellSize, originX, originY, animTime, open)
+        }
+
+        // Stone frame around the opening (top + bottom edges of the strip).
+        val frameThickness = (cellSize * 0.12f).coerceAtLeast(2f)
+        canvas.drawRect(left, top, right, top + frameThickness, gateFramePaint)
+        canvas.drawRect(left, bottom - frameThickness, right, bottom, gateFramePaint)
+
+        // Portal vortex behind the doors (alpha scales with open progress so a
+        // sealed door has no light leaking through).
+        canvas.save()
+        canvas.clipRect(left, top + frameThickness, right, bottom - frameThickness)
+        if (open > 0f) {
+            drawPortalVortex(canvas, left, top + frameThickness, right, bottom - frameThickness,
+                cx, cy, cellSize, animTime, open)
+        }
+
+        // Door slabs: meet at vertical center when locked; slide outward past
+        // the frame as `open` ramps to 1. The clipRect above hides the parts
+        // that slide beyond the frame.
+        if (open < 1f) {
+            val innerTop = top + frameThickness
+            val innerBot = bottom - frameThickness
+            val innerHalf = (innerBot - innerTop) / 2f
+            val slideOffset = open * (innerHalf + frameThickness)
+            val slabInset = frameThickness * 0.4f
+
+            // Top slab (originally [innerTop, cy]) slides UP
+            val topSlabTop = innerTop - slideOffset
+            val topSlabBot = cy - slideOffset
+            drawDoorSlab(canvas, left + slabInset, topSlabTop, right - slabInset, topSlabBot,
+                cellSize, topHalf = true)
+
+            // Bottom slab (originally [cy, innerBot]) slides DOWN
+            val botSlabTop = cy + slideOffset
+            val botSlabBot = innerBot + slideOffset
+            drawDoorSlab(canvas, left + slabInset, botSlabTop, right - slabInset, botSlabBot,
+                cellSize, topHalf = false)
+        }
+        canvas.restore()
+    }
+
+    private fun drawDoorSlab(
+        canvas: Canvas, left: Float, top: Float, right: Float, bottom: Float,
+        cellSize: Float, topHalf: Boolean,
+    ) {
+        if (bottom <= top) return
+        // Body
+        tmpRect.set(left, top, right, bottom)
+        canvas.drawRect(tmpRect, gateSlabPaint)
+        // Top-of-slab bevel highlight
+        tmpRect.set(left, top, right, top + (bottom - top) * 0.18f)
+        canvas.drawRect(tmpRect, gateSlabHighlight)
+        // Bottom-of-slab shadow
+        tmpRect.set(left, bottom - (bottom - top) * 0.12f, right, bottom)
+        canvas.drawRect(tmpRect, gateSlabShadow)
+        // Horizontal banding (plank lines) for stone-block feel
+        val bandSpacing = cellSize * 0.45f
+        var y = top + bandSpacing
+        while (y < bottom - 2f) {
+            canvas.drawLine(left + cellSize * 0.10f, y, right - cellSize * 0.10f, y, gateSlabSeam)
+            y += bandSpacing
+        }
+        // Rivets at the inner edge (where the two slabs meet) — large dots.
+        val rivetRow = if (topHalf) bottom - cellSize * 0.18f else top + cellSize * 0.18f
+        val rivetR = cellSize * 0.07f
+        canvas.drawCircle(left + cellSize * 0.22f, rivetRow, rivetR, gateRivetPaint)
+        canvas.drawCircle(right - cellSize * 0.22f, rivetRow, rivetR, gateRivetPaint)
+        canvas.drawCircle((left + right) / 2f, rivetRow, rivetR, gateRivetPaint)
+    }
+
+    private fun drawPortalVortex(
+        canvas: Canvas,
+        left: Float, top: Float, right: Float, bottom: Float,
+        cx: Float, cy: Float, cellSize: Float, animTime: Float, alpha: Float,
+    ) {
+        val width = right - left
+        val height = bottom - top
+        val maxRadius = sqrt(width * width + height * height) * 0.55f
+
+        val a255 = (alpha.coerceIn(0f, 1f) * 255f).toInt()
+        val layer = canvas.saveLayerAlpha(left, top, right, bottom, a255)
+
+        // Radial glow base
+        val pulse = 0.88f + 0.12f * sin(animTime * 4f)
+        portalGlowPaint.shader = RadialGradient(
+            cx, cy,
+            maxRadius * pulse,
+            intArrayOf(
+                Color.parseColor("#FFFFFFFF"),
+                Color.parseColor("#CCB4FFE0"),
+                Color.parseColor("#7022FFAA"),
+                Color.parseColor("#00041A20"),
+            ),
+            floatArrayOf(0f, 0.18f, 0.55f, 1f),
+            Shader.TileMode.CLAMP,
+        )
+        canvas.drawRect(left, top, right, bottom, portalGlowPaint)
+
+        // Rotating spokes — bright streaks of light radiating outward, swept
+        // by animTime so the portal "spins". Each spoke is a tall, thin
+        // rectangle drawn after rotation.
+        val spokes = 6
+        val spinDeg = animTime * 70f
+        for (i in 0 until spokes) {
+            val angle = spinDeg + i * (360f / spokes)
+            canvas.save()
+            canvas.rotate(angle, cx, cy)
+            val len = maxRadius * 1.1f
+            val w = cellSize * 0.08f
+            canvas.drawRect(cx - w, cy - len, cx + w, cy + len, portalSpokePaint)
+            canvas.restore()
+        }
+
+        // Concentric rings — pulse outward
+        val ringPhase = (animTime * 0.6f) - (animTime * 0.6f).toInt()
+        for (i in 0 until 3) {
+            val rp = (ringPhase + i / 3f) % 1f
+            val ringRadius = maxRadius * rp
+            val ringAlpha = (255 * (1f - rp)).toInt().coerceIn(0, 255)
+            portalRingPaint.alpha = ringAlpha
+            portalRingPaint.strokeWidth = cellSize * (0.08f - 0.06f * rp).coerceAtLeast(1.5f)
+            canvas.drawCircle(cx, cy, ringRadius, portalRingPaint)
+        }
+
+        // Sparkles
+        for (s in portalSparkles) {
+            val sx = cx + s[0] * width * 0.42f
+            val sy = cy + s[1] * height * 0.42f
+            val sp = (0.5f + 0.5f * sin(animTime * 3f + s[2])).coerceIn(0f, 1f)
+            portalSparklePaint.alpha = (255 * sp).toInt()
+            canvas.drawCircle(sx, sy, cellSize * 0.05f * (0.5f + sp), portalSparklePaint)
+        }
+
+        canvas.restoreToCount(layer)
+    }
+
+    /** Soft halo of light that spills out of the open gate into the adjacent
+     *  maze interior, so the player sees the glow before reaching the portal. */
+    private fun drawPortalGlowSpill(
+        canvas: Canvas, b: Rect, cellSize: Float, originX: Float, originY: Float,
+        animTime: Float, open: Float,
+    ) {
+        // Detect which wall the portal sits on. Spill extends ~1.5 cells into
+        // the playable area; offscreen sides contribute nothing.
+        val onLeftWall = b.left == 0
+        val onRightWall = b.right == cols - 1
+        val onTopWall = b.top == 0
+        val onBottomWall = b.bottom == rows - 1
+
+        val pad = cellSize * 1.5f
+        val leftSpill = if (onRightWall) pad else 0f
+        val rightSpill = if (onLeftWall) pad else 0f
+        val topSpill = if (onBottomWall) pad else 0f
+        val bottomSpill = if (onTopWall) pad else 0f
+        val left = originX + b.left * cellSize - leftSpill
+        val top = originY + b.top * cellSize - topSpill
+        val right = originX + (b.right + 1) * cellSize + rightSpill
+        val bottom = originY + (b.bottom + 1) * cellSize + bottomSpill
+        val cx = (originX + b.left * cellSize + originX + (b.right + 1) * cellSize) / 2f
+        val cy = (originY + b.top * cellSize + originY + (b.bottom + 1) * cellSize) / 2f
+
+        val pulse = 0.85f + 0.15f * sin(animTime * 4f)
+        val radius = sqrt(((right - left) * (right - left) + (bottom - top) * (bottom - top))) * 0.6f * pulse
+        portalSpillPaint.shader = RadialGradient(
+            cx, cy, radius,
+            intArrayOf(
+                Color.argb((140 * open).toInt(), 180, 255, 220),
+                Color.argb((60 * open).toInt(), 80, 220, 200),
+                Color.argb(0, 0, 0, 0),
+            ),
+            floatArrayOf(0f, 0.45f, 1f),
+            Shader.TileMode.CLAMP,
+        )
+        canvas.drawRect(left, top, right, bottom, portalSpillPaint)
     }
 
     private fun drawCurrentArrow(
@@ -544,5 +807,11 @@ class Maze(
     private val lilyPadLight = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor("#4FA463")
         style = Paint.Style.FILL
+    }
+
+    companion object {
+        // Seconds for the door slabs to slide fully open after the last pellet
+        // is eaten. Short enough to feel snappy; long enough to read as motion.
+        private const val GATE_OPEN_DURATION: Float = 0.55f
     }
 }
