@@ -12,7 +12,7 @@ import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 
 /**
  * Wraps a single rewarded-ad slot using Google's official **test** rewarded
- * ad unit ID. Replace [TEST_REWARDED_AD_UNIT] (and the manifest meta-data
+ * ad unit ID. Replace [REWARDED_AD_UNIT] (and the manifest meta-data
  * `com.google.android.gms.ads.APPLICATION_ID`) with real values before publishing.
  *
  * Test ad unit ID source: https://developers.google.com/admob/android/test-ads
@@ -22,7 +22,11 @@ class AdMobController(private val activity: Activity) {
     companion object {
         private const val TAG = "AdMobController"
         // Google's official test rewarded ad unit ID:
-        const val TEST_REWARDED_AD_UNIT = "ca-app-pub-3940256099942544/5224354917"
+        private val REWARDED_AD_UNIT = if (BuildConfig.DEBUG)
+            "ca-app-pub-3940256099942544/5224354917"
+        else
+            "ca-app-pub-7133034697479472/2130222934"
+
     }
 
     private var rewardedAd: RewardedAd? = null
@@ -39,7 +43,7 @@ class AdMobController(private val activity: Activity) {
         val req = AdRequest.Builder().build()
         RewardedAd.load(
             activity,
-            TEST_REWARDED_AD_UNIT,
+            REWARDED_AD_UNIT,
             req,
             object : RewardedAdLoadCallback() {
                 override fun onAdLoaded(ad: RewardedAd) {

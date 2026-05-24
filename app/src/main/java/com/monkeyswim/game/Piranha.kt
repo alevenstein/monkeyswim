@@ -122,7 +122,19 @@ class Piranha(
                 }
             }
             else -> {
-                mode = if (frightTimer > 0f) Mode.FRIGHTENED else Mode.CHASE
+                // CHASE / FRIGHTENED. Safety net: if a piranha somehow ends up
+                // standing on a pen tile (lightning reset, future teleport
+                // powerups, edge cases), flip back to LEAVING_PEN so it heads
+                // out the door instead of orbiting the monkey from inside the
+                // pen. Clearing direction bypasses the reverse-exclusion in
+                // pickDirection so the next pick can step straight toward the
+                // exit even from the door tile itself.
+                if (maze.isPenTile(tileCol, tileRow)) {
+                    mode = Mode.LEAVING_PEN
+                    direction = Direction.NONE
+                } else {
+                    mode = if (frightTimer > 0f) Mode.FRIGHTENED else Mode.CHASE
+                }
             }
         }
 
@@ -247,6 +259,18 @@ class Piranha(
             val ncol = tileCol + d.dx
             val nrow = tileRow + d.dy
             if (!maze.isPiranhaWalkable(ncol, nrow)) continue
+            // CHASE / FRIGHTENED piranhas refuse to enter pen tiles. Without
+            // this guard, in layouts where the pen-exit corridor is a 1-wide
+            // funnel directly below a horizontal corridor (e.g. L2 where
+            // (7,1)→(7,2)→(7,3)→door), a piranha crossing the corridor sees
+            // the monkey "below the pen" and greedily descends the funnel
+            // through the door, then gets stuck cycling inside the pen
+            // because every interior tile keeps recommending "down toward
+            // monkey" over "up through the door". Only LEAVING_PEN (which
+            // targets the exit) and EATEN (which uses a BFS flow field) are
+            // allowed to traverse the pen.
+            if ((mode == Mode.CHASE || mode == Mode.FRIGHTENED) &&
+                maze.isPenTile(ncol, nrow)) continue
             val ddx = (ncol - tx).toFloat()
             val ddy = (nrow - ty).toFloat()
             val dist = ddx * ddx + ddy * ddy

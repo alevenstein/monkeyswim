@@ -85,6 +85,7 @@ Piranha behaviours:
 - Four personalities (Pac-Man-style): **DIRECT** (Blinky), **AHEAD2** (Pinky), **AHEAD4** (Inky), **ROAMER** (Clyde). Extra challenge-mode piranhas cycle through the same four personalities.
 - Three modes: **CHASE**, **FRIGHTENED**, **EATEN** (returning to spawn as eyes only). A fourth state, **LEAVING_PEN**, drives the staggered exit.
 - Pac-Man tie-break order at junctions: UP, LEFT, DOWN, RIGHT.
+- **Pen re-entry is forbidden.** A `CHASE`/`FRIGHTENED` piranha will not pick a pen tile (door or interior) as its next step — only `LEAVING_PEN` (which targets the exit) and `EATEN` (which uses the BFS flow field back to spawn) may traverse the pen. Without this guard, layouts where the pen-exit corridor is a 1-wide funnel directly below a horizontal corridor (e.g. L2, where row 1 sits above the funnel `(7,2)→(7,3)→(7,4)`) would suck loose piranhas back through the door whenever they crossed the column above the pen, and once inside, the greedy "down toward monkey" heuristic would trap them in a small in-pen cycle indefinitely. A safety net in the mode-sync also re-flips any piranha that somehow lands on a pen tile in `CHASE`/`FRIGHTENED` back to `LEAVING_PEN` (with `direction = NONE` to bypass the reverse-exclusion on the next pick).
 
 ### Powerups
 

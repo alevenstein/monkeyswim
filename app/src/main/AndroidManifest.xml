@@ -11,14 +11,9 @@
         android:supportsRtl="false"
         android:theme="@style/Theme.MonkeySwim">
 
-        <!--
-            AdMob App ID. This is Google's official sample/test App ID.
-            TODO: Replace with your real AdMob App ID before publishing.
-            Test App ID: ca-app-pub-3940256099942544~3347511713
-        -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713" />
+            android:value="ca-app-pub-7133034697479472~5884236314" />
 
         <activity
             android:name=".MainActivity"
