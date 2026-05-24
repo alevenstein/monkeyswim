@@ -152,6 +152,16 @@ class GameState(
 
     @Synchronized
     fun reset(initialLives: Int = 5) {
+        resetToAwaitingStart(initialLives)
+        phase = Phase.READY
+        phaseTimer = 2.0f
+    }
+
+    /** Like [reset] but leaves the game pinned in `AWAITING_START` (frozen, no
+     *  READY countdown) so the splash overlay can stay up until the player
+     *  taps Start. Used by the debug Reset path that re-shows the splash. */
+    @Synchronized
+    fun resetToAwaitingStart(initialLives: Int = 5) {
         level = 1
         score = 0
         lives = initialLives
@@ -161,8 +171,7 @@ class GameState(
         levelIntroBanner = null
         baitCharges = 0
         loadLevel(1)
-        phase = Phase.READY
-        phaseTimer = 2.0f
+        phase = Phase.AWAITING_START
         emitAll()
     }
 

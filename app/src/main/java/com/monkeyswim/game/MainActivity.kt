@@ -50,6 +50,7 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
     private lateinit var debugBar: LinearLayout
     private lateinit var debugLevelSpinner: Spinner
     private lateinit var debugFruitButton: Button
+    private lateinit var debugResetButton: Button
 
     /** Suppresses the spinner's onItemSelected callback when we're updating the
      *  selection programmatically (e.g. on level-up via natural progression). */
@@ -98,6 +99,7 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
         debugBar = findViewById(R.id.debugBar)
         debugLevelSpinner = findViewById(R.id.debugLevelSpinner)
         debugFruitButton = findViewById(R.id.debugFruitButton)
+        debugResetButton = findViewById(R.id.debugResetButton)
         setupDebugLevelSelector()
 
         splashPrivacyLink.paintFlags = splashPrivacyLink.paintFlags or Paint.UNDERLINE_TEXT_FLAG
@@ -126,9 +128,7 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
         gameView.listener = this
 
         restartButton.setOnClickListener {
-            hideGameOver()
-            clearMechanicIntroSeenFlags()
-            gameView.gameState().reset()
+            showSplashForReset()
         }
         continueChallengeButton.setOnClickListener {
             allLevelsCompleteOverlay.visibility = View.GONE
@@ -328,6 +328,10 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
         debugFruitButton.setOnClickListener {
             gameView.gameState().debugActivatePowerPellet()
         }
+
+        debugResetButton.setOnClickListener {
+            showSplashForReset()
+        }
     }
 
     override fun onGameOver() {
@@ -384,6 +388,33 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
     private fun markMechanicIntroSeen(mechanic: GameState.MechanicIntro) {
         getSharedPreferences(SETTINGS_FILE, Context.MODE_PRIVATE)
             .edit().putBoolean(mechanicSeenKey(mechanic), true).apply()
+    }
+
+    /** Full restart via the splash: hides game-over / level-complete overlays,
+     *  resets state to L1 with fresh lives, pins it in AWAITING_START so the
+     *  game stays frozen under the splash, pre-selects the current difficulty,
+     *  and re-shows the splash. The splash's Start button drives the actual
+     *  game start (which also clears the mechanic-intro seen flags). Shared by
+     *  the game-over Restart button and the debug Reset button. */
+    private fun showSplashForReset() {
+        hideGameOver()
+        allLevelsCompleteOverlay.visibility = View.GONE
+        val state = gameView.gameState()
+        state.resetToAwaitingStart()
+        preselectCurrentDifficulty(state.difficultyMultiplier)
+        splashOverlay.visibility = View.VISIBLE
+    }
+
+    /** Sync the splash difficulty radio to the supplied multiplier so re-showing
+     *  the splash mid-game (debug Reset) pre-selects what the player was already
+     *  playing on. Unknown multipliers fall through to Medium. */
+    private fun preselectCurrentDifficulty(multiplier: Float) {
+        val targetId = when (multiplier) {
+            0.75f -> R.id.difficultyEasy
+            1.25f -> R.id.difficultyHard
+            else -> R.id.difficultyMedium
+        }
+        splashDifficultyGroup.check(targetId)
     }
 
     /** Wipe the "already seen this intro" flags so the next playthrough
