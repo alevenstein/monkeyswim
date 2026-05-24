@@ -248,6 +248,15 @@ class Piranha(
         if (mode == Mode.EATEN) {
             homeFlow[tileCol to tileRow]?.let { return it }
         }
+        // CHASE/FRIGHTENED escape from pruned tiles: if we're standing in a
+        // dead-end pocket (typically the pen-exit funnel, immediately after
+        // LEAVING_PEN transitions us to CHASE on the cell above the door),
+        // ignore the monkey target and follow the precomputed escape
+        // direction toward the live skeleton. Bypasses the reverse-exclusion
+        // because the escape is by definition outward from where we came.
+        if (mode == Mode.CHASE || mode == Mode.FRIGHTENED) {
+            maze.chaseEscapeAt(tileCol, tileRow)?.let { return it }
+        }
         val (tx, ty) = targetTile(monkey)
         var bestDir = Direction.NONE
         var bestDist = Float.MAX_VALUE
@@ -259,18 +268,26 @@ class Piranha(
             val ncol = tileCol + d.dx
             val nrow = tileRow + d.dy
             if (!maze.isPiranhaWalkable(ncol, nrow)) continue
-            // CHASE / FRIGHTENED piranhas refuse to enter pen tiles. Without
-            // this guard, in layouts where the pen-exit corridor is a 1-wide
-            // funnel directly below a horizontal corridor (e.g. L2 where
-            // (7,1)→(7,2)→(7,3)→door), a piranha crossing the corridor sees
-            // the monkey "below the pen" and greedily descends the funnel
-            // through the door, then gets stuck cycling inside the pen
-            // because every interior tile keeps recommending "down toward
-            // monkey" over "up through the door". Only LEAVING_PEN (which
-            // targets the exit) and EATEN (which uses a BFS flow field) are
-            // allowed to traverse the pen.
-            if ((mode == Mode.CHASE || mode == Mode.FRIGHTENED) &&
-                maze.isPenTile(ncol, nrow)) continue
+            // CHASE/FRIGHTENED guards (LEAVING_PEN and EATEN unaffected —
+            // they need the pen / use the precomputed home-flow):
+            //   * Hard block: never step into a pen tile (re-entry
+            //     forbidden — fixes the L2 in-pen trap where the greedy
+            //     heuristic walks a loose piranha through the door and
+            //     traps it in an interior cycle).
+            //   * Soft block: don't dive from the live skeleton INTO a
+            //     pruned dead-end pocket (fixes the L3 funnel where the
+            //     greedy heuristic descends (7,9)→(7,10) and oscillates).
+            //     Allowed in reverse: a piranha already on a pruned tile
+            //     (just transitioned from LEAVING_PEN on the pen-exit cell)
+            //     can step onto another pruned tile on its way out — that
+            //     case is normally handled by `chaseEscapeAt` short-circuit
+            //     above, but the soft-block check kept here is a safety
+            //     net in case the escape direction is null.
+            if (mode == Mode.CHASE || mode == Mode.FRIGHTENED) {
+                if (maze.isPenTile(ncol, nrow)) continue
+                if (!maze.isLiveChaseTile(ncol, nrow) &&
+                    maze.isLiveChaseTile(tileCol, tileRow)) continue
+            }
             val ddx = (ncol - tx).toFloat()
             val ddy = (nrow - ty).toFloat()
             val dist = ddx * ddx + ddy * ddy

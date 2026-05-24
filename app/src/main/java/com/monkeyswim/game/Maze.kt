@@ -46,6 +46,26 @@ class Maze(
     // vortex rather than per-cell. Null only if a level has no gateway.
     val gatewayBounds: Rect?
 
+    // Tiles a CHASE/FRIGHTENED piranha is allowed to step INTO from a live
+    // tile. Excludes walls, the pen, the locked portal, AND every tile in a
+    // dead-end pocket (iteratively prune anything with <2 surviving
+    // neighbors). Without the dead-end prune, levels with a 1-wide pen-exit
+    // funnel (e.g. L3: (7,9)→…→(7,12)→blocked door) trap loose piranhas: the
+    // greedy distance heuristic picks "down toward monkey" at every fork and
+    // the piranha oscillates between the funnel and adjacent 1-cell pockets.
+    // Tide HIGH is assumed (cells gated only by tide are kept).
+    private val liveChaseTiles: Set<Pair<Int, Int>>
+
+    // For each pruned tile, the direction stepping toward the nearest live
+    // tile (one BFS step toward the live skeleton). Piranhas standing on a
+    // pruned tile in CHASE/FRIGHTENED follow this instead of the greedy
+    // target — necessary because the pen-exit cell itself is usually pruned
+    // (1-wide above the door), so the moment a piranha transitions from
+    // LEAVING_PEN to CHASE it's standing on a pruned tile with no live
+    // neighbor to greedy-step toward, and without an escape direction would
+    // bounce straight back into the pen via the safety-net mode flip.
+    private val chaseEscapeDir: Map<Pair<Int, Int>, Direction>
+
     // Tunnel exit rows at the tunnel columns (used when an entity walks off the
     // top or bottom of the maze). The wrap is vertical and per-column: stepping
     // past the top T tile in column c re-enters at the bottom T tile in the
@@ -157,6 +177,105 @@ class Maze(
         } else {
             -1 to -1
         }
+
+        liveChaseTiles = computeLiveChaseTiles()
+        chaseEscapeDir = computeChaseEscapeDirections(liveChaseTiles)
+    }
+
+    /** BFS outward from the live skeleton into pruned territory, recording
+     *  for each pruned tile the one-step direction toward its nearest live
+     *  neighbor. Used by `Piranha.pickDirection` to force escape behavior
+     *  when a CHASE/FRIGHTENED piranha is standing on a pruned tile (e.g.
+     *  immediately after `LEAVING_PEN` deposits it on the pen-exit cell). */
+    private fun computeChaseEscapeDirections(
+        live: Set<Pair<Int, Int>>,
+    ): Map<Pair<Int, Int>, Direction> {
+        val flow = HashMap<Pair<Int, Int>, Direction>()
+        val visited = HashSet<Pair<Int, Int>>(live)
+        val queue = ArrayDeque<Pair<Int, Int>>().apply { addAll(live) }
+        val dirs = listOf(Direction.UP, Direction.DOWN, Direction.LEFT, Direction.RIGHT)
+        while (queue.isNotEmpty()) {
+            val cell = queue.removeFirst()
+            for (dir in dirs) {
+                val nb = cell.first + dir.dx to cell.second + dir.dy
+                if (nb in visited) continue
+                if (nb.first !in 0 until cols || nb.second !in 0 until rows) continue
+                // Only chase-candidate tiles can be escape sources — pen and
+                // walls are never reachable by a CHASE piranha anyway.
+                if (!isChaseCandidate(nb.first, nb.second)) continue
+                // Step from nb toward cell goes in direction `dir.opposite()`.
+                flow[nb] = dir.opposite()
+                visited.add(nb)
+                queue.addLast(nb)
+            }
+        }
+        return flow
+    }
+
+    /** Returns the precomputed escape direction for a pruned tile, or null
+     *  if (col, row) is on the live skeleton (or off-grid / pen / wall). */
+    fun chaseEscapeAt(col: Int, row: Int): Direction? = chaseEscapeDir[col to row]
+
+    /** Build the set of tiles that CHASE/FRIGHTENED piranhas can step into.
+     *  Starts from every chase-walkable tile (excludes walls, pen, portal),
+     *  then iteratively prunes any tile with <2 surviving neighbors so
+     *  dead-end pockets fall out. The result is the maze's "live skeleton";
+     *  every tile in it has at least two ways out, so a piranha that lands
+     *  on it can always continue without backtracking into a corner. */
+    private fun computeLiveChaseTiles(): Set<Pair<Int, Int>> {
+        val candidates = HashSet<Pair<Int, Int>>()
+        for (r in 0 until rows) {
+            for (c in 0 until cols) {
+                if (isChaseCandidate(c, r)) candidates.add(c to r)
+            }
+        }
+        val dirs = listOf(Direction.UP, Direction.DOWN, Direction.LEFT, Direction.RIGHT)
+        val degree = HashMap<Pair<Int, Int>, Int>(candidates.size)
+        for (cell in candidates) {
+            var d = 0
+            for (dir in dirs) {
+                if ((cell.first + dir.dx to cell.second + dir.dy) in candidates) d++
+            }
+            degree[cell] = d
+        }
+        val queue = ArrayDeque<Pair<Int, Int>>()
+        for ((cell, d) in degree) {
+            if (d < 2) queue.add(cell)
+        }
+        while (queue.isNotEmpty()) {
+            val cell = queue.removeFirst()
+            if (cell !in candidates) continue
+            candidates.remove(cell)
+            for (dir in dirs) {
+                val n = cell.first + dir.dx to cell.second + dir.dy
+                if (n in candidates) {
+                    val nd = (degree[n] ?: 0) - 1
+                    degree[n] = nd
+                    if (nd < 2) queue.add(n)
+                }
+            }
+        }
+        return candidates
+    }
+
+    /** Initial candidacy for the chase-live set: every tile a CHASE/FRIGHTENED
+     *  piranha could in principle occupy. Excludes walls, the pen (re-entry
+     *  forbidden), and the locked portal. Tide is assumed HIGH (cells gated
+     *  only by tide are kept). */
+    private fun isChaseCandidate(col: Int, row: Int): Boolean = when (tiles[row][col]) {
+        Tile.PATH, Tile.PELLET, Tile.POWER_PELLET, Tile.MONKEY_SPAWN,
+        Tile.TUNNEL, Tile.CURRENT_UP, Tile.CURRENT_DOWN,
+        Tile.CURRENT_LEFT, Tile.CURRENT_RIGHT,
+        Tile.TIDE, Tile.LILY_PAD, Tile.CROCODILE_SPAWN -> true
+        else -> false
+    }
+
+    /** True if a CHASE/FRIGHTENED piranha may step into (col, row). Tunnel
+     *  wrap is allowed (off-grid on a tunnel column wraps to a live tile by
+     *  construction since every level's tunnel mouth is a 3-cell corridor). */
+    fun isLiveChaseTile(col: Int, row: Int): Boolean {
+        if (col in tunnelCols && (row < 0 || row >= rows)) return true
+        return (col to row) in liveChaseTiles
     }
 
     fun isPenTile(col: Int, row: Int): Boolean {
