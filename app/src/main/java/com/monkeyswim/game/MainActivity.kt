@@ -50,6 +50,7 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
     private lateinit var debugBar: LinearLayout
     private lateinit var debugLevelSpinner: Spinner
     private lateinit var debugFruitButton: Button
+    private lateinit var debugBananaButton: Button
     private lateinit var debugResetButton: Button
 
     /** Suppresses the spinner's onItemSelected callback when we're updating the
@@ -99,6 +100,7 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
         debugBar = findViewById(R.id.debugBar)
         debugLevelSpinner = findViewById(R.id.debugLevelSpinner)
         debugFruitButton = findViewById(R.id.debugFruitButton)
+        debugBananaButton = findViewById(R.id.debugBananaButton)
         debugResetButton = findViewById(R.id.debugResetButton)
         setupDebugLevelSelector()
 
@@ -330,6 +332,10 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
 
         debugFruitButton.setOnClickListener {
             gameView.gameState().debugActivatePowerPellet()
+        }
+
+        debugBananaButton.setOnClickListener {
+            gameView.gameState().debugSpawnBanana()
         }
 
         debugResetButton.setOnClickListener {

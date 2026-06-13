@@ -827,6 +827,15 @@ class GameState(
         frightChainBonus = 200
     }
 
+    /** Debug hook: drop a banana on a free tile immediately, as if the spawn
+     *  timer had just fired. Resets the timer to the normal active duration so
+     *  it expires on the usual schedule if left uncollected. */
+    @Synchronized
+    fun debugSpawnBanana() {
+        banana = pickRandomFreeTile()
+        bananaTimer = BANANA_ACTIVE_DURATION
+    }
+
     private fun createPiranhas(m: Maze, lvl: Int): List<Piranha> {
         val scale = piranhaSpeedScaleForLevel(lvl)
         val count = piranhaCountForLevel(lvl)
