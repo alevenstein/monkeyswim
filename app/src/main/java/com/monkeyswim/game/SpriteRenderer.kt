@@ -137,6 +137,18 @@ object SpriteRenderer {
         style = Paint.Style.STROKE; strokeWidth = 5f
     }
 
+    // Hooked-worm (bait powerup icon). Metal hook is a rounded silver stroke;
+    // the worm is a fat rounded reddish-pink stroke with darker segment ticks.
+    private val hookMetal = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE; strokeCap = Paint.Cap.ROUND; strokeJoin = Paint.Join.ROUND
+    }
+    private val wormBody = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE; strokeCap = Paint.Cap.ROUND; strokeJoin = Paint.Join.ROUND
+    }
+    private val wormSegment = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE; strokeCap = Paint.Cap.ROUND
+    }
+
     private val tmpRect = RectF()
     private val tmpPath = Path()
 
@@ -549,6 +561,57 @@ object SpriteRenderer {
         canvas.drawPath(tmpPath, heartFill)
         heartStroke.color = Color.argb(alpha, 255, 210, 230)
         canvas.drawPath(tmpPath, heartStroke)
+    }
+
+    /**
+     * Fishing hook with a worm threaded on it — the bait powerup's pickup icon.
+     * Pops centre-screen and fades over [duration], matching the turtle/heart.
+     * The hook is a silver J with an eyelet loop and a barb; the worm is a fat
+     * wiggly body draped over the shank with a few darker segment ticks.
+     */
+    fun drawHookedWorm(
+        canvas: Canvas,
+        cx: Float, cy: Float,
+        size: Float,
+        timeLeft: Float,
+        duration: Float,
+    ) {
+        val popScale = if (timeLeft > duration - 0.25f) (duration - timeLeft) / 0.25f else 1.0f
+        val s = size * popScale
+        val alpha = ((timeLeft / duration) * 255f).toInt().coerceIn(0, 255)
+
+        // --- Hook (silver) ---
+        hookMetal.color = Color.argb(alpha, 200, 208, 215)
+        hookMetal.strokeWidth = s * 0.10f
+        // Eyelet loop at the very top.
+        canvas.drawCircle(cx, cy - s * 0.78f, s * 0.13f, hookMetal)
+        // Shank down from the eyelet, curving into a J and back up to the point.
+        tmpPath.reset()
+        tmpPath.moveTo(cx, cy - s * 0.65f)
+        tmpPath.lineTo(cx, cy + s * 0.45f)
+        tmpPath.quadTo(cx, cy + s * 0.95f, cx - s * 0.42f, cy + s * 0.82f)
+        tmpPath.quadTo(cx - s * 0.78f, cy + s * 0.66f, cx - s * 0.58f, cy + s * 0.28f)
+        canvas.drawPath(tmpPath, hookMetal)
+        // Barb just below the point.
+        tmpPath.reset()
+        tmpPath.moveTo(cx - s * 0.58f, cy + s * 0.28f)
+        tmpPath.lineTo(cx - s * 0.40f, cy + s * 0.46f)
+        canvas.drawPath(tmpPath, hookMetal)
+
+        // --- Worm (reddish-pink) draped over the upper shank ---
+        wormBody.color = Color.argb(alpha, 205, 92, 106)
+        wormBody.strokeWidth = s * 0.26f
+        tmpPath.reset()
+        tmpPath.moveTo(cx - s * 0.55f, cy - s * 0.42f)
+        tmpPath.quadTo(cx - s * 0.05f, cy - s * 0.72f, cx + s * 0.22f, cy - s * 0.40f)
+        tmpPath.quadTo(cx + s * 0.48f, cy - s * 0.08f, cx + s * 0.16f, cy + s * 0.16f)
+        canvas.drawPath(tmpPath, wormBody)
+        // A couple of darker segment ticks so it reads as a worm, not a noodle.
+        wormSegment.color = Color.argb(alpha, 150, 60, 72)
+        wormSegment.strokeWidth = s * 0.045f
+        canvas.drawCircle(cx - s * 0.22f, cy - s * 0.55f, s * 0.12f, wormSegment)
+        canvas.drawCircle(cx + s * 0.16f, cy - s * 0.40f, s * 0.12f, wormSegment)
+        canvas.drawCircle(cx + s * 0.27f, cy - s * 0.10f, s * 0.11f, wormSegment)
     }
 
     /**

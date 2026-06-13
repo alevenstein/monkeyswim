@@ -200,6 +200,9 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
         // starts. Build is fast enough not to delay onCreate noticeably.
         soundEngine.init(this)
         gameView.gameState().soundEngine = soundEngine
+        // Seed the one-time bait tutorial flag from persisted state so a player
+        // who's already seen it gets the hooked-worm icon, not the popup again.
+        gameView.gameState().baitIntroSeen = hasSeenMechanicIntro(GameState.MechanicIntro.BAIT)
         updateSoundButton()
 
         // Restore the previously persisted game (if any). A saved game skips the
@@ -371,6 +374,8 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
                     R.string.intro_lilypads_title to R.string.intro_lilypads_body
                 GameState.MechanicIntro.CROCODILE ->
                     R.string.intro_crocodile_title to R.string.intro_crocodile_body
+                GameState.MechanicIntro.BAIT ->
+                    R.string.intro_bait_title to R.string.intro_bait_body
             }
             mechanicIntroTitle.setText(titleRes)
             mechanicIntroBody.setText(bodyRes)
@@ -425,6 +430,10 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
             editor.remove(mechanicSeenKey(mechanic))
         }
         editor.apply()
+        // The bait intro flag is mirrored in GameState (it decides popup vs
+        // icon synchronously) — clear it there too so the popup re-surfaces on
+        // this fresh playthrough.
+        gameView.gameState().baitIntroSeen = false
     }
 
     private fun showGameOver() {

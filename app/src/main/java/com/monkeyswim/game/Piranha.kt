@@ -95,6 +95,12 @@ class Piranha(
      *  BAIT_RANGE_SQ tiles², targetTile picks the bait instead of the monkey. */
     var currentBait: Pair<Int, Int>? = null
 
+    /** Per-frame black-hole position (or null). GameState sets this before
+     *  update() while a black hole is active. When non-null it overrides the
+     *  CHASE/FRIGHTENED target so the piranha is dragged toward the hole from
+     *  across the maze (at a reduced speed) until it's consumed on arrival. */
+    var blackHolePull: Pair<Int, Int>? = null
+
     fun update(deltaSec: Float, monkey: Monkey, frightTimer: Float) {
         animTime += deltaSec
 
@@ -146,7 +152,14 @@ class Piranha(
         // Currents modify chase/frightened movement the same way they affect
         // the monkey (+50% with, -50% against). EATEN piranhas are immune so
         // their BFS return-home path isn't disturbed.
-        val speed = if (mode == Mode.EATEN) baseSpeed else baseSpeed * currentMultiplier()
+        // Black hole drag: a piranha being pulled toward an active black hole
+        // crawls along at a fraction of its normal pace so the pull reads as a
+        // slow gravitational drag rather than an ordinary chase.
+        val pullScale =
+            if (blackHolePull != null && (mode == Mode.CHASE || mode == Mode.FRIGHTENED))
+                BLACK_HOLE_DRAG_SCALE
+            else 1f
+        val speed = (if (mode == Mode.EATEN) baseSpeed else baseSpeed * currentMultiplier()) * pullScale
         var remaining = speed * deltaSec
         while (remaining > 0f) {
             val step = remaining.coerceAtMost(0.45f)
@@ -210,13 +223,19 @@ class Piranha(
     private fun targetTile(monkey: Monkey): Pair<Int, Int> {
         if (mode == Mode.EATEN) return spawnX.toInt() to spawnY.toInt()
         if (mode == Mode.LEAVING_PEN) return maze.penExitTile
+        // Black hole gravity overrides the normal chase/flee target: a piranha
+        // out in the maze homes in on the hole and gets consumed on arrival.
+        blackHolePull?.let { return it }
         if (mode == Mode.FRIGHTENED) {
             // Random target far away — bias to opposite of monkey.
             return (maze.cols - monkey.tileCol) to (maze.rows - monkey.tileRow)
         }
-        // CHASE mode: if a bait is near, re-target it. The piranha doesn't
-        // home perfectly (greedy junctions still apply), but it'll generally
-        // detour. Once bait is consumed (GameState clears it on contact) the
+        // CHASE mode: if a bait is on the board, re-target it. The piranha
+        // doesn't home perfectly (greedy junctions still apply), but it'll
+        // generally detour. The lure reaches across the whole maze — an 8-tile
+        // radius was small enough that on the 22×15 layout the scattered
+        // piranhas were usually out of range, so dropping bait appeared to do
+        // nothing. Once bait is consumed (GameState clears it on contact) the
         // piranha falls back to the personality-driven monkey target.
         val cb = currentBait
         if (cb != null) {
@@ -339,7 +358,16 @@ class Piranha(
     }
 
     companion object {
-        // Bait-detection range, in squared tile distance (so 64 ≈ 8 tiles).
-        private const val BAIT_RANGE_SQ = 64
+        // Bait-detection range, in squared tile distance. Set well beyond the
+        // maze diagonal (22²+15² ≈ 709) so every CHASE piranha is lured, no
+        // matter where it is — bait is a deliberate "pull them all off me"
+        // tool, not a short-range nudge.
+        private const val BAIT_RANGE_SQ = 900
+
+        // Speed multiplier applied while a piranha is being dragged toward an
+        // active black hole. Kept a touch below 1 so it still reads as a pull
+        // rather than an ordinary chase, but high enough that piranhas across
+        // the maze are visibly reeled in over the hole's lifetime.
+        private const val BLACK_HOLE_DRAG_SCALE = 0.85f
     }
 }

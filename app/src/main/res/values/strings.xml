@@ -46,6 +46,8 @@
     <string name="intro_lilypads_body">Green lily pads are slippery — step onto one and you keep moving in the same direction (and so do the piranhas!). You can\'t turn or reverse until you slide off.</string>
     <string name="intro_crocodile_title">Crocodile!</string>
     <string name="intro_crocodile_body">A crocodile patrols one lane of the maze, back and forth. It\'s slow but always dangerous — power pellets don\'t scare it. Time your crossing.</string>
+    <string name="intro_bait_title">Bait!</string>
+    <string name="intro_bait_body">You earned a bait charge! A 🐟 button appears in the HUD — tap it to drop a tasty fish on your tile. Every chasing piranha breaks off and swims for the bait instead of you, giving you a window to escape. The bait vanishes once a piranha reaches it (or after a few seconds). Charges stack, so save them for a tight spot!</string>
     <string name="all_levels_complete_title">River Cleared!</string>
     <string name="all_levels_complete_subtitle">You\'ve completed every level.</string>
     <string name="continue_challenge">Continue (Harder)</string>

@@ -22,17 +22,21 @@ class GameState(
      *  but the "have they seen it yet?" persistence is up to the listener
      *  (MainActivity stores flags in SharedPreferences). */
     enum class MechanicIntro {
-        CURRENTS, TIDE, LILY_PADS, CROCODILE;
+        CURRENTS, TIDE, LILY_PADS, CROCODILE, BAIT;
 
         companion object {
             /** The first level at which each mechanic appears in the layouts.
              *  When loadLevel sees `level == introducedAtLevel(M)`, it fires
-             *  `onMechanicIntro(M)` so the UI can pause + show an explainer. */
+             *  `onMechanicIntro(M)` so the UI can pause + show an explainer.
+             *  BAIT isn't tied to a level — it's triggered the first time a
+             *  banana rolls the bait powerup — so it returns an unreachable
+             *  level that `enterLevelWithIntro` will never match. */
             fun introducedAtLevel(m: MechanicIntro): Int = when (m) {
                 CURRENTS -> 5
                 CROCODILE -> 8
                 TIDE -> 12
                 LILY_PADS -> 16
+                BAIT -> Int.MAX_VALUE
             }
         }
     }
@@ -103,14 +107,22 @@ class GameState(
     private var slowPiranhaTimer: Float = 0f
     private var turtleTimer: Float = 0f
     private var heartTimer: Float = 0f
+    private var baitIconTimer: Float = 0f
 
     // Bait: BAIT-powerup grants a charge; player taps the HUD bait button to
-    // drop one at the monkey's tile. Only one active bait at a time; piranhas
-    // in CHASE within ~8 tiles re-target the bait instead of the monkey.
+    // drop one at the monkey's tile. Only one active bait at a time; every
+    // CHASE piranha re-targets the bait instead of the monkey.
     var baitCharges: Int = 0
         private set
     private var bait: Pair<Int, Int>? = null
     private var baitTimer: Float = 0f
+
+    /** Whether the player has already seen the one-time bait tutorial popup.
+     *  Persisted by the listener (MainActivity SharedPreferences) and pushed
+     *  back in here at startup / cleared on a fresh game, so activatePowerup
+     *  can decide synchronously between the pausing popup (first time) and the
+     *  transient hooked-worm icon (every time after). */
+    var baitIntroSeen: Boolean = false
 
     // Tide state. tideTimer advances 0..TIDE_PERIOD; maze.tideHigh is derived
     // from where in the cycle we are.
@@ -119,6 +131,12 @@ class GameState(
     /** The mechanic whose tutorial overlay is currently being shown (or null
      *  if no intro is pending). Cleared by acknowledgeMechanicIntro(). */
     private var pendingMechanicIntro: MechanicIntro? = null
+
+    /** Phase to drop back into when the current mechanic intro is acknowledged.
+     *  Level-start intros resume to READY (the level's "Ready!" countdown); the
+     *  mid-play bait intro resumes straight to PLAYING so the run continues
+     *  exactly where it paused. */
+    private var introResumePhase: Phase = Phase.READY
 
     /**
      * Procedural SFX engine. Optional — null is a no-op so unit tests and
@@ -407,6 +425,7 @@ class GameState(
         if (lightningFlashTimer > 0f) lightningFlashTimer -= dt
         if (turtleTimer > 0f) turtleTimer -= dt
         if (heartTimer > 0f) heartTimer -= dt
+        if (baitIconTimer > 0f) baitIconTimer -= dt
         if (blackHoleTimer > 0f) {
             blackHoleTimer -= dt
             if (blackHoleTimer <= 0f) blackHole = null
@@ -446,8 +465,10 @@ class GameState(
 
         monkey.update(dt)
         val currentBait = bait
+        val currentBlackHole = blackHole
         for (p in piranhas) {
             p.currentBait = currentBait
+            p.blackHolePull = currentBlackHole
             p.update(dt, monkey, frightTimer)
         }
         shark?.update(dt, piranhas)
@@ -486,6 +507,10 @@ class GameState(
             banana = null
             bananaTimer = nextBananaRespawnDelay()
             activatePowerup(Powerup.values().random())
+            // The first-bait tutorial pauses the game (phase flips out of
+            // PLAYING). Bail out of the rest of this frame's update so nothing
+            // moves or collides behind the popup.
+            if (phase != Phase.PLAYING) return
         }
 
         // Black hole kills anything standing on its tile.
@@ -588,6 +613,19 @@ class GameState(
                 // what gets the wet plop.
                 baitCharges++
                 listener?.onBaitChargesChanged(baitCharges)
+                if (baitIntroSeen) {
+                    // Already taught — just pop the transient hooked-worm icon
+                    // so the grant is acknowledged without interrupting play.
+                    baitIconTimer = BAIT_ICON_VISIBLE_DURATION
+                } else {
+                    // First bait ever: pause and surface the tutorial popup.
+                    // Resume straight back to PLAYING when it's dismissed.
+                    baitIntroSeen = true
+                    pendingMechanicIntro = MechanicIntro.BAIT
+                    introResumePhase = Phase.PLAYING
+                    phase = Phase.MECHANIC_INTRO
+                    listener?.onMechanicIntro(MechanicIntro.BAIT)
+                }
             }
         }
     }
@@ -659,6 +697,7 @@ class GameState(
         slowPiranhaTimer = 0f
         turtleTimer = 0f
         heartTimer = 0f
+        baitIconTimer = 0f
         bait = null
         baitTimer = 0f
     }
@@ -755,6 +794,7 @@ class GameState(
         }
         if (intro != null) {
             pendingMechanicIntro = intro
+            introResumePhase = Phase.READY
             phase = Phase.MECHANIC_INTRO
             listener?.onMechanicIntro(intro)
         } else {
@@ -764,13 +804,20 @@ class GameState(
     }
 
     /** Resume play after a mechanic intro overlay was dismissed (or skipped
-     *  because the user has already seen it). No-op outside MECHANIC_INTRO. */
+     *  because the user has already seen it). No-op outside MECHANIC_INTRO.
+     *  Resumes to whichever phase the intro interrupted (READY for level-start
+     *  intros, PLAYING for the mid-run bait intro). */
     @Synchronized
     fun acknowledgeMechanicIntro() {
         if (phase != Phase.MECHANIC_INTRO) return
         pendingMechanicIntro = null
-        phase = Phase.READY
-        phaseTimer = 2.0f
+        if (introResumePhase == Phase.PLAYING) {
+            phase = Phase.PLAYING
+        } else {
+            phase = Phase.READY
+            phaseTimer = 2.0f
+        }
+        introResumePhase = Phase.READY
     }
 
     /** Debug hook: trigger the power-pellet fright effect without eating one. */
@@ -865,7 +912,7 @@ class GameState(
         banana?.let { (col, row) ->
             val cx = originX + (col + 0.5f) * cellSize
             val cy = originY + (row + 0.5f) * cellSize
-            val pulse = 0.55f + 0.05f * kotlin.math.sin(animTime * 4f)
+            val pulse = 0.63f + 0.05f * kotlin.math.sin(animTime * 4f)
             FruitRenderer.drawBanana(canvas, cx, cy, cellSize * pulse)
         }
 
@@ -933,6 +980,17 @@ class GameState(
             val hy = hudHeightPx + playableHeight / 2f
             SpriteRenderer.drawHeart(
                 canvas, hx, hy, cellSize * 1.8f, heartTimer, HEART_VISIBLE_DURATION,
+            )
+        }
+
+        // Brief hooked-worm visual when a (non-first) bait charge is granted —
+        // same pop-and-fade pattern as the turtle/heart, signalling the player
+        // earned a bait to deploy.
+        if (baitIconTimer > 0f) {
+            val wx = viewWidth / 2f
+            val wy = hudHeightPx + playableHeight / 2f
+            SpriteRenderer.drawHookedWorm(
+                canvas, wx, wy, cellSize * 1.8f, baitIconTimer, BAIT_ICON_VISIBLE_DURATION,
             )
         }
 
@@ -1009,11 +1067,12 @@ class GameState(
         private const val BANANA_RESPAWN_MAX = 40f         // delay between bananas max (s)
         private const val BANANA_ACTIVE_DURATION = 24f     // how long an uneaten banana stays (s)
         private const val LIGHTNING_FLASH_DURATION = 0.6f
-        private const val BLACK_HOLE_DURATION = 15f
+        private const val BLACK_HOLE_DURATION = 19f
         private const val SHARK_DURATION = 15f
         private const val SLOW_DURATION = 10f
         private const val TURTLE_VISIBLE_DURATION = 1.5f
         private const val HEART_VISIBLE_DURATION = 1.5f
+        private const val BAIT_ICON_VISIBLE_DURATION = 1.5f
         private const val BAIT_DURATION = 6f               // seconds an uneaten bait stays
 
         // Tide cycle: 3 s exposed (walkable) then 3 s submerged-walls.
