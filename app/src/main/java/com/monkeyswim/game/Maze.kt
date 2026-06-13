@@ -566,7 +566,7 @@ class Maze(
                         canvas.drawCircle(cx, cy, cellSize * 0.12f, pelletPaint)
                     }
                     Tile.POWER_PELLET -> {
-                        val pulse = 0.40f + 0.04f * sin(animTime * 4f)
+                        val pulse = 0.47f + 0.04f * sin(animTime * 4f)
                         val fruit = powerPelletFruit[c to r] ?: FruitRenderer.FruitType.APPLE
                         FruitRenderer.draw(canvas, fruit, cx, cy, cellSize * pulse)
                     }

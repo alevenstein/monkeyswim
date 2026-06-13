@@ -921,7 +921,7 @@ class GameState(
         banana?.let { (col, row) ->
             val cx = originX + (col + 0.5f) * cellSize
             val cy = originY + (row + 0.5f) * cellSize
-            val pulse = 0.63f + 0.05f * kotlin.math.sin(animTime * 4f)
+            val pulse = 0.72f + 0.05f * kotlin.math.sin(animTime * 4f)
             FruitRenderer.drawBanana(canvas, cx, cy, cellSize * pulse)
         }
 

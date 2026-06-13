@@ -15,6 +15,19 @@ object SpriteRenderer {
     private val monkeyFur = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor("#8B5A2B"); style = Paint.Style.FILL
     }
+    private val monkeyFurDark = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#6E441F"); style = Paint.Style.FILL
+    }
+    private val monkeyFurHi = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#A56A33"); style = Paint.Style.FILL
+    }
+    private val monkeyTail = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#8B5A2B"); style = Paint.Style.STROKE
+        strokeCap = Paint.Cap.ROUND; strokeJoin = Paint.Join.ROUND
+    }
+    private val monkeyFaceShade = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#E0BC8F"); style = Paint.Style.FILL
+    }
     private val monkeyFace = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor("#F2D2A8"); style = Paint.Style.FILL
     }
@@ -31,17 +44,17 @@ object SpriteRenderer {
     private val piranhaBody = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor("#7E8C99"); style = Paint.Style.FILL
     }
+    private val piranhaBack = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#5A6573"); style = Paint.Style.FILL
+    }
     private val piranhaBelly = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#C44A3D"); style = Paint.Style.FILL
+        color = Color.parseColor("#D9543F"); style = Paint.Style.FILL
     }
     private val piranhaFin = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor("#3F4853"); style = Paint.Style.FILL
     }
-    private val frightBody = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#3050C8"); style = Paint.Style.FILL
-    }
-    private val frightFin = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#1B2A6B"); style = Paint.Style.FILL
+    private val piranhaMouth = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#4A1010"); style = Paint.Style.FILL
     }
     private val toothPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.WHITE; style = Paint.Style.FILL
@@ -54,7 +67,8 @@ object SpriteRenderer {
         color = Color.parseColor("#2A1605"); style = Paint.Style.FILL
     }
     private val piranhaOutline = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#1F2630"); style = Paint.Style.FILL
+        color = Color.parseColor("#1F2630"); style = Paint.Style.STROKE
+        strokeCap = Paint.Cap.ROUND; strokeJoin = Paint.Join.ROUND
     }
     private val wakePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.argb(170, 230, 245, 255); style = Paint.Style.FILL
@@ -177,6 +191,19 @@ object SpriteRenderer {
             canvas.drawCircle(rippleX - cellSize * 0.10f, s * 0.4f, cellSize * 0.10f, ripplePaint)
         }
 
+        // Curled tail trailing behind, wagging gently with the swim frame. Drawn
+        // first so the body overlaps its root. A darker rim is stroked under the
+        // fur-coloured stroke for a bit of definition.
+        val tailWag = cellSize * 0.05f * armOffset
+        tmpPath.reset()
+        tmpPath.moveTo(-s * 0.85f, s * 0.10f)
+        tmpPath.quadTo(-s * 1.55f, s * 0.05f + tailWag, -s * 1.50f, -s * 0.55f + tailWag)
+        tmpPath.quadTo(-s * 1.46f, -s * 0.95f + tailWag, -s * 1.12f, -s * 0.92f + tailWag)
+        monkeyTail.color = Color.parseColor("#3F2A12"); monkeyTail.strokeWidth = s * 0.26f
+        canvas.drawPath(tmpPath, monkeyTail)
+        monkeyTail.color = Color.parseColor("#8B5A2B"); monkeyTail.strokeWidth = s * 0.18f
+        canvas.drawPath(tmpPath, monkeyTail)
+
         // Ears (drawn first; body covers their inner edge). Set at the temples,
         // small and on the sides — not Mickey-Mouse circles at the back.
         canvas.drawCircle(s * 0.15f, -s * 0.92f, s * 0.27f, monkeyOutline)
@@ -194,7 +221,25 @@ object SpriteRenderer {
         tmpRect.set(-s * 0.95f, -s * 0.85f, s, s * 0.85f)
         canvas.drawOval(tmpRect, monkeyFur)
 
-        // Face mask — pale-tan peanut/figure-8 covering the front (the signature monkey marking)
+        // Volumetric fur shading, clipped to the body: a darker belly band along
+        // the underside (+y) and a lighter highlight sweep along the back (-y).
+        tmpPath.reset()
+        tmpPath.addOval(tmpRect, Path.Direction.CW)
+        canvas.save()
+        canvas.clipPath(tmpPath)
+        tmpRect.set(-s * 0.95f, s * 0.18f, s, s * 1.05f)
+        canvas.drawOval(tmpRect, monkeyFurDark)
+        tmpRect.set(-s * 0.80f, -s * 1.00f, s * 0.70f, -s * 0.18f)
+        canvas.drawOval(tmpRect, monkeyFurHi)
+        canvas.restore()
+
+        // Face mask — pale-tan peanut/figure-8 covering the front (the signature
+        // monkey marking). A slightly larger, faintly darker tan sits behind it
+        // first so the mask has a soft contoured edge rather than a flat cutout.
+        canvas.drawCircle(s * 0.30f, -s * 0.32f, s * 0.44f, monkeyFaceShade)
+        canvas.drawCircle(s * 0.30f,  s * 0.32f, s * 0.44f, monkeyFaceShade)
+        tmpRect.set(s * 0.06f, -s * 0.44f, s * 0.88f, s * 0.44f)
+        canvas.drawOval(tmpRect, monkeyFaceShade)
         canvas.drawCircle(s * 0.32f, -s * 0.30f, s * 0.40f, monkeyFace)
         canvas.drawCircle(s * 0.32f,  s * 0.30f, s * 0.40f, monkeyFace)
         tmpRect.set(s * 0.10f, -s * 0.40f, s * 0.85f, s * 0.40f)
@@ -214,21 +259,34 @@ object SpriteRenderer {
         tmpRect.set(s * 0.28f,  s * 0.04f, s * 0.58f,  s * 0.46f)
         canvas.drawArc(tmpRect, 60f, 100f, false, monkeyBrow)
 
-        // Eyes — closer together than the bear version, sitting on the face mask
+        // Eyes — closer together than the bear version, sitting on the face mask.
+        // A thin dark rim gives them more definition than a bare white disc.
+        monkeyBrow.strokeWidth = s * 0.03f
         canvas.drawCircle(s * 0.42f, -s * 0.22f, s * 0.16f, eyeWhite)
         canvas.drawCircle(s * 0.42f,  s * 0.22f, s * 0.16f, eyeWhite)
+        canvas.drawCircle(s * 0.42f, -s * 0.22f, s * 0.16f, monkeyBrow)
+        canvas.drawCircle(s * 0.42f,  s * 0.22f, s * 0.16f, monkeyBrow)
         canvas.drawCircle(s * 0.48f, -s * 0.22f, s * 0.10f, eyeBlack)
         canvas.drawCircle(s * 0.48f,  s * 0.22f, s * 0.10f, eyeBlack)
         canvas.drawCircle(s * 0.52f, -s * 0.25f, s * 0.04f, eyeWhite)
         canvas.drawCircle(s * 0.52f,  s * 0.19f, s * 0.04f, eyeWhite)
 
-        // Swimming arms with pale palms (primates have palms!)
-        canvas.drawCircle(s * 0.30f, -s * 0.95f - cellSize * 0.04f * armOffset, s * 0.20f, monkeyOutline)
-        canvas.drawCircle(-s * 0.10f, s * 0.95f + cellSize * 0.04f * armOffset, s * 0.20f, monkeyOutline)
-        canvas.drawCircle(s * 0.30f, -s * 0.95f - cellSize * 0.04f * armOffset, s * 0.18f, monkeyFur)
-        canvas.drawCircle(-s * 0.10f, s * 0.95f + cellSize * 0.04f * armOffset, s * 0.18f, monkeyFur)
-        canvas.drawCircle(s * 0.30f, -s * 0.95f - cellSize * 0.04f * armOffset, s * 0.10f, monkeyFace)
-        canvas.drawCircle(-s * 0.10f, s * 0.95f + cellSize * 0.04f * armOffset, s * 0.10f, monkeyFace)
+        // Swimming arms with pale palms (primates have palms!). Three short
+        // finger creases on each palm sell the "hand" at higher resolutions.
+        val ax1 = s * 0.30f; val ay1 = -s * 0.95f - cellSize * 0.04f * armOffset
+        val ax2 = -s * 0.10f; val ay2 = s * 0.95f + cellSize * 0.04f * armOffset
+        canvas.drawCircle(ax1, ay1, s * 0.20f, monkeyOutline)
+        canvas.drawCircle(ax2, ay2, s * 0.20f, monkeyOutline)
+        canvas.drawCircle(ax1, ay1, s * 0.18f, monkeyFur)
+        canvas.drawCircle(ax2, ay2, s * 0.18f, monkeyFur)
+        canvas.drawCircle(ax1, ay1, s * 0.11f, monkeyFace)
+        canvas.drawCircle(ax2, ay2, s * 0.11f, monkeyFace)
+        monkeyBrow.strokeWidth = s * 0.025f
+        for (i in -1..1) {
+            val fx = i * s * 0.07f
+            canvas.drawLine(ax1 + fx, ay1 - s * 0.10f, ax1 + fx, ay1 + s * 0.02f, monkeyBrow)
+            canvas.drawLine(ax2 + fx, ay2 - s * 0.10f, ax2 + fx, ay2 + s * 0.02f, monkeyBrow)
+        }
 
         canvas.restore()
     }
@@ -241,86 +299,151 @@ object SpriteRenderer {
         frame: Int,
         frightened: Boolean,
         frightBlink: Boolean,
+        bodyColor: Int = 0xFFC0392B.toInt(),
     ) {
         canvas.save()
         canvas.translate(cx, cy)
         canvas.rotate(rotationFor(direction))
         val s = cellSize * 0.75f
 
-        val body = if (frightened) {
-            if (frightBlink) Paint(frightBody).apply { color = Color.parseColor("#E0E0FF") }
-            else frightBody
-        } else piranhaBody
-        val fin = if (frightened) frightFin else piranhaFin
+        // Resolve the palette. A fright overrides any per-fish tint (they all
+        // turn the same scared blue); otherwise the fish wears its assigned
+        // colour with a darker back-shade and an even darker fin derived from it.
+        val bodyCol = when {
+            frightened && frightBlink -> Color.parseColor("#E0E0FF")
+            frightened -> Color.parseColor("#3050C8")
+            else -> bodyColor
+        }
+        piranhaBody.color = bodyCol
+        piranhaFin.color = if (frightened) Color.parseColor("#1B2A6B") else darken(bodyColor, 0.58f)
+        piranhaBack.color = if (frightened) Color.parseColor("#22368A") else darken(bodyColor, 0.78f)
 
-        // Wake foam trail behind tail
-        canvas.drawCircle(-s * 1.65f, -s * 0.20f, cellSize * 0.10f, wakePaint)
-        canvas.drawCircle(-s * 1.85f,  s * 0.25f, cellSize * 0.07f, wakePaint)
+        // Wake foam trail behind the tail.
+        canvas.drawCircle(-s * 1.70f, -s * 0.20f, cellSize * 0.10f, wakePaint)
+        canvas.drawCircle(-s * 1.90f,  s * 0.25f, cellSize * 0.07f, wakePaint)
 
-        // Tail fin (behind = LEFT in local frame), animates between two angles
+        // Forked caudal (tail) fin — two prongs with a central notch read far
+        // more "fish" than the old single triangle. Flicks with the frame.
+        val tailFlick = (if (frame % 2 == 0) -1f else 1f) * cellSize * 0.07f
         tmpPath.reset()
-        val tailFlick = if (frame % 2 == 0) -0.4f else 0.4f
-        tmpPath.moveTo(-s * 1.0f, 0f)
-        tmpPath.lineTo(-s * 1.5f, -s * 0.6f + tailFlick * cellSize * 0.10f)
-        tmpPath.lineTo(-s * 1.5f,  s * 0.6f - tailFlick * cellSize * 0.10f)
+        tmpPath.moveTo(-s * 0.92f, 0f)
+        tmpPath.lineTo(-s * 1.62f, -s * 0.62f + tailFlick)
+        tmpPath.lineTo(-s * 1.30f, 0f)
+        tmpPath.lineTo(-s * 1.62f,  s * 0.62f - tailFlick)
         tmpPath.close()
-        canvas.drawPath(tmpPath, fin)
+        canvas.drawPath(tmpPath, piranhaFin)
 
-        // Body outline (slightly larger oval behind)
-        tmpRect.set(-s * 1.06f, -s * 0.62f, s * 1.06f, s * 0.62f)
-        canvas.drawOval(tmpRect, piranhaOutline)
+        // Dorsal fin — a triangular sail along the back (dorsal = -y, the side
+        // opposite the red belly), set just behind the head hump.
+        tmpPath.reset()
+        tmpPath.moveTo(-s * 0.20f, -s * 0.55f)
+        tmpPath.lineTo( s * 0.05f, -s * 0.98f)
+        tmpPath.lineTo( s * 0.34f, -s * 0.52f)
+        tmpPath.close()
+        canvas.drawPath(tmpPath, piranhaFin)
 
-        // Body oval (longer than tall)
-        tmpRect.set(-s, -s * 0.55f, s, s * 0.55f)
-        canvas.drawOval(tmpRect, body)
+        // Body — a humped, deep-bellied profile tapering to a blunt jaw, the
+        // classic piranha silhouette. A path (not an ellipse) gives the steep
+        // forehead and jutting lower jaw that say "piranha" rather than "fish".
+        buildPiranhaBody(s)
+        canvas.drawPath(tmpPath, piranhaBody)
 
-        // Belly stripe (red) — only when not frightened
+        // Volume + markings, clipped to the body so nothing spills past the edge:
+        // a darker band along the back and (unless frightened) the red belly.
+        canvas.save()
+        canvas.clipPath(tmpPath)
+        tmpRect.set(-s * 1.05f, -s * 0.75f, s * 1.2f, -s * 0.02f)
+        canvas.drawOval(tmpRect, piranhaBack)
         if (!frightened) {
-            tmpRect.set(-s * 0.85f, s * 0.15f, s * 0.85f, s * 0.55f)
+            tmpRect.set(-s * 0.85f, s * 0.12f, s * 0.95f, s * 0.75f)
             canvas.drawOval(tmpRect, piranhaBelly)
         }
+        canvas.restore()
 
-        // Side fins (alternate per frame)
+        // Outline stroke around the silhouette for a crisp edge (buildPiranhaBody
+        // left the body path in tmpPath; clipPath/drawOval above don't modify it).
+        piranhaOutline.strokeWidth = s * 0.07f
+        canvas.drawPath(tmpPath, piranhaOutline)
+
+        // Pectoral fins flaring from the sides, alternating per frame.
         val sideFinOff = if (frame % 2 == 0) -1f else 1f
         tmpPath.reset()
-        tmpPath.moveTo(-s * 0.10f, -s * 0.50f)
-        tmpPath.lineTo(-s * 0.40f, -s * 0.85f + cellSize * 0.05f * sideFinOff)
-        tmpPath.lineTo( s * 0.20f, -s * 0.55f)
+        tmpPath.moveTo(s * 0.05f, -s * 0.46f)
+        tmpPath.lineTo(-s * 0.32f, -s * 0.82f + cellSize * 0.05f * sideFinOff)
+        tmpPath.lineTo( s * 0.30f, -s * 0.48f)
         tmpPath.close()
-        canvas.drawPath(tmpPath, fin)
+        canvas.drawPath(tmpPath, piranhaFin)
         tmpPath.reset()
-        tmpPath.moveTo(-s * 0.10f, s * 0.50f)
-        tmpPath.lineTo(-s * 0.40f, s * 0.85f - cellSize * 0.05f * sideFinOff)
-        tmpPath.lineTo( s * 0.20f, s * 0.55f)
+        tmpPath.moveTo(s * 0.05f, s * 0.46f)
+        tmpPath.lineTo(-s * 0.32f, s * 0.82f - cellSize * 0.05f * sideFinOff)
+        tmpPath.lineTo( s * 0.30f, s * 0.48f)
         tmpPath.close()
-        canvas.drawPath(tmpPath, fin)
+        canvas.drawPath(tmpPath, piranhaFin)
 
-        // Mouth with teeth (front)
-        tmpRect.set(s * 0.55f, -s * 0.25f, s * 1.05f, s * 0.25f)
-        canvas.drawOval(tmpRect, body)
-        // Teeth (frightened sprite gets a calm closed mouth — no teeth)
+        // Gill slit — a short curved line behind the head.
+        tmpPath.reset()
+        tmpPath.moveTo(s * 0.40f, -s * 0.42f)
+        tmpPath.quadTo(s * 0.30f, 0f, s * 0.40f, s * 0.42f)
+        canvas.drawPath(tmpPath, piranhaOutline)
+
+        // Jaw + interlocking teeth (frightened sprite keeps a calm closed mouth).
         if (!frightened) {
+            // Dark mouth gape at the snout.
+            tmpRect.set(s * 0.62f, -s * 0.14f, s * 1.16f, s * 0.22f)
+            canvas.drawOval(tmpRect, piranhaMouth)
+            // A saw-tooth row across the jaw line: upper teeth point down, lower
+            // teeth point up, interlocking like a piranha's fearsome grin.
+            val tx0 = s * 0.64f
+            val tx1 = s * 1.12f
+            val n = 5
+            val tw = (tx1 - tx0) / n
             tmpPath.reset()
-            tmpPath.moveTo(s * 0.65f, -s * 0.05f)
-            tmpPath.lineTo(s * 0.75f, -s * 0.20f)
-            tmpPath.lineTo(s * 0.85f, -s * 0.05f)
-            tmpPath.close()
-            canvas.drawPath(tmpPath, toothPaint)
-            tmpPath.reset()
-            tmpPath.moveTo(s * 0.65f, s * 0.05f)
-            tmpPath.lineTo(s * 0.75f, s * 0.20f)
-            tmpPath.lineTo(s * 0.85f, s * 0.05f)
-            tmpPath.close()
+            for (i in 0 until n) {
+                val xa = tx0 + i * tw
+                tmpPath.moveTo(xa, -s * 0.05f)
+                tmpPath.lineTo(xa + tw * 0.5f, s * 0.05f)
+                tmpPath.lineTo(xa + tw, -s * 0.05f)
+                tmpPath.close()
+            }
+            for (i in 0 until n) {
+                val xa = tx0 + tw * 0.5f + i * tw
+                tmpPath.moveTo(xa, s * 0.13f)
+                tmpPath.lineTo(xa + tw * 0.5f, s * 0.03f)
+                tmpPath.lineTo(xa + tw, s * 0.13f)
+                tmpPath.close()
+            }
             canvas.drawPath(tmpPath, toothPaint)
         }
 
-        // Eye (single, top-down view) with sparkle
-        canvas.drawCircle(s * 0.30f, -s * 0.20f, s * 0.18f, eyeWhite)
-        canvas.drawCircle(s * 0.36f, -s * 0.20f, s * 0.10f, eyeBlack)
-        canvas.drawCircle(s * 0.40f, -s * 0.24f, s * 0.04f, eyeWhite)
+        // Eye with a small angry brow and a sparkle.
+        canvas.drawCircle(s * 0.40f, -s * 0.24f, s * 0.17f, eyeWhite)
+        canvas.drawCircle(s * 0.46f, -s * 0.24f, s * 0.095f, eyeBlack)
+        canvas.drawCircle(s * 0.50f, -s * 0.28f, s * 0.04f, eyeWhite)
+        piranhaOutline.strokeWidth = s * 0.06f
+        canvas.drawLine(s * 0.24f, -s * 0.46f, s * 0.56f, -s * 0.30f, piranhaOutline)
 
         canvas.restore()
     }
+
+    /** Builds the piranha body silhouette into [tmpPath], facing RIGHT (+x):
+     *  a humped back, deep belly, and a blunt jutting jaw at the snout. */
+    private fun buildPiranhaBody(s: Float) {
+        tmpPath.reset()
+        tmpPath.moveTo(-s * 0.95f, -s * 0.26f)               // tail root, upper
+        tmpPath.cubicTo(-s * 0.35f, -s * 0.72f, s * 0.28f, -s * 0.66f, s * 0.60f, -s * 0.44f) // humped back
+        tmpPath.quadTo(s * 0.96f, -s * 0.28f, s * 1.14f, -s * 0.02f) // steep forehead to snout
+        tmpPath.lineTo(s * 1.14f, s * 0.12f)                 // blunt snout / mouth front
+        tmpPath.quadTo(s * 0.80f, s * 0.54f, s * 0.12f, s * 0.60f)  // jutting jaw + belly
+        tmpPath.cubicTo(-s * 0.45f, s * 0.66f, -s * 0.84f, s * 0.46f, -s * 0.95f, s * 0.26f) // belly back to tail
+        tmpPath.close()
+    }
+
+    /** Multiplies a colour's RGB by [factor] (clamped) for cheap shading tints. */
+    private fun darken(color: Int, factor: Float): Int = Color.rgb(
+        (Color.red(color) * factor).toInt().coerceIn(0, 255),
+        (Color.green(color) * factor).toInt().coerceIn(0, 255),
+        (Color.blue(color) * factor).toInt().coerceIn(0, 255),
+    )
 
     private fun rotationFor(direction: Direction): Float = when (direction) {
         Direction.RIGHT, Direction.NONE -> 0f

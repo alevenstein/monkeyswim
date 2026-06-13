@@ -1,6 +1,7 @@
 package com.monkeyswim.game
 
 import android.graphics.Canvas
+import android.graphics.Color
 import kotlin.math.abs
 import kotlin.math.sqrt
 
@@ -18,6 +19,16 @@ class Piranha(
 ) {
     enum class Personality { DIRECT, AHEAD2, AHEAD4, ROAMER }
     enum class Mode { CHASE, FRIGHTENED, EATEN, LEAVING_PEN }
+
+    /** Per-personality body tint so the four piranhas are visually distinct
+     *  (they keep the shared red belly + teeth, so they still read as a school
+     *  of piranhas). Frightened mode overrides this with the scared blue. */
+    val bodyColor: Int = when (personality) {
+        Personality.DIRECT -> Color.parseColor("#C0392B") // red
+        Personality.AHEAD2 -> Color.parseColor("#2E86C1") // blue
+        Personality.AHEAD4 -> Color.parseColor("#27AE60") // green
+        Personality.ROAMER -> Color.parseColor("#E67E22") // orange
+    }
 
     var x: Float = spawnCol + 0.5f
         private set
@@ -342,7 +353,7 @@ class Piranha(
             // Eyes-only: tiny white dots heading home.
             SpriteRenderer.drawPiranha(canvas, cx, cy, cellSize * 0.45f, direction, frame, true, true)
         } else {
-            SpriteRenderer.drawPiranha(canvas, cx, cy, cellSize, direction, frame, frightened, blink)
+            SpriteRenderer.drawPiranha(canvas, cx, cy, cellSize, direction, frame, frightened, blink, bodyColor)
         }
     }
 
