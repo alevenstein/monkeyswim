@@ -202,8 +202,8 @@ def icon_face(size=512):
         pts = [(x, y + amp * math.sin(x / (W/4.0))) for x in range(0, W+1, W//60)]
         for k in range(len(pts)-1):
             d.line([pts[k], pts[k+1]], fill=WATER_SHALLOW, width=int(H*0.018))
-    pellets(d, W, H, [(0.12,0.16),(0.88,0.16),(0.1,0.5),(0.9,0.52),(0.5,0.08)], int(W*0.022))
-    draw_monkey(d, W*0.5, H*0.44, R=W*0.30)
+    pellets(d, W, H, [(0.1,0.13),(0.9,0.13),(0.07,0.46),(0.93,0.48),(0.5,0.06)], int(W*0.022))
+    draw_monkey(d, W*0.5, H*0.47, R=W*0.39)
     return img.convert("RGB").resize((size, size), Image.LANCZOS)
 
 
