@@ -18,6 +18,11 @@ class Monkey(
     var y: Float = spawnRow + 0.5f
         private set
 
+    // Position at the start of the most recent simulation tick, for render
+    // interpolation. See [renderX]/[renderY] and renderLerp.
+    private var prevX: Float = x
+    private var prevY: Float = y
+
     var direction: Direction = Direction.NONE
         private set
     var queuedDirection: Direction = Direction.NONE
@@ -41,16 +46,24 @@ class Monkey(
     fun resetTo(col: Int, row: Int) {
         x = col + 0.5f
         y = row + 0.5f
+        prevX = x
+        prevY = y
         direction = initialDirection
         queuedDirection = Direction.NONE
         lastRequestedDirection = Direction.NONE
         animTime = 0f
     }
 
+    /** Interpolated render coordinates between the last two ticks. */
+    fun renderX(alpha: Float): Float = renderLerp(prevX, x, alpha)
+    fun renderY(alpha: Float): Float = renderLerp(prevY, y, alpha)
+
     val tileCol: Int get() = x.toInt()
     val tileRow: Int get() = y.toInt()
 
     fun update(deltaSec: Float) {
+        prevX = x
+        prevY = y
         animTime += deltaSec
         val speed = baseSpeed * speedScale * currentMultiplier()
         var remaining = speed * deltaSec
@@ -195,9 +208,9 @@ class Monkey(
         queuedDirection = dir
     }
 
-    fun draw(canvas: Canvas, cellSize: Float, originX: Float, originY: Float) {
-        val cx = originX + x * cellSize
-        val cy = originY + y * cellSize
+    fun draw(canvas: Canvas, cellSize: Float, originX: Float, originY: Float, alpha: Float) {
+        val cx = originX + renderX(alpha) * cellSize
+        val cy = originY + renderY(alpha) * cellSize
         SpriteRenderer.drawMonkey(canvas, cx, cy, cellSize, direction, frame)
     }
 }

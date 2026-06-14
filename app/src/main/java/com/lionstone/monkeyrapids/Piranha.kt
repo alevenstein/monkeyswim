@@ -35,6 +35,10 @@ class Piranha(
     var y: Float = spawnRow + 0.5f
         private set
 
+    // Start-of-tick position for render interpolation (see renderX/renderY).
+    private var prevX: Float = x
+    private var prevY: Float = y
+
     var direction: Direction = Direction.LEFT
         private set
 
@@ -92,6 +96,8 @@ class Piranha(
     fun resetToSpawn() {
         x = spawnX
         y = spawnY
+        prevX = x
+        prevY = y
         direction = Direction.LEFT
         mode = Mode.LEAVING_PEN
         releaseTimer = releaseDelay
@@ -100,6 +106,10 @@ class Piranha(
 
     val tileCol: Int get() = x.toInt()
     val tileRow: Int get() = y.toInt()
+
+    /** Interpolated render coordinates between the last two ticks. */
+    fun renderX(alpha: Float): Float = renderLerp(prevX, x, alpha)
+    fun renderY(alpha: Float): Float = renderLerp(prevY, y, alpha)
 
     /** Per-frame bait position (or null). GameState sets this before update().
      *  When non-null AND the piranha is in CHASE AND the bait is within
@@ -113,6 +123,8 @@ class Piranha(
     var blackHolePull: Pair<Int, Int>? = null
 
     fun update(deltaSec: Float, monkey: Monkey, frightTimer: Float) {
+        prevX = x
+        prevY = y
         animTime += deltaSec
 
         // Wait inside the pen until the staggered-release timer expires.
@@ -343,9 +355,9 @@ class Piranha(
         mode = Mode.EATEN
     }
 
-    fun draw(canvas: Canvas, cellSize: Float, originX: Float, originY: Float, frightTimer: Float) {
-        val cx = originX + x * cellSize
-        val cy = originY + y * cellSize
+    fun draw(canvas: Canvas, cellSize: Float, originX: Float, originY: Float, frightTimer: Float, alpha: Float) {
+        val cx = originX + renderX(alpha) * cellSize
+        val cy = originY + renderY(alpha) * cellSize
         val frightened = mode == Mode.FRIGHTENED
         // Blink white during last 1.5s of fright.
         val blink = frightened && frightTimer < 1.5f && (((frightTimer * 8f).toInt()) % 2 == 0)

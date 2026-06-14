@@ -21,6 +21,10 @@ class Shark(
     var direction: Direction = Direction.RIGHT
         private set
 
+    // Start-of-tick position for render interpolation (see renderX/renderY).
+    private var prevX: Float = x
+    private var prevY: Float = y
+
     private var animTime: Float = 0f
     val frame: Int get() = ((animTime * 6f).toInt() % 2)
     val tileCol: Int get() = x.toInt()
@@ -28,7 +32,13 @@ class Shark(
 
     private val baseSpeed = 5.5f
 
+    /** Interpolated render coordinates between the last two ticks. */
+    fun renderX(alpha: Float): Float = renderLerp(prevX, x, alpha)
+    fun renderY(alpha: Float): Float = renderLerp(prevY, y, alpha)
+
     fun update(deltaSec: Float, piranhas: List<Piranha>) {
+        prevX = x
+        prevY = y
         animTime += deltaSec
         val target = nearestTarget(piranhas) ?: return
 
@@ -108,9 +118,9 @@ class Shark(
         return sqrt(dx * dx + dy * dy) < threshold
     }
 
-    fun draw(canvas: Canvas, cellSize: Float, originX: Float, originY: Float) {
-        val cx = originX + x * cellSize
-        val cy = originY + y * cellSize
+    fun draw(canvas: Canvas, cellSize: Float, originX: Float, originY: Float, alpha: Float) {
+        val cx = originX + renderX(alpha) * cellSize
+        val cy = originY + renderY(alpha) * cellSize
         SpriteRenderer.drawShark(canvas, cx, cy, cellSize, direction, frame)
     }
 }

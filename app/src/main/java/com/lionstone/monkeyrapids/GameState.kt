@@ -904,7 +904,7 @@ class GameState(
     }
 
     @Synchronized
-    fun draw(canvas: Canvas, viewWidth: Int, viewHeight: Int, hudHeightPx: Float) {
+    fun draw(canvas: Canvas, viewWidth: Int, viewHeight: Int, hudHeightPx: Float, alpha: Float = 1f) {
         val playableHeight = viewHeight - hudHeightPx
         val cellSize = kotlin.math.min(
             viewWidth.toFloat() / maze.cols,
@@ -944,7 +944,7 @@ class GameState(
         }
 
         if (phase != Phase.LIFE_LOST) {
-            monkey.draw(canvas, cellSize, originX, originY)
+            monkey.draw(canvas, cellSize, originX, originY, alpha)
         } else {
             // Death animation: shrink the monkey.
             val t = (1.5f - phaseTimer.coerceAtLeast(0f)) / 1.5f
@@ -957,17 +957,17 @@ class GameState(
         }
 
         if (phase != Phase.LIFE_LOST && phase != Phase.LEVEL_COMPLETE) {
-            for (p in piranhas) p.draw(canvas, cellSize, originX, originY, frightTimer)
+            for (p in piranhas) p.draw(canvas, cellSize, originX, originY, frightTimer, alpha)
         }
 
         // Shark draws on top of piranhas (it's the predator chasing them).
         if (phase != Phase.LIFE_LOST && phase != Phase.LEVEL_COMPLETE) {
-            shark?.draw(canvas, cellSize, originX, originY)
+            shark?.draw(canvas, cellSize, originX, originY, alpha)
         }
 
         // Crocodile draws after piranhas so its larger sprite reads on top.
         if (phase != Phase.LIFE_LOST && phase != Phase.LEVEL_COMPLETE) {
-            crocodile?.draw(canvas, cellSize, originX, originY)
+            crocodile?.draw(canvas, cellSize, originX, originY, alpha)
         }
 
         // Brief turtle visual when the slow-piranhas powerup activates —

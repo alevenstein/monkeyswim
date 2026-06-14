@@ -24,6 +24,10 @@ class Crocodile(
     var y: Float = spawnRow + 0.5f
         private set
 
+    // Start-of-tick position for render interpolation (see renderX/renderY).
+    private var prevX: Float = x
+    private var prevY: Float = y
+
     var direction: Direction = Direction.RIGHT
         private set
 
@@ -54,6 +58,8 @@ class Crocodile(
     fun resetToSpawn() {
         x = spawnX
         y = spawnY
+        prevX = x
+        prevY = y
         animTime = 0f
         // Direction preserved across resets — the croc just keeps doing its thing.
     }
@@ -61,7 +67,13 @@ class Crocodile(
     val tileCol: Int get() = x.toInt()
     val tileRow: Int get() = y.toInt()
 
+    /** Interpolated render coordinates between the last two ticks. */
+    fun renderX(alpha: Float): Float = renderLerp(prevX, x, alpha)
+    fun renderY(alpha: Float): Float = renderLerp(prevY, y, alpha)
+
     fun update(deltaSec: Float) {
+        prevX = x
+        prevY = y
         animTime += deltaSec
         if (direction == Direction.NONE) return
         val speed = baseSpeed * speedScale
@@ -98,9 +110,9 @@ class Crocodile(
         return dx < 0.6f && dy < 0.6f
     }
 
-    fun draw(canvas: Canvas, cellSize: Float, originX: Float, originY: Float) {
-        val cx = originX + x * cellSize
-        val cy = originY + y * cellSize
+    fun draw(canvas: Canvas, cellSize: Float, originX: Float, originY: Float, alpha: Float) {
+        val cx = originX + renderX(alpha) * cellSize
+        val cy = originY + renderY(alpha) * cellSize
         SpriteRenderer.drawCrocodile(canvas, cx, cy, cellSize, direction, frame)
     }
 }
