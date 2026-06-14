@@ -10,7 +10,7 @@ import android.graphics.Typeface
  * Methods are synchronized so the game thread and UI thread can call them safely.
  */
 class GameState(
-    initialLives: Int = 50,
+    initialLives: Int = 5,
     var listener: Listener? = null,
 ) {
     enum class Phase { AWAITING_START, READY, PLAYING, LIFE_LOST, LEVEL_COMPLETE, ALL_LEVELS_COMPLETE, GAME_OVER, PAUSED, MECHANIC_INTRO }
