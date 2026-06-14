@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="@color/water_deep">
 
-    <com.monkeyswim.game.GameView
+    <com.lionstone.monkeyrapids.GameView
         android:id="@+id/gameView"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />

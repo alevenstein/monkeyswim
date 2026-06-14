@@ -279,7 +279,7 @@ def feature_graphic(W=1024, H=500):
     ftag = font(int(h*0.062), heavy=False)
     x0 = int(w*0.05)
     outlined_text(d, (x0, int(h*0.24)), "MONKEY", f1, GOLD, (40, 26, 6), int(h*0.012), shadow=(2,18,30))
-    outlined_text(d, (x0, int(h*0.46)), "SWIM",   f2, GOLD, (40, 26, 6), int(h*0.012), shadow=(2,18,30))
+    outlined_text(d, (x0, int(h*0.46)), "RAPIDS", f2, GOLD, (40, 26, 6), int(h*0.012), shadow=(2,18,30))
     d.text((x0 + int(h*0.01), int(h*0.7)), "Dodge the piranhas. Clear the river.",
            font=ftag, fill=(225, 240, 250))
     return img.convert("RGB").resize((W, H), Image.LANCZOS)

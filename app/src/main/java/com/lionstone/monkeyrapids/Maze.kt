@@ -1,4 +1,4 @@
-package com.monkeyswim.game
+package com.lionstone.monkeyrapids
 
 import android.graphics.Canvas
 import android.graphics.Color

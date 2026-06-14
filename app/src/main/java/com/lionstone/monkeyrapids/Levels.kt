@@ -1,4 +1,4 @@
-package com.monkeyswim.game
+package com.lionstone.monkeyrapids
 
 /**
  * Level catalog. Each level is a 22×15 layout that *must* contain:

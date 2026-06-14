@@ -1,4 +1,4 @@
-package com.monkeyswim.game
+package com.lionstone.monkeyrapids
 
 import android.app.Activity
 import android.util.Log

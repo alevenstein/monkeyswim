@@ -1,4 +1,4 @@
-package com.monkeyswim.game
+package com.lionstone.monkeyrapids
 
 import android.content.Context
 import android.media.AudioAttributes

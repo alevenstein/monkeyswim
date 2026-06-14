@@ -1,4 +1,4 @@
-# MonkeySwim — Sound Effects
+# MonkeyRapids — Sound Effects
 
 All sound effects are **procedurally synthesised** in `SoundEngine.kt` — no audio assets. Each effect is generated once at app start into a 16-bit PCM `ShortArray` and uploaded into its own `AudioTrack` in `MODE_STATIC`; `play()` rewinds and re-triggers. Different effects can play simultaneously because each has its own track.
 
@@ -6,7 +6,7 @@ This file is the design log for every effect: what it sounds like, why it was ch
 
 ## Mute toggle
 
-The `enabled` flag on `SoundEngine` is the global mute. Persisted to `SharedPreferences` (`monkeyswim_settings` / `soundEnabled`, default `true`) so the choice survives process restarts. The HUD has a **🔊 / 🔇** button (rightmost on the top bar, white when on, muted gray `#546E7A` when off) that toggles it — same visual contract as Brick Basher's Canvas-drawn sound button, just rendered as an Android `Button` to match the rest of the MonkeySwim HUD.
+The `enabled` flag on `SoundEngine` is the global mute. Persisted to `SharedPreferences` (`monkeyswim_settings` / `soundEnabled`, default `true`) so the choice survives process restarts. The HUD has a **🔊 / 🔇** button (rightmost on the top bar, white when on, muted gray `#546E7A` when off) that toggles it — same visual contract as Brick Basher's Canvas-drawn sound button, just rendered as an Android `Button` to match the rest of the MonkeyRapids HUD.
 
 When `enabled` is `false`, every `play()` call is a no-op.
 

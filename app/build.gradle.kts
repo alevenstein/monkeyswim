@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.monkeyswim.game"
+    namespace = "com.lionstone.monkeyrapids"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.monkeyswim.game"
+        applicationId = "com.lionstone.monkeyrapids"
         minSdk = 24
         targetSdk = 34
         versionCode = 1

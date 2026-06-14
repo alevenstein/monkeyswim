@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <style name="Theme.MonkeySwim" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    <style name="Theme.MonkeyRapids" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="colorPrimary">@color/water_shallow</item>
         <item name="colorPrimaryDark">@color/water_deep</item>
         <item name="colorAccent">@color/power_pellet</item>
         <item name="android:statusBarColor">@color/water_deep</item>
     </style>
 
-    <style name="Theme.MonkeySwim.Fullscreen" parent="Theme.MonkeySwim">
+    <style name="Theme.MonkeyRapids.Fullscreen" parent="Theme.MonkeyRapids">
         <item name="android:windowFullscreen">true</item>
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowActionBar">false</item>

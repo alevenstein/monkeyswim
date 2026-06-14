@@ -1,4 +1,4 @@
-## MonkeySwim
+## MonkeyRapids
 
 Android-native game with gameplay nearly identical to Pac-Man, themed as a monkey swimming through canals and being chased by piranhas. Built in Kotlin with `SurfaceView` + a custom 60 FPS game thread (no engine).
 

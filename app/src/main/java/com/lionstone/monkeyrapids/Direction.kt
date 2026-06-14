@@ -1,4 +1,4 @@
-package com.monkeyswim.game
+package com.lionstone.monkeyrapids
 
 enum class Direction(val dx: Int, val dy: Int) {
     NONE(0, 0),
