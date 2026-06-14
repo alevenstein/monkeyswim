@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">MonkeyRapids</string>
+    <string name="app_name">Monkey Rapids</string>
     <string name="game_over">Game Over</string>
     <string name="restart">Restart</string>
     <string name="watch_ad_for_lives">Watch Ad for +3 Lives</string>
