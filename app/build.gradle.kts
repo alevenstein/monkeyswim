@@ -5,14 +5,14 @@ plugins {
 
 android {
     namespace = "com.lionstone.monkeyrapids"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.lionstone.monkeyrapids"
         minSdk = 24
-        targetSdk = 34
-        versionCode = 1
-        versionName = "0.1.0"
+        targetSdk = 35
+        versionCode = 2
+        versionName = "0.1.1"
     }
 
     buildTypes {
