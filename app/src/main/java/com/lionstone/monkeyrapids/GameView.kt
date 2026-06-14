@@ -13,7 +13,7 @@ class GameView @JvmOverloads constructor(
     defStyle: Int = 0,
 ) : SurfaceView(context, attrs, defStyle), SurfaceHolder.Callback {
 
-    private var thread: GameThread? = null
+    private var loop: GameLoop? = null
     var hudHeightPx: Float = 0f
 
     private val state: GameState = GameState()
@@ -38,27 +38,14 @@ class GameView @JvmOverloads constructor(
     fun gameState(): GameState = state
 
     override fun surfaceCreated(holder: SurfaceHolder) {
-        thread = GameThread(holder, state) { hudHeightPx }.also {
-            it.running = true
-            it.start()
-        }
+        loop = GameLoop(holder, state) { hudHeightPx }.also { it.start() }
     }
 
     override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) = Unit
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
-        val t = thread ?: return
-        t.running = false
-        var retries = 5
-        while (retries-- > 0) {
-            try {
-                t.join(200)
-                break
-            } catch (_: InterruptedException) {
-                // try again
-            }
-        }
-        thread = null
+        loop?.stop()
+        loop = null
     }
 
     // ---------- Touch input ----------
