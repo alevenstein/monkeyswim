@@ -147,7 +147,12 @@ class Piranha(
                 val dy = y - spawnY
                 if (dx * dx + dy * dy < 0.04f) {
                     x = spawnX; y = spawnY
+                    prevX = x; prevY = y
+                    // Regroup in the pen before re-emerging, rather than turning
+                    // straight back around the moment it gets home.
                     mode = Mode.LEAVING_PEN
+                    releaseTimer = REENTRY_DELAY
+                    return
                 }
             }
             else -> {
@@ -392,5 +397,11 @@ class Piranha(
         // rather than an ordinary chase, but high enough that piranhas across
         // the maze are visibly reeled in over the hole's lifetime.
         private const val BLACK_HOLE_DRAG_SCALE = 0.85f
+
+        // After an EATEN piranha makes it home, it waits this long in the pen
+        // before swimming back out — so it doesn't pop straight back into the
+        // chase the instant it returns. (Lightning/level resets use the
+        // original staggered release delays instead, via resetToSpawn.)
+        private const val REENTRY_DELAY = 3f
     }
 }

@@ -78,7 +78,7 @@ Each level has a 3×2 pen; **position varies per level** (top/middle/bottom × l
 
 During the **first run-through (levels 1-30)** exactly four piranhas spawn at the four corners of the pen-interior bounding box. They're released through the gate on a staggered schedule from level start — first immediately, then at 4 s, 8 s, and 12 s. In **challenge mode** the count rises by one every five levels (see "Challenge mode" below); extras cycle through the same four spawn corners with their own staggered release (`i * 4f` seconds), so an L10 challenge level has six piranhas trickling out across the first 20 seconds.
 
-After a piranha is killed (eaten frightened, hit by a powerup, etc.) it returns to its spawn corner via a pre-computed BFS shortest-path "flow field" — always optimal, never gets lost.
+After a piranha is killed (eaten frightened, hit by a powerup, etc.) it returns to its spawn corner via a pre-computed BFS shortest-path "flow field" — always optimal, never gets lost. On reaching home it **waits ~3 s in the pen** (`Piranha.REENTRY_DELAY`, re-using the same `releaseTimer` countdown as the level-start release) before swimming back out, rather than re-releasing the instant it arrives. (The lightning powerup is the exception: it sends every piranha home via `resetToSpawn`, which re-applies the original staggered 0/4/8/12 s release schedule.)
 
 Piranha behaviours:
 
