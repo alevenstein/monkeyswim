@@ -65,7 +65,10 @@ class AdMobController(private val activity: Activity) {
 
     /**
      * Shows the rewarded ad. [onReward] fires only if the user actually earns
-     * the reward. [onUnavailable] fires if no ad is loaded yet.
+     * the reward, and only *after* the ad has been dismissed — Google fires the
+     * earned-reward listener while the ad is still on screen, so deferring to
+     * dismissal keeps the game from resuming behind the still-open ad.
+     * [onUnavailable] fires if no ad is loaded yet.
      */
     fun showRewarded(onReward: () -> Unit, onUnavailable: () -> Unit) {
         val ad = rewardedAd
@@ -74,10 +77,12 @@ class AdMobController(private val activity: Activity) {
             loadAd()
             return
         }
+        var earnedReward = false
         ad.fullScreenContentCallback = object : FullScreenContentCallback() {
             override fun onAdDismissedFullScreenContent() {
                 rewardedAd = null
                 loadAd()  // pre-load next
+                if (earnedReward) onReward()
             }
             override fun onAdFailedToShowFullScreenContent(adError: com.google.android.gms.ads.AdError) {
                 rewardedAd = null
@@ -85,6 +90,6 @@ class AdMobController(private val activity: Activity) {
                 onUnavailable()
             }
         }
-        ad.show(activity, OnUserEarnedRewardListener { _ -> onReward() })
+        ad.show(activity, OnUserEarnedRewardListener { _ -> earnedReward = true })
     }
 }
