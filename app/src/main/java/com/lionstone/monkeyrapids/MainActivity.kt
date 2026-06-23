@@ -43,6 +43,10 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
     private lateinit var baitButton: Button
     private lateinit var helpOverlay: FrameLayout
     private lateinit var helpCloseButton: Button
+    private lateinit var gamesButton: Button
+    private lateinit var gamesOverlay: FrameLayout
+    private lateinit var gamesCloseButton: Button
+    private lateinit var gamesBrickBasher: View
     private lateinit var splashOverlay: FrameLayout
     private lateinit var splashDifficultyGroup: RadioGroup
     private lateinit var splashStartButton: Button
@@ -64,6 +68,9 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
 
     /** True if showing the help overlay paused the game (so closing should resume). */
     private var helpPausedGame = false
+
+    /** True if showing the games overlay paused the game (so closing should resume). */
+    private var gamesPausedGame = false
 
     private lateinit var adMob: AdMobController
     private val soundEngine = SoundEngine()
@@ -93,6 +100,10 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
         baitButton = findViewById(R.id.baitButton)
         helpOverlay = findViewById(R.id.helpOverlay)
         helpCloseButton = findViewById(R.id.helpCloseButton)
+        gamesButton = findViewById(R.id.gamesButton)
+        gamesOverlay = findViewById(R.id.gamesOverlay)
+        gamesCloseButton = findViewById(R.id.gamesCloseButton)
+        gamesBrickBasher = findViewById(R.id.gamesBrickBasher)
         splashOverlay = findViewById(R.id.splashOverlay)
         splashDifficultyGroup = findViewById(R.id.splashDifficultyGroup)
         splashStartButton = findViewById(R.id.splashStartButton)
@@ -175,6 +186,28 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
             if (helpPausedGame) {
                 gameView.gameState().setPaused(false)
                 helpPausedGame = false
+            }
+        }
+        gamesButton.setOnClickListener {
+            // Mirror the help overlay: pause an actively-playing game on open so
+            // it doesn't run behind the popup, and only resume it on close.
+            val state = gameView.gameState()
+            gamesPausedGame = if (state.phase == GameState.Phase.PLAYING) {
+                state.setPaused(true)
+                true
+            } else {
+                false
+            }
+            gamesOverlay.visibility = View.VISIBLE
+        }
+        gamesBrickBasher.setOnClickListener {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(BRICK_BASHER_URL)))
+        }
+        gamesCloseButton.setOnClickListener {
+            gamesOverlay.visibility = View.GONE
+            if (gamesPausedGame) {
+                gameView.gameState().setPaused(false)
+                gamesPausedGame = false
             }
         }
         watchAdButton.setOnClickListener {
@@ -453,6 +486,8 @@ class MainActivity : AppCompatActivity(), GameState.Listener {
 
     companion object {
         private const val PRIVACY_POLICY_URL = "https://lionstone.dev/privacy/"
+        private const val BRICK_BASHER_URL =
+            "https://play.google.com/store/apps/details?id=com.lionstone.brickbasher"
         // Same SharedPreferences file SoundEngine uses for its mute state, so
         // the player's tutorial-seen flags and audio toggle share one bag.
         private const val SETTINGS_FILE = "monkeyswim_settings"

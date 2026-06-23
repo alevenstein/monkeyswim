@@ -22,6 +22,12 @@
     <string name="help_button">?</string>
     <string name="help_title">How to Play</string>
     <string name="help_close">Close</string>
+    <string name="games_button">🎮</string>
+    <string name="games_title">More Games</string>
+    <string name="games_intro">More games from Lionstone Software:</string>
+    <string name="games_brickbasher_name">Brick Basher</string>
+    <string name="games_brickbasher_desc">A fast, modern take on the classic brick-breaker. Tap to view on Google Play.</string>
+    <string name="games_close">Close</string>
     <string name="help_powerups_label">Powerups</string>
     <string name="help_banana">Banana — collect for a random powerup</string>
     <string name="help_lightning">Lightning — sends all piranhas back to the pen</string>

@@ -54,6 +54,7 @@
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:gravity="end"
+                android:layout_marginEnd="16dp"
                 tools:text="Lives 3" />
 
             <Button
@@ -74,30 +75,43 @@
 
             <Button
                 android:id="@+id/soundButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="42dp"
+                android:layout_height="46dp"
                 android:minWidth="0dp"
                 android:minHeight="0dp"
-                android:padding="4dp"
+                android:padding="0dp"
                 android:layout_marginStart="6dp"
                 android:text="@string/sound_on"
                 android:textColor="@android:color/white"
                 android:backgroundTint="@color/button_bg"
-                android:textSize="16sp" />
+                android:textSize="18sp" />
 
             <Button
                 android:id="@+id/helpButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="42dp"
+                android:layout_height="46dp"
                 android:minWidth="0dp"
                 android:minHeight="0dp"
-                android:padding="4dp"
+                android:padding="0dp"
                 android:layout_marginStart="6dp"
                 android:text="@string/help_button"
                 android:textColor="@color/button_text"
                 android:backgroundTint="@color/button_bg"
-                android:textSize="14sp"
+                android:textSize="18sp"
                 android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/gamesButton"
+                android:layout_width="42dp"
+                android:layout_height="46dp"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:padding="0dp"
+                android:layout_marginStart="6dp"
+                android:text="@string/games_button"
+                android:textColor="@color/button_text"
+                android:backgroundTint="@color/button_bg"
+                android:textSize="18sp" />
         </LinearLayout>
 
         <!-- Debug-only level selector. Visibility is set programmatically in
@@ -613,6 +627,115 @@
                     android:textStyle="bold" />
             </LinearLayout>
         </ScrollView>
+    </FrameLayout>
+
+    <!-- "More Games" overlay — cross-promotes other Lionstone Software titles.
+         Each game entry is a clickable card that opens its Play Store listing.
+         Opened from the gamepad button in the HUD; dismissed by Close. -->
+    <FrameLayout
+        android:id="@+id/gamesOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/splash_bg"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone">
+
+        <!-- Centered floating "window" panel rather than a full-screen wash. -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_margin="24dp"
+            android:orientation="vertical"
+            android:background="@drawable/games_window_bg"
+            android:paddingHorizontal="24dp"
+            android:paddingTop="20dp"
+            android:paddingBottom="24dp">
+
+            <!-- Title bar -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/games_title"
+                android:textColor="@color/power_pellet"
+                android:textSize="26sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:layout_marginBottom="6dp" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/power_pellet"
+                android:alpha="0.5"
+                android:layout_marginBottom="16dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/games_intro"
+                android:textColor="@color/pellet"
+                android:textSize="15sp"
+                android:gravity="center"
+                android:layout_marginBottom="20dp" />
+
+            <LinearLayout
+                android:id="@+id/gamesBrickBasher"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="@drawable/games_card_bg"
+                android:padding="14dp"
+                android:layout_marginBottom="24dp">
+
+                <ImageView
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:src="@drawable/brickbasher_icon"
+                    android:layout_marginEnd="14dp"
+                    android:contentDescription="@string/games_brickbasher_name" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/games_brickbasher_name"
+                        android:textColor="@color/power_pellet"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="4dp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/games_brickbasher_desc"
+                        android:textColor="@color/hud_text"
+                        android:textSize="13sp"
+                        android:lineSpacingExtra="2dp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/gamesCloseButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:minWidth="180dp"
+                android:text="@string/games_close"
+                android:textColor="@color/button_text"
+                android:backgroundTint="@color/button_bg"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+        </LinearLayout>
     </FrameLayout>
 
 </FrameLayout>
