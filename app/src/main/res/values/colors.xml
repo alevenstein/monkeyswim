@@ -19,6 +19,7 @@
     <color name="button_bg">#FFE9B0</color>
     <color name="button_bg_pressed">#E0CC8A</color>
     <color name="button_text">#222222</color>
+    <color name="bait_button_bg">#FF7043</color>
     <color name="gateway_locked">#222222</color>
     <color name="gateway_unlocked">#22FFAA</color>
 </resources>

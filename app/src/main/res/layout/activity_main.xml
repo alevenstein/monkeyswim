@@ -21,97 +21,113 @@
             android:id="@+id/hudBar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
+            android:orientation="vertical"
             android:padding="12dp"
-            android:background="@color/hud_bg"
-            android:gravity="center_vertical">
+            android:background="@color/hud_bg">
 
-            <TextView
-                android:id="@+id/scoreLabel"
-                android:layout_width="0dp"
+            <!-- Top row: score on the left, control buttons on the right. -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:textColor="@color/hud_text"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                tools:text="Score 0" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
 
-            <TextView
-                android:id="@+id/levelLabel"
-                android:layout_width="wrap_content"
+                <TextView
+                    android:id="@+id/scoreLabel"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textColor="@color/hud_text"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    tools:text="Score 0" />
+
+                <Button
+                    android:id="@+id/baitButton"
+                    android:layout_width="42dp"
+                    android:layout_height="46dp"
+                    android:minWidth="0dp"
+                    android:minHeight="0dp"
+                    android:padding="0dp"
+                    android:layout_marginStart="6dp"
+                    android:text="@string/bait_button"
+                    android:textColor="@android:color/white"
+                    android:backgroundTint="@color/bait_button_bg"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:visibility="gone"
+                    tools:text="🐟 1"
+                    tools:visibility="visible" />
+
+                <Button
+                    android:id="@+id/soundButton"
+                    android:layout_width="42dp"
+                    android:layout_height="46dp"
+                    android:minWidth="0dp"
+                    android:minHeight="0dp"
+                    android:padding="0dp"
+                    android:layout_marginStart="6dp"
+                    android:text="@string/sound_on"
+                    android:textColor="@android:color/white"
+                    android:backgroundTint="@color/button_bg"
+                    android:textSize="18sp" />
+
+                <Button
+                    android:id="@+id/helpButton"
+                    android:layout_width="42dp"
+                    android:layout_height="46dp"
+                    android:minWidth="0dp"
+                    android:minHeight="0dp"
+                    android:padding="0dp"
+                    android:layout_marginStart="6dp"
+                    android:text="@string/help_button"
+                    android:textColor="@color/button_text"
+                    android:backgroundTint="@color/button_bg"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/gamesButton"
+                    android:layout_width="42dp"
+                    android:layout_height="46dp"
+                    android:minWidth="0dp"
+                    android:minHeight="0dp"
+                    android:padding="0dp"
+                    android:layout_marginStart="6dp"
+                    android:text="@string/games_button"
+                    android:textColor="@color/button_text"
+                    android:backgroundTint="@color/button_bg"
+                    android:textSize="18sp" />
+            </LinearLayout>
+
+            <!-- Second row: level and lives, spaced to opposite ends. -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="@color/hud_text"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                tools:text="Level 1" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="8dp">
 
-            <TextView
-                android:id="@+id/livesLabel"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:textColor="@color/hud_text"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:gravity="end"
-                android:layout_marginEnd="16dp"
-                tools:text="Lives 3" />
+                <TextView
+                    android:id="@+id/levelLabel"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textColor="@color/hud_text"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    tools:text="Level 1" />
 
-            <Button
-                android:id="@+id/baitButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:minWidth="0dp"
-                android:minHeight="0dp"
-                android:padding="4dp"
-                android:layout_marginStart="6dp"
-                android:text="@string/bait_button"
-                android:textColor="@color/button_text"
-                android:backgroundTint="@color/button_bg"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:visibility="gone"
-                tools:text="🐟 1" />
-
-            <Button
-                android:id="@+id/soundButton"
-                android:layout_width="42dp"
-                android:layout_height="46dp"
-                android:minWidth="0dp"
-                android:minHeight="0dp"
-                android:padding="0dp"
-                android:layout_marginStart="6dp"
-                android:text="@string/sound_on"
-                android:textColor="@android:color/white"
-                android:backgroundTint="@color/button_bg"
-                android:textSize="18sp" />
-
-            <Button
-                android:id="@+id/helpButton"
-                android:layout_width="42dp"
-                android:layout_height="46dp"
-                android:minWidth="0dp"
-                android:minHeight="0dp"
-                android:padding="0dp"
-                android:layout_marginStart="6dp"
-                android:text="@string/help_button"
-                android:textColor="@color/button_text"
-                android:backgroundTint="@color/button_bg"
-                android:textSize="18sp"
-                android:textStyle="bold" />
-
-            <Button
-                android:id="@+id/gamesButton"
-                android:layout_width="42dp"
-                android:layout_height="46dp"
-                android:minWidth="0dp"
-                android:minHeight="0dp"
-                android:padding="0dp"
-                android:layout_marginStart="6dp"
-                android:text="@string/games_button"
-                android:textColor="@color/button_text"
-                android:backgroundTint="@color/button_bg"
-                android:textSize="18sp" />
+                <TextView
+                    android:id="@+id/livesLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/hud_text"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:gravity="end"
+                    tools:text="Lives 3" />
+            </LinearLayout>
         </LinearLayout>
 
         <!-- Debug-only level selector. Visibility is set programmatically in

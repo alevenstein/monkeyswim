@@ -175,7 +175,13 @@ object SpriteRenderer {
     ) {
         canvas.save()
         canvas.translate(cx, cy)
-        canvas.rotate(rotationFor(direction))
+        // Mirror horizontally for LEFT rather than rotating 180°, which would also
+        // flip the sprite upside down (see drawPiranha).
+        if (direction == Direction.LEFT) {
+            canvas.scale(-1f, 1f)
+        } else {
+            canvas.rotate(rotationFor(direction))
+        }
         val s = cellSize * 0.75f  // half-size
         val armOffset = if (frame % 2 == 0) 1f else -1f
 
@@ -303,7 +309,14 @@ object SpriteRenderer {
     ) {
         canvas.save()
         canvas.translate(cx, cy)
-        canvas.rotate(rotationFor(direction))
+        // The base sprite points right with its red belly down. For LEFT, mirror
+        // horizontally rather than rotating 180° — a half-turn would also flip the
+        // belly up, leaving the fish swimming upside down.
+        if (direction == Direction.LEFT) {
+            canvas.scale(-1f, 1f)
+        } else {
+            canvas.rotate(rotationFor(direction))
+        }
         val s = cellSize * 0.75f
 
         // Resolve the palette. A fright overrides any per-fish tint (they all
@@ -467,16 +480,19 @@ object SpriteRenderer {
     ) {
         canvas.save()
         canvas.translate(cx, cy)
-        // Rotate so the sprite always faces the direction of motion. Sprite
-        // is drawn pointing RIGHT by default.
-        val angleDeg = when (direction) {
-            Direction.RIGHT -> 0f
-            Direction.DOWN -> 90f
-            Direction.LEFT -> 180f
-            Direction.UP -> 270f
-            Direction.NONE -> 0f
+        // Orient the sprite to its direction of motion (drawn pointing RIGHT by
+        // default). LEFT mirrors horizontally rather than rotating 180°, which
+        // would also flip the croc upside down (belly up, ridges down).
+        if (direction == Direction.LEFT) {
+            canvas.scale(-1f, 1f)
+        } else {
+            val angleDeg = when (direction) {
+                Direction.DOWN -> 90f
+                Direction.UP -> 270f
+                else -> 0f
+            }
+            canvas.rotate(angleDeg)
         }
-        canvas.rotate(angleDeg)
 
         val s = cellSize * 0.6f
         // Main body — long flat oval extending forward.
@@ -532,7 +548,13 @@ object SpriteRenderer {
     ) {
         canvas.save()
         canvas.translate(cx, cy)
-        canvas.rotate(rotationFor(direction))
+        // Mirror horizontally for LEFT rather than rotating 180°, which would also
+        // flip the sprite upside down (see drawPiranha).
+        if (direction == Direction.LEFT) {
+            canvas.scale(-1f, 1f)
+        } else {
+            canvas.rotate(rotationFor(direction))
+        }
         val s = cellSize * 0.65f
         val tailFlick = if (frame % 2 == 0) -1f else 1f
 

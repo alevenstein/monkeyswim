@@ -63,5 +63,11 @@ cd promo
 python _gen_art.py        # rewrites icons + feature_graphic.png
 ```
 
-Screenshots are recaptured manually via `adb exec-out screencap`; the debug bar
-is removed with a fixed-band crop (y≈335–424 on a 1080-wide capture).
+Screenshots are recaptured via `adb exec-out screencap`; the debug bar
+is removed with a fixed-band crop, splicing the HUD directly above the maze.
+With the current two-row HUD the band to remove is **y 250–394** on a 1080×2424
+capture (the gameplay shots end up 1080×2280). Tips for recapturing: run the
+debug build on the Pixel 9 AVD, use the in-HUD Level spinner to jump levels
+(the mechanic-intro overlay freezes the game so the idle monkey can't die while
+you compose the shot), and keep the monkey moving with `input swipe` during the
+capture burst.
