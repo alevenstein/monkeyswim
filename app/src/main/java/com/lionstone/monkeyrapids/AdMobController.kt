@@ -25,7 +25,7 @@ class AdMobController(private val activity: Activity) {
         private val REWARDED_AD_UNIT = if (BuildConfig.DEBUG)
             "ca-app-pub-3940256099942544/5224354917"
         else
-            "ca-app-pub-7133034697479472/2130222934"
+            "ca-app-pub-7133034697479472/2433596379"
 
     }
 
